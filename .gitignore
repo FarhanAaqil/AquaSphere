@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Model outputs (large binaries committed separately)
+# model/model.pt   — committed when generated
+# model/model.joblib — committed when generated
+
+# Cache (re-downloadable, don't bloat the repo)
+data/cache/
+
+# Logs
+data/collect.log
+
+# OS
+.DS_Store
+Thumbs.db
