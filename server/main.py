@@ -26,7 +26,7 @@ import math
 import os
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from pathlib import Path
 from typing import Optional
@@ -193,7 +193,7 @@ def simulated_sst(lat: float, lon: float, date_str: str) -> float:
     try:
         dt = datetime.strptime(date_str, "%Y-%m-%d")
     except ValueError:
-        dt = datetime.utcnow()
+        dt = datetime.now(timezone.utc)
     m  = dt.month
     sp = math.sin((m / 12) * 2 * math.pi - math.pi / 2)
     bob = lon >= 78

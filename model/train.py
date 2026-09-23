@@ -31,6 +31,13 @@ from pathlib import Path
 
 import numpy as np
 
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
@@ -71,13 +78,13 @@ def load_data(csv_path: Path):
                 temps = [float(row[c]) for c in DEPTH_COLS if row.get(c, "") != ""]
                 if len(temps) < 12:          # need most depths valid
                     continue
-                # Pad missing deep temps with last known value
+                # Pad missing surface temp with SST, and deep temps with last known value
                 full_temps = []
-                last = None
+                last = sst
                 for c in DEPTH_COLS:
                     v = row.get(c, "")
                     if v == "":
-                        full_temps.append(last if last is not None else 4.0)
+                        full_temps.append(last)
                     else:
                         last = float(v)
                         full_temps.append(last)
@@ -149,7 +156,7 @@ def try_torch_train(X_tr, Y_tr, X_val, Y_val, epochs: int, hidden: int):
     PATIENCE      = 20
 
     print(f"Training PyTorch MLP  ({sum(p.numel() for p in model.parameters())} params) "
-          f"on {X_tr.shape[0]} samples …")
+          f"on {X_tr.shape[0]} samples ...")
 
     for epoch in range(1, epochs + 1):
         model.train()
@@ -170,7 +177,7 @@ def try_torch_train(X_tr, Y_tr, X_val, Y_val, epochs: int, hidden: int):
             if val_loss < best_val_loss - 1e-5:
                 best_val_loss = val_loss
                 patience_cnt  = 0
-                torch.save(model.state_dict(), MODEL_PT + ".best.tmp")
+                torch.save(model.state_dict(), str(MODEL_PT) + ".best.tmp")
             else:
                 patience_cnt += 1
                 if patience_cnt >= PATIENCE:
@@ -178,16 +185,17 @@ def try_torch_train(X_tr, Y_tr, X_val, Y_val, epochs: int, hidden: int):
                     break
 
     # Restore best weights
-    if os.path.exists(MODEL_PT.as_posix() + ".best.tmp"):
-        model.load_state_dict(torch.load(MODEL_PT.as_posix() + ".best.tmp"))
-        os.remove(MODEL_PT.as_posix() + ".best.tmp")
+    tmp_path = str(MODEL_PT) + ".best.tmp"
+    if os.path.exists(tmp_path):
+        model.load_state_dict(torch.load(tmp_path))
+        os.remove(tmp_path)
 
     torch.save({
         "model_state": model.state_dict(),
         "embed_dim": 16,
         "hidden": hidden,
     }, MODEL_PT)
-    print(f"Saved model → {MODEL_PT}")
+    print(f"Saved model -> {MODEL_PT}")
 
     # Validation predictions for metrics
     model.eval()
@@ -207,7 +215,7 @@ def sklearn_train(X_tr, Y_tr, X_val, Y_val, hidden: int):
     from sklearn.multioutput import MultiOutputRegressor
     import joblib
 
-    print(f"PyTorch not available — using sklearn MLPRegressor on {X_tr.shape[0]} samples …")
+    print(f"PyTorch not available -- using sklearn MLPRegressor on {X_tr.shape[0]} samples ...")
 
     mlp = MLPRegressor(
         hidden_layer_sizes=(hidden, 16, hidden),
@@ -224,7 +232,7 @@ def sklearn_train(X_tr, Y_tr, X_val, Y_val, hidden: int):
     model.fit(X_tr, Y_tr)
 
     joblib.dump(model, MODEL_JL)
-    print(f"Saved model → {MODEL_JL}")
+    print(f"Saved model -> {MODEL_JL}")
 
     return model.predict(X_val)
 
@@ -298,7 +306,7 @@ def main():
     if not DATA_CSV.exists():
         sys.exit(f"Training CSV not found: {DATA_CSV}\nRun  python data/collect.py  first.")
 
-    print(f"Loading data from {DATA_CSV} …")
+    print(f"Loading data from {DATA_CSV} ...")
     X, Y = load_data(DATA_CSV)
     print(f"  {X.shape[0]} samples  |  {X.shape[1]} inputs  |  {Y.shape[1]} targets")
 
@@ -336,17 +344,17 @@ def main():
         scaler["backend"] = "sklearn"
 
     SCALER_JSON.write_text(json.dumps(scaler, indent=2))
-    print(f"Saved scaler → {SCALER_JSON}")
+    print(f"Saved scaler -> {SCALER_JSON}")
 
     # Metrics
     metrics = compute_metrics(Y_val, val_pred)
     METRICS_JSON.write_text(json.dumps(metrics, indent=2))
-    print(f"Saved metrics → {METRICS_JSON}")
+    print(f"Saved metrics -> {METRICS_JSON}")
 
     # Summary print
     ov = metrics["overall"]
     print(f"\n=== Validation Results  (n={metrics['n_val_samples']}) ===")
-    print(f"  Overall  RMSE={ov['rmse']:.3f}°C  bias={ov['bias']:+.3f}°C  r={ov['corr']:.3f}")
+    print(f"  Overall  RMSE={ov['rmse']:.3f} deg C  bias={ov['bias']:+.3f} deg C  r={ov['corr']:.3f}")
     print("\n  Per depth group:")
     for g in metrics["grouped"]:
         print(f"  {g['depth']:<14s}  RMSE={g['rmse']:.3f}  bias={g['bias']:+.3f}  r={g['corr']:.3f}")
