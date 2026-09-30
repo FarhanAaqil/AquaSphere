@@ -245,13 +245,13 @@ function thermoclineDepthFor(lat,lon,dateStr){
 }
 /* =====================================================================
    OceanEmbed — real backend integration
-   getProfile(), embeddingCoord(), validationMetrics() now try to fetch
-   from the FastAPI server (localhost:8000). They fall back gracefully
+   getProfile(), embeddingCoord(), validationMetrics() fetch from the
+   FastAPI backend via window.location.origin. They fall back gracefully
    to the original deterministic simulation if the server is unreachable,
    so the demo never breaks when the backend is not running.
    ===================================================================== */
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = (window.location.origin && window.location.origin !== 'null') ? window.location.origin : 'http://localhost:8000';
 
 // Cached response from the last successful /predict call.
 // Used to share the embedding vector across getProfile + embeddingCoord

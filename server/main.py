@@ -35,6 +35,7 @@ import numpy as np
 import requests
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 # ---------------------------------------------------------------------------
 # Paths  (server/main.py lives one level below the repo root)
@@ -44,6 +45,7 @@ MODEL_PT     = ROOT / "model" / "model.pt"
 MODEL_JL     = ROOT / "model" / "model.joblib"
 SCALER_JSON  = ROOT / "model" / "scaler.json"
 METRICS_JSON = ROOT / "model" / "validation_metrics.json"
+HTML_FILE    = ROOT / "oceanembed-prototype.html"
 
 STANDARD_DEPTHS = [0, 5, 10, 20, 30, 50, 75, 100, 125, 150, 200, 300, 500, 700, 1000]
 
@@ -285,6 +287,14 @@ def model_predict(lat: float, lon: float, date_str: str, sst: float):
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+@app.get("/", response_class=FileResponse)
+@app.get("/oceanembed-prototype.html", response_class=FileResponse, include_in_schema=False)
+def root():
+    if not HTML_FILE.exists():
+        raise HTTPException(status_code=404, detail="Dashboard HTML not found")
+    return FileResponse(HTML_FILE, media_type="text/html")
+
+
 @app.get("/health")
 def health():
     return {
@@ -346,3 +356,9 @@ def validation():
             ],
         }
     return json.loads(METRICS_JSON.read_text())
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("server.main:app", host="0.0.0.0", port=port)
