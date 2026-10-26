@@ -9,9 +9,7 @@ LON_MIN: float = 45.0
 LON_MAX: float = 105.0
 
 # Standard Argo interpolation depths (m)
-STANDARD_DEPTHS: list[int] = [
-    0, 5, 10, 20, 30, 50, 75, 100, 125, 150, 200, 300, 500, 700, 1000
-]
+STANDARD_DEPTHS: list[int] = [0, 5, 10, 20, 30, 50, 75, 100, 125, 150, 200, 300, 500, 700, 1000]
 
 N_DEPTHS: int = len(STANDARD_DEPTHS)
 
@@ -20,8 +18,8 @@ DEPTH_COLS: list[str] = [f"t_{d}" for d in STANDARD_DEPTHS]
 
 # Depth groups for summary tables (label → list[depth_m])
 DEPTH_GROUPS: dict[str, list[int]] = {
-    "0\u201330 m":    [0, 5, 10, 20, 30],
-    "50\u2013150 m":  [50, 75, 100, 125, 150],
+    "0\u201330 m": [0, 5, 10, 20, 30],
+    "50\u2013150 m": [50, 75, 100, 125, 150],
     "200\u2013300 m": [200, 300],
     "500\u20131000 m": [500, 700, 1000],
 }
