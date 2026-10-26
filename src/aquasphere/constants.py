@@ -20,10 +20,10 @@ DEPTH_COLS: list[str] = [f"t_{d}" for d in STANDARD_DEPTHS]
 
 # Depth groups for summary tables (label → list[depth_m])
 DEPTH_GROUPS: dict[str, list[int]] = {
-    "0–30 m":    [0, 5, 10, 20, 30],
-    "50–150 m":  [50, 75, 100, 125, 150],
-    "200–300 m": [200, 300],
-    "500–1000 m":[500, 700, 1000],
+    "0\u201330 m":    [0, 5, 10, 20, 30],
+    "50\u2013150 m":  [50, 75, 100, 125, 150],
+    "200\u2013300 m": [200, 300],
+    "500\u20131000 m": [500, 700, 1000],
 }
 
 # Temporal split boundaries (train ≤ VAL_YEAR-1, val == VAL_YEAR, test ≥ TEST_YEAR_START)

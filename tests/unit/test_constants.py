@@ -48,7 +48,7 @@ def test_depth_groups_cover_all_depths() -> None:
 
 
 def test_domain_bounds() -> None:
-    """Domain must match SIH 26066 spec: 5–30°N, 45–105°E."""
+    """Domain must match SIH 26066 spec: 5-30 N, 45-105 E."""
     assert LAT_MIN == 5.0
     assert LAT_MAX == 30.0
     assert LON_MIN == 45.0
