@@ -127,13 +127,13 @@ def generate_baseline_markdown(results: list[dict[str, Any]], n_val: int, n_floa
     return "\n".join(lines)
 
 
-def update_markdown_file(file_path: Path, new_content: str) -> bool:
-    """Update file section between <!-- METRICS:START --> and <!-- METRICS:END -->."""
+def update_markdown_file(file_path: Path, new_content: str, marker: str = "METRICS") -> bool:
+    """Update file section between <!-- {marker}:START --> and <!-- {marker}:END -->."""
     if not file_path.exists():
         return False
 
     content = file_path.read_text(encoding="utf-8")
-    pattern = r"(<!-- METRICS:START -->)(.*?)(<!-- METRICS:END -->)"
+    pattern = rf"(<!-- {marker}:START -->)(.*?)(<!-- {marker}:END -->)"
     replacement = rf"\1\n{new_content}\n\3"
 
     new_full, count = re.subn(pattern, replacement, content, flags=re.DOTALL)
@@ -148,6 +148,7 @@ def run_evaluation(
     output_json: str | Path = "docs/results/metrics.json",
     output_md: str | Path = "docs/results/baseline_table.md",
     seed: int = 42,
+    split: str = "val",
 ) -> dict[str, Any]:
     """Execute complete evaluation protocol and output artifacts."""
     csv_file = Path(csv_path)
@@ -163,13 +164,16 @@ def run_evaluation(
     )
     assert_no_leakage(train_df, val_df, test_df, group_col="float_id")
 
-    n_val_floats = val_df["float_id"].nunique()
-    logger.info("Validation set: %d profiles from %d floats", len(val_df), n_val_floats)
+    eval_df = test_df if split == "test" else val_df
+    n_eval_floats = eval_df["float_id"].nunique()
+    logger.info(
+        "Evaluation set (%s): %d profiles from %d floats", split, len(eval_df), n_eval_floats
+    )
 
     # 2. Evaluate Climatology first (required for Skill Score)
     clim = ClimatologyBaseline()
     clim.fit(train_df)
-    clim_val_preds = clim.predict(val_df)
+    clim_eval_preds = clim.predict(eval_df)
 
     # 3. Evaluate Ladder
     models: list[tuple[str, Any]] = [
@@ -181,7 +185,7 @@ def run_evaluation(
 
     eval_results: list[dict[str, Any]] = []
     for name, mdl in models:
-        res = evaluate_model(name, mdl, train_df, val_df, clim_val_preds)
+        res = evaluate_model(name, mdl, train_df, eval_df, clim_eval_preds)
         eval_results.append(res)
 
     # 4. Generate JSON artifact
@@ -190,10 +194,10 @@ def run_evaluation(
         "_generated_at": datetime.now(UTC).isoformat(),
         "model_version": "v0.2-baseline",
         "data_version": "argo-2025-snapshot",
-        "split": "val_float_grouped",
+        "split": f"{split}_float_grouped",
         "n_train_profiles": len(train_df),
-        "n_val_profiles": len(val_df),
-        "n_val_floats": n_val_floats,
+        "n_eval_profiles": len(eval_df),
+        "n_eval_floats": n_eval_floats,
         "baselines": {
             r["name"]: {
                 "overall_rmse": r["overall_rmse"],
@@ -217,17 +221,24 @@ def run_evaluation(
     logger.info("Wrote metrics payload to %s", out_json)
 
     # 5. Generate Markdown Table artifact
-    md_content = generate_baseline_markdown(eval_results, len(val_df), n_val_floats)
+    md_content = generate_baseline_markdown(eval_results, len(eval_df), n_eval_floats)
     out_md = Path(output_md)
     out_md.parent.mkdir(parents=True, exist_ok=True)
     out_md.write_text(md_content, encoding="utf-8")
     logger.info("Wrote baseline table to %s", out_md)
 
-    # 6. Update MODEL_CARD.md
-    model_card = Path("docs/MODEL_CARD.md")
-    updated_card = update_markdown_file(model_card, md_content)
-    if updated_card:
-        logger.info("Updated metrics section in %s", model_card)
+    # 6. Update markdown documents with METRICS table
+    for md_doc in [Path("docs/MODEL_CARD.md"), Path("README.md"), Path("walkthrough.md")]:
+        if update_markdown_file(md_doc, md_content, marker="METRICS"):
+            logger.info("Updated METRICS section in %s", md_doc)
+
+    # 7. Update markdown documents with ABLATION table if present
+    ablation_file = Path("docs/results/ablation_table.md")
+    if ablation_file.exists():
+        ablation_md = ablation_file.read_text(encoding="utf-8")
+        for md_doc in [Path("docs/MODEL_CARD.md"), Path("README.md")]:
+            if update_markdown_file(md_doc, ablation_md, marker="ABLATION"):
+                logger.info("Updated ABLATION section in %s", md_doc)
 
     return json_payload
 
@@ -237,11 +248,20 @@ def main() -> None:
     parser.add_argument("--data", default="data/argo_sst_training.csv", help="Path to Argo CSV")
     parser.add_argument("--json", default="docs/results/metrics.json", help="Output JSON path")
     parser.add_argument("--md", default="docs/results/baseline_table.md", help="Output MD path")
+    parser.add_argument(
+        "--split", choices=["val", "test"], default="val", help="Partition to evaluate on"
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed for splitting")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-    run_evaluation(csv_path=args.data, output_json=args.json, output_md=args.md, seed=args.seed)
+    run_evaluation(
+        csv_path=args.data,
+        output_json=args.json,
+        output_md=args.md,
+        seed=args.seed,
+        split=args.split,
+    )
 
     print("\n" + "=" * 78)
     print("  AQUASPHERE EVALUATION FRAMEWORK — HONEST BASELINE LADDER")

@@ -3,7 +3,7 @@
 > **Evaluation Set:** 242 held-out profiles across 15 unique Argo floats.
 > **Hold-Out Rule:** Zero float ID overlap with training (leak-free guaranteed).
 
-| Model | Overall RMSE (°C) | Thermocline RMSE (50–150m) | 95% CI (Thermo) | Skill Score (SS) | D20 Error (m) | MLD Error (m) |
+| Model | Overall RMSE (°C) | Thermocline RMSE (50-150m) | 95% CI (Thermo) | Skill Score (SS) | D20 Error (m) | MLD Error (m) |
 |---|---|---|---|---|---|---|
 | **Climatology** | 1.925 | 2.290 | [2.03, 2.58] | +0.000 | 29.6 | 30.6 |
 | **Climatology + Ridge** | 1.776 | 2.195 | [1.98, 2.45] | +0.149 | 29.7 | 30.0 |

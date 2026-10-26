@@ -1,35 +1,60 @@
 # Reproducing AquaSphere Results
 
-Tested on Python 3.11, Linux/macOS/Windows (CPU).  GPU optional.
+Follow these steps to reproduce all benchmarks, test suites, and model outputs from a clean repository clone.
+
+Tested on **Python 3.11 / 3.12** on Linux, macOS, and Windows (CPU-optimized, GPU optional).
+
+---
+
+## Quickstart (≤ 6 Commands)
 
 ```bash
-# 1. Clone and install
+# 1. Clone repository
 git clone https://github.com/FarhanAaqil/AquaSphere.git
 cd AquaSphere
-pip install -e ".[dev]"          # or: uv sync
 
-# 2. Verify data sources (metadata check — no large download)
+# 2. Install package and dependencies
+pip install -e ".[dev]"
+
+# 3. Verify data sources and manifest integrity
 python data/verify_sources.py
 
-# 3. Download and build the Zarr store + Argo parquet
-make data                        # runs aquasphere.data pipeline
+# 4. Run test suite with coverage verification (>= 80%)
+pytest tests/ --cov=aquasphere --cov-fail-under=80 -q
 
-# 4. Train Tier A (ablation A1–A4, 3 seeds each)
-make train                       # runs aquasphere.train.train
+# 5. Evaluate models and regenerate benchmark tables
+python -m aquasphere.eval.report --split val
 
-# 5. Evaluate against baselines, generate metrics.json
-make eval                        # runs aquasphere.eval.report
-
-# 6. Start the API server
-make serve
-
-# 7. Run all tests
-make test
+# 6. Launch the interactive decision-support server
+python -m aquasphere.serve.app --host 0.0.0.0 --port 8000
 ```
 
-All steps write deterministic outputs given the pinned lockfile (`uv.lock` /
-`requirements-lock.txt`).  See `docs/ARCHITECTURE.md` for the full pipeline
-diagram.
+Open **`http://localhost:8000`** in any web browser to explore the 9 interactive views.
 
-> **Test-set discipline:** the held-out test year (2024–2025) is touched only
-> in step 5.  Do not run `make eval` with `--test` until the model is frozen.
+---
+
+## Makefile Targets
+
+| Target | Description |
+|---|---|
+| `make setup` | Install package in editable mode with development tooling |
+| `make test` | Execute full unit, ML behavior, and API contract test suite |
+| `make lint` | Run `ruff check` and `ruff format --check` |
+| `make typecheck` | Run strict `mypy` type analysis on core packages |
+| `make train` | Run Tier A training pipeline with conformal calibration |
+| `make eval` | Generate evaluation ladder and metrics payload |
+| `make serve` | Start FastAPI serving layer on port 8000 |
+| `make reproduce` | Complete end-to-end clean pipeline reproduction |
+
+---
+
+## Docker Deployment
+
+To reproduce the deployment environment inside an isolated container:
+
+```bash
+docker build -t aquasphere:latest .
+docker run -p 8000:8000 aquasphere:latest
+```
+
+The container automatically exposes `/health` and `/ready` probes, as verified in continuous integration.
