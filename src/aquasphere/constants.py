@@ -16,6 +16,9 @@ N_DEPTHS: int = len(STANDARD_DEPTHS)
 # Depth column names used in DataFrames / CSVs
 DEPTH_COLS: list[str] = [f"t_{d}" for d in STANDARD_DEPTHS]
 
+# Depth observation mask column names (1 = observed, 0 = missing)
+MASK_COLS: list[str] = [f"m_{d}" for d in STANDARD_DEPTHS]
+
 # Depth groups for summary tables (label → list[depth_m])
 DEPTH_GROUPS: dict[str, list[int]] = {
     "0\u201330 m": [0, 5, 10, 20, 30],
