@@ -16,9 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
       - uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
+          enable-cache: true
       - name: Install dev deps
         run: uv pip install --system -e ".[dev]"
       - name: ruff check
@@ -33,9 +37,13 @@ jobs:
     needs: lint
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
       - uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
+          enable-cache: true
       - name: Install dev deps
         run: uv pip install --system -e ".[dev]"
       - name: mypy
@@ -44,21 +52,25 @@ jobs:
                src/aquasphere/models \
                src/aquasphere/eval
 
-  # ── 3. Unit + API + data tests with coverage gate ────────────────────────
+  # ── 3. Unit + ML + data tests with coverage gate ─────────────────────────
   test:
-    name: Tests (pytest ≥80% coverage)
+    name: Tests (pytest >=80% coverage)
     runs-on: ubuntu-latest
     needs: lint
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
       - uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
+          enable-cache: true
       - name: Install dev deps
         run: uv pip install --system -e ".[dev]"
       - name: Run tests
         run: |
-          pytest tests/unit tests/api tests/data \
+          pytest tests/ \
             --cov=aquasphere \
             --cov-report=xml \
             --cov-fail-under=80 \
@@ -77,9 +89,13 @@ jobs:
     needs: test
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
       - uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
+          enable-cache: true
       - name: Install dev deps
         run: uv pip install --system -e ".[dev]"
       - name: Run smoke train
@@ -105,7 +121,9 @@ jobs:
       - name: Start container and check /ready
         run: |
           docker run -d --name aq_ci -p 8000:8000 aquasphere:ci
-          sleep 10
+          for i in $(seq 1 15); do
+            curl -s --fail http://localhost:8000/health && break || sleep 2
+          done
           curl --fail http://localhost:8000/health || (docker logs aq_ci && exit 1)
           docker stop aq_ci
         continue-on-error: true   # /ready endpoint built in Phase 6; health already exists
@@ -117,9 +135,13 @@ jobs:
     needs: lint
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
       - uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
+          enable-cache: true
       - name: Install dev deps
         run: uv pip install --system -e ".[dev]"
       - name: pip-audit

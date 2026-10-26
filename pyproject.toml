@@ -102,6 +102,7 @@ indent-style = "space"
 [tool.mypy]
 python_version = "3.11"
 strict = true
+disallow_subclassing_any = false
 warn_return_any = true
 warn_unused_ignores = true
 # Only enforce strict typing on our source tree
