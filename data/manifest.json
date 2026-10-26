@@ -11,7 +11,7 @@
     "argo_sst_training_csv": {
       "path": "data/argo_sst_training.csv",
       "size_bytes": 324564,
-      "sha256": "8ce0eaa7f0265516798875859e5770ee6621d8d53162b77d33a26b1f642b8fcf",
+      "sha256": "30e1ef3ecf9bc9d3e89b5b0339ae15455b7ff83a10e551ce1273c807338aeffa",
       "description": "Real Argo profiles collocated with NOAA OISST v2.1 for North Indian Ocean (v1 baseline snapshot).",
       "registered_at": "2026-10-26T02:42:52.621190+00:00",
       "source_url": "https://argovis-api.colorado.edu",

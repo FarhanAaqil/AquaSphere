@@ -23,11 +23,18 @@ from aquasphere.constants import LAT_MAX, LAT_MIN, LON_MAX, LON_MIN
 logger = logging.getLogger(__name__)
 
 
-def compute_file_sha256(path: Path | str) -> str:
-    """Compute the SHA-256 hex digest of a file in streaming chunks."""
+def compute_file_sha256(path: Path | str, normalize_newlines: bool = False) -> str:
+    """Compute the SHA-256 hex digest of a file in streaming chunks.
+
+    If normalize_newlines is True, normalizes CRLF to LF for cross-platform consistency.
+    """
     p = Path(path)
     if not p.exists():
         raise FileNotFoundError(f"File not found: {p}")
+
+    if normalize_newlines:
+        raw = p.read_bytes()
+        return hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest()
 
     hasher = hashlib.sha256()
     with open(p, "rb") as f:
@@ -115,6 +122,27 @@ class DataManifest:
 
         current_hash = compute_file_sha256(p)
         matched = current_hash == entry["sha256"]
+        if not matched and p.suffix.lower() in [
+            ".csv",
+            ".tsv",
+            ".txt",
+            ".json",
+            ".yaml",
+            ".yml",
+            ".md",
+        ]:
+            # Handle Git checkout line-ending differences (Windows CRLF vs Linux LF)
+            norm_hash = compute_file_sha256(p, normalize_newlines=True)
+            if entry["sha256"] == norm_hash:
+                matched = True
+            else:
+                raw = p.read_bytes()
+                crlf_hash = hashlib.sha256(
+                    raw.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+                ).hexdigest()
+                if entry["sha256"] == crlf_hash:
+                    matched = True
+
         if not matched:
             logger.error(
                 "Hash mismatch for '%s': expected %s, got %s", name, entry["sha256"], current_hash
