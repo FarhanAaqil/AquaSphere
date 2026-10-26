@@ -26,6 +26,7 @@ import numpy as np
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from aquasphere.constants import LAT_MAX, LAT_MIN, LON_MAX, LON_MIN, STANDARD_DEPTHS
 from aquasphere.serve.engine import InferenceEngine
@@ -142,6 +143,24 @@ async def predict_single(req: PredictRequest) -> PredictResponse:
         lat=req.lat,
         lon=req.lon,
         date=req.date,
+        features=obs_features,
+        source=source,
+    )
+    return PredictResponse(**pred)
+
+
+@app.get("/predict", response_model=PredictResponse)
+async def predict_single_get(
+    lat: float = Query(..., ge=LAT_MIN, le=LAT_MAX),
+    lon: float = Query(..., ge=LON_MIN, le=LON_MAX),
+    date: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$"),
+) -> PredictResponse:
+    """Reconstruct subsurface temperature profile for a single point via GET query."""
+    obs_features, source = await resolver.resolve(lat=lat, lon=lon, date=date)
+    pred = engine.predict_point(
+        lat=lat,
+        lon=lon,
+        date=date,
         features=obs_features,
         source=source,
     )
@@ -267,9 +286,23 @@ async def explain_prediction(
     )
 
 
-# Serve root prototype HTML if present
+# Serve static frontend from web/ or fallback to oceanembed-prototype.html
+WEB_DIR = Path("web")
 HTML_PROTOTYPE = Path("oceanembed-prototype.html")
-if HTML_PROTOTYPE.exists():
+
+if WEB_DIR.exists():
+    app.mount("/js", StaticFiles(directory=str(WEB_DIR / "js")), name="js")
+    app.mount("/css", StaticFiles(directory=str(WEB_DIR / "css")), name="css")
+
+    @app.get("/", include_in_schema=False)
+    def serve_index() -> FileResponse:
+        return FileResponse(WEB_DIR / "index.html")
+
+    @app.get("/index.html", include_in_schema=False)
+    def serve_index_html() -> FileResponse:
+        return FileResponse(WEB_DIR / "index.html")
+
+elif HTML_PROTOTYPE.exists():
 
     @app.get("/", include_in_schema=False)
     def serve_prototype_html() -> FileResponse:

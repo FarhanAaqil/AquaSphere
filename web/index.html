@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AquaSphere — North Indian Ocean Subsurface Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+  <!-- Offline Banner (shown only when API is unreachable) -->
+  <div class="offline-banner" id="offlineBanner" style="display: none;">
+    <span class="badge">Offline Demo</span>
+    <span><b>Backend Unreachable:</b> Live API server is not connected. Displaying deterministic synthetic demonstration values.</span>
+  </div>
+
+  <div class="shell">
+    <!-- Left Navigation Rail -->
+    <nav class="rail" id="rail" aria-label="Primary Navigation">
+      <div class="brand" title="AquaSphere / OceanEmbed" id="brandBtn">AS</div>
+      <!-- Nav buttons will be injected dynamically by app.js -->
+    </nav>
+
+    <!-- Main Viewport -->
+    <div class="main">
+      <!-- Context Bar -->
+      <header class="ctxbar" id="ctxbar" aria-label="Current Coordinate Context">
+        <!-- Rendered by app.js -->
+      </header>
+
+      <!-- Dynamic Page Content -->
+      <main class="content" id="content" role="main">
+        <!-- Injected by active view renderer -->
+      </main>
+
+      <footer class="credit">
+        AquaSphere — MoES/INCOIS SIH 26066 · North Indian Ocean (5°–30°N, 45°–105°E) · Subsurface Reconstructions
+      </footer>
+    </div>
+  </div>
+
+  <!-- Interactive Guided Demo Walkthrough Card -->
+  <aside class="demo-badge" id="demoBadge" style="display: none;" aria-live="polite"></aside>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

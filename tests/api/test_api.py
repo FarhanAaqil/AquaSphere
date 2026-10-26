@@ -198,3 +198,37 @@ def test_offline_fallback_honesty() -> None:
         assert "Silent simulation is strictly prohibited" in resp.json()["detail"]
     finally:
         resolver.enable_network = prev_network
+
+
+def test_predict_get_query_params() -> None:
+    # Pre-seed resolver memory cache to ensure resolution succeeds
+    resolver._update_mem_cache(
+        resolver._hash_key(14.0, 70.0, "2023-06-01"),
+        {"sst": 29.5, "sss": 36.0, "sla": 0.05, "ug": 0.1, "vg": -0.1},
+        "disk_cache",
+    )
+    resp = client.get("/predict?lat=14.0&lon=70.0&date=2023-06-01")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["lat"] == pytest.approx(14.0)
+    assert data["lon"] == pytest.approx(70.0)
+    assert len(data["temperatures"]) == 15
+    assert len(data["embedding"]) == 16
+
+
+def test_frontend_static_serving() -> None:
+    # Check index.html serving
+    resp_root = client.get("/")
+    assert resp_root.status_code == 200
+    assert "AquaSphere" in resp_root.text
+    assert '<nav class="rail"' in resp_root.text
+
+    # Check CSS asset serving
+    resp_css = client.get("/css/styles.css")
+    assert resp_css.status_code == 200
+    assert "--deep:" in resp_css.text
+
+    # Check JS module asset serving
+    resp_js = client.get("/js/app.js")
+    assert resp_js.status_code == 200
+    assert "renderCurrentView" in resp_js.text
