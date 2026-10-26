@@ -4,6 +4,7 @@
 
 import { fetchMeta, formatSourceBadge, regionName } from './api.js';
 import { state, subscribe, setPage, setLocation } from './state.js';
+import { renderStudio } from './views/studio.js';
 import { renderOverview } from './views/overview.js';
 import { renderExplore } from './views/explore.js';
 import { renderLocation } from './views/location.js';
@@ -15,6 +16,7 @@ import { renderValidation } from './views/validation.js';
 import { renderReports } from './views/reports.js';
 
 const NAV = [
+  { id: 'studio', label: 'Studio 3D', icon: 'cube' },
   { id: 'overview', label: 'Overview', icon: 'grid' },
   { id: 'explore', label: 'Explore', icon: 'map' },
   { id: 'location', label: 'Location', icon: 'pin' },
@@ -27,6 +29,7 @@ const NAV = [
 ];
 
 const ICONS = {
+  cube: '<path d="m21 16-9 5-9-5V8l9-5 9 5v8Z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/>',
   grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
   map: '<path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2Z"/><path d="M9 3v16M15 5v16"/>',
   pin: '<path d="M12 22s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12Z"/><circle cx="12" cy="10" r="2.4"/>',
@@ -51,7 +54,7 @@ function buildRail() {
   if (!rail) return;
 
   const brand = document.getElementById('brandBtn');
-  if (brand) brand.onclick = () => setPage('overview');
+  if (brand) brand.onclick = () => setPage('studio');
 
   NAV.forEach(n => {
     const btn = document.createElement('button');
@@ -100,6 +103,9 @@ async function renderCurrentView() {
 
   let viewEl = null;
   switch (state.page) {
+    case 'studio':
+      viewEl = await renderStudio();
+      break;
     case 'overview':
       viewEl = await renderOverview();
       break;

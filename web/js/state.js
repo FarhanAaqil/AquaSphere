@@ -10,7 +10,7 @@ export const state = {
   mapLayer: 'sst',
   compareA: { lat: 15.0, lon: 88.0, date: '2025-05-15' },
   compareB: { lat: 13.0, lon: 65.0, date: '2025-05-15' },
-  page: 'overview',
+  page: 'studio',
   meta: null,
   isOfflineDemo: false,
   demo: { active: false, step: 0 },
