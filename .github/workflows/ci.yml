@@ -51,7 +51,8 @@ jobs:
           mypy src/aquasphere/data \
                src/aquasphere/models \
                src/aquasphere/train \
-               src/aquasphere/eval
+               src/aquasphere/eval \
+               src/aquasphere/serve
 
   # ── 3. Unit + ML + data tests with coverage gate ─────────────────────────
   test:
@@ -132,8 +133,8 @@ jobs:
             curl -s --fail http://localhost:8000/health && break || sleep 2
           done
           curl --fail http://localhost:8000/health || (docker logs aq_ci && exit 1)
+          curl --fail http://localhost:8000/ready || (docker logs aq_ci && exit 1)
           docker stop aq_ci
-        continue-on-error: true   # /ready endpoint built in Phase 6; health already exists
 
   # ── 6. Dependency audit ───────────────────────────────────────────────────
   audit:

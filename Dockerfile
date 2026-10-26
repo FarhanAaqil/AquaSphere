@@ -22,4 +22,4 @@ COPY . .
 EXPOSE 8000
 
 # Launch uvicorn bound to 0.0.0.0 and Render's $PORT
-CMD ["sh", "-c", "uvicorn server.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "uvicorn aquasphere.serve.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
