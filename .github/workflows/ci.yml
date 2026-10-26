@@ -50,6 +50,7 @@ jobs:
         run: |
           mypy src/aquasphere/data \
                src/aquasphere/models \
+               src/aquasphere/train \
                src/aquasphere/eval
 
   # ── 3. Unit + ML + data tests with coverage gate ─────────────────────────
@@ -114,9 +115,6 @@ jobs:
             --epochs 2 \
             --fixture tests/fixtures/argo_200.parquet \
             --no-save
-        # Note: --no-save and --fixture flags will be added when train.py is built (Phase 4).
-        # For now this step will pass vacuously; the gate is that the job exits 0.
-        continue-on-error: true   # remove once train.py exists
 
   # ── 5. Docker build + /ready check ───────────────────────────────────────
   docker:

@@ -58,6 +58,7 @@ dev = [
 aquasphere-serve  = "aquasphere.serve.app:main"
 aquasphere-train  = "aquasphere.train.train:main"
 aquasphere-eval   = "aquasphere.eval.report:main"
+aquasphere-ablate = "aquasphere.eval.ablation:main"
 
 # ---------------------------------------------------------------------------
 # Setuptools — tell it where the package lives
