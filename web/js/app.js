@@ -4,6 +4,7 @@
 
 import { fetchMeta, formatSourceBadge, regionName } from './api.js';
 import { state, subscribe, setPage, setLocation } from './state.js';
+import { CinematicController } from './components/cinematic.js';
 import { renderStudio } from './views/studio.js';
 import { renderOverview } from './views/overview.js';
 import { renderExplore } from './views/explore.js';
@@ -91,6 +92,16 @@ function renderContextBar() {
 }
 
 async function renderCurrentView() {
+  // Sync body mode
+  const isStudio = state.page === 'studio';
+  document.body.className = isStudio ? 'mode-studio' : 'mode-workstation';
+
+  // Sync mode switcher buttons
+  const btnMode3D = document.getElementById('btnMode3D');
+  const btnModeWork = document.getElementById('btnModeWorkstation');
+  if (btnMode3D) btnMode3D.classList.toggle('active', isStudio);
+  if (btnModeWork) btnModeWork.classList.toggle('active', !isStudio);
+
   // Update nav active classes
   document.querySelectorAll('.navbtn').forEach(b => {
     b.classList.toggle('active', b.dataset.page === state.page);
@@ -197,9 +208,62 @@ function renderGuidedDemo() {
   });
 }
 
+function setupTopNav() {
+  const brandBtn = document.getElementById('topNavBrandBtn');
+  if (brandBtn) {
+    brandBtn.onclick = () => setPage('studio');
+  }
+
+  const btnMode3D = document.getElementById('btnMode3D');
+  if (btnMode3D) {
+    btnMode3D.onclick = () => setPage('studio');
+  }
+
+  const btnModeWork = document.getElementById('btnModeWorkstation');
+  if (btnModeWork) {
+    btnModeWork.onclick = () => {
+      setPage(state.page === 'studio' ? 'overview' : state.page);
+    };
+  }
+
+  const ctaBtn = document.getElementById('navCtaConsoleBtn');
+  if (ctaBtn) {
+    ctaBtn.onclick = () => setPage('overview');
+  }
+
+  // Anchor navigation links for studio sections
+  const anchors = [
+    { id: 'navLinkStrata', target: '#strata' },
+    { id: 'navLinkBenchmarks', target: '#benchmarks' },
+    { id: 'navLinkRegimes', target: '#stratum-gallery' },
+    { id: 'navLinkConsole', target: '#console' },
+  ];
+
+  anchors.forEach(({ id, target }) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.onclick = (e) => {
+      e.preventDefault();
+      if (state.page !== 'studio') {
+        setPage('studio');
+        setTimeout(() => {
+          document.querySelector(target)?.scrollIntoView({ behavior: 'smooth' });
+        }, 150);
+      } else {
+        document.querySelector(target)?.scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+  });
+}
+
 // App Initialization
 async function init() {
+  setupTopNav();
   buildRail();
+
+  // Cinematic Preloader Execution
+  const preloader = new CinematicController();
+  preloader.playPreloader();
 
   // Load server metadata
   const meta = await fetchMeta();

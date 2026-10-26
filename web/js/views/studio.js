@@ -4,10 +4,12 @@
  */
 
 import { Monolith3D } from '../components/monolith3d.js';
+import { CinematicController } from '../components/cinematic.js';
 import { fetchPredict, fetchMeta, regionName } from '../api.js';
 import { state, setPage, setDepth, setLocation } from '../state.js';
 
 let monolithInstance = null;
+let cinematicInstance = null;
 
 export async function renderStudio() {
   const container = document.createElement('div');
@@ -52,9 +54,9 @@ export async function renderStudio() {
               </span>
               <span class="badge-cobalt-light">[SUB-SURFACE GEO-STRATA // 0–1000m]</span>
             </div>
-            <h1 class="hero-title">DEEP WATER</h1>
+            <h1 class="hero-title"><span class="reveal-word">DEEP</span> <span class="reveal-word">WATER</span></h1>
             <div class="hero-subtitle-row">
-              <span class="hero-subtitle-accent">CALIBRATED REALITY</span>
+              <span class="hero-subtitle-accent"><span class="reveal-word">CALIBRATED</span> <span class="reveal-word">REALITY</span></span>
               <span class="hero-subtitle-tag">NORTH INDIAN OCEAN OBSERVATORY</span>
             </div>
           </div>
@@ -537,13 +539,18 @@ export async function renderStudio() {
 }
 
 function setupStudioInteractions(container) {
-  // 1. Initialize 3D Monolith
+  // 1. Initialize 3D Monolith & Cinematic Motion
   const canvas = container.querySelector('#threeMonolithCanvas');
   if (canvas) {
     if (monolithInstance) {
       monolithInstance.destroy();
     }
     monolithInstance = new Monolith3D(canvas);
+
+    if (cinematicInstance) {
+      cinematicInstance.destroy();
+    }
+    cinematicInstance = new CinematicController(monolithInstance);
   }
 
   // 2. 3D Mode Toggle Buttons
