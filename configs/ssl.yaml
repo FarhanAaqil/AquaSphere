@@ -1,0 +1,33 @@
+# AquaSphere — Tier C self-supervised pre-training configuration (gated)
+
+ssl:
+  strategy: "masked_patch"     # "masked_patch" | "masked_channel"
+  mask_ratio: 0.50              # fraction of pixels/channels masked
+  reconstruction_loss: "mse"
+
+  # Stage 1: unsupervised pre-train on full Zarr store (no Argo needed)
+  stage1:
+    epochs: 100
+    batch_size: 512
+    lr: 1e-3
+    seed: 42
+
+  # Stage 2: fine-tune on Argo (encoder frozen for frozen_epochs, then unfrozen)
+  stage2:
+    frozen_epochs: 20
+    total_epochs: 200
+    lr_frozen: 1e-3
+    lr_unfrozen: 1e-4
+    seed: 42
+
+gate:
+  # Keep SSL only if it improves test thermocline RMSE over Tier B
+  # with block-bootstrap 95% CI excluding zero.
+  metric: "thermocline_rmse"
+  require_ci_excludes_zero: true
+  # Also keep if low-data learning curve shows >5% relative improvement
+  low_data_fractions: [0.1, 0.25, 0.5]
+
+output:
+  checkpoint_dir: "checkpoints/ssl"
+  save_config: true

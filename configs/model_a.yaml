@@ -1,0 +1,52 @@
+# AquaSphere — Tier A supervised model configuration
+
+model:
+  name: "tier_a_mlp"
+  embed_dim: 16
+  hidden: 128
+  predict_anomaly: true     # predict T anomaly vs climatology, add clim back
+
+inputs:
+  scalars:
+    - lat
+    - lon
+    - sin_doy
+    - cos_doy
+    - sst
+    - sss
+    - sla
+    - ug
+    - vg
+    - u10
+    - v10
+  # 7 availability masks (one per variable that can be missing)
+  availability_masks:
+    - sss_avail
+    - sla_avail
+    - ug_avail
+    - vg_avail
+    - u10_avail
+    - v10_avail
+    - sst_avail
+
+loss:
+  type: "heteroscedastic_nll"   # "mse" | "heteroscedastic_nll"
+  warmup_epochs: 10             # use MSE for first N epochs, then NLL
+  thermocline_weight: 2.0       # w_k for 50–150 m depths
+  lambda_grad: 0.01             # profile gradient smoothness
+  lambda_phys: 0.001            # temperature inversion penalty
+  eps_inv: 0.0                  # allow slight inversions below this (°C)
+  log_sigma2_clamp: [-6.0, 4.0] # stability clamp
+
+training:
+  seed: 42
+  epochs: 300
+  batch_size: 256
+  lr: 1e-3
+  weight_decay: 1e-4
+  patience: 30
+  n_seeds: 3                    # seeds for ablation: [42, 123, 7]
+
+output:
+  checkpoint_dir: "checkpoints/tier_a"
+  save_config: true             # save config.yaml + git SHA + seed next to .pt

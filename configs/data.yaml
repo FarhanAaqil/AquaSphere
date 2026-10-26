@@ -1,0 +1,38 @@
+# AquaSphere — Data pipeline configuration
+# All paths are relative to the repo root unless otherwise noted.
+
+argo:
+  source: "argopy"          # "argopy" | "erddap" | "argovis"
+  fallback: "argovis"
+  qc_flags: [1]             # 1 = good; add 2 for probably-good
+  mode: "delayed"           # "delayed" | "real_time"
+  year_start: 2015
+  year_end: 2025
+  output_parquet: "data/processed/argo_profiles.parquet"
+
+satellite:
+  grid_resolution: 0.25     # degrees
+  output_zarr: "data/store/surface.zarr"
+  variables:
+    sst:
+      primary: "ncdc_oisst_v2_avhrr_by_time_zlev_lat_lon"
+      source: "erddap"
+    sss:
+      primary: "jplSMAP_L3_SSS_8day"
+      source: "erddap"
+      fallback: "cmems_obs-mob_glo_phy-sss_my_multi_P1D"
+    sla:
+      primary: "cmems_obs-sl_glo_phy-ssh_my_allsat-l4-duacs-0.125deg_P1D"
+      source: "cmems"
+      fallback: "erdTAssh1day"
+    winds:
+      primary: "era5_reanalysis-era5-single-levels"
+      source: "cds"
+      fallback: "noaa_ccmp_winds"
+
+collocation:
+  patch_size: 9             # grid cells (9×9 ≈ 2.25° at 0.25° resolution)
+  max_time_delta_hours: 12  # max hours between profile and satellite overpass
+
+manifest:
+  path: "data/manifest.json"

@@ -1,0 +1,34 @@
+# AquaSphere — Tier B patch-CNN encoder configuration
+
+model:
+  name: "tier_b_cnn"
+  embed_dim: 32
+  # CNN encoder over 9×9 patch
+  cnn:
+    in_channels: 7            # sst, sss, sla, ug, vg, u10, v10
+    blocks: 3
+    base_channels: 32
+    max_params: 300000        # hard cap — stay CPU-trainable
+  scalar_embed_dim: 16        # auxiliary scalar branch merged with CNN embedding
+  predict_anomaly: true
+
+loss:
+  # Inherits Tier A loss settings — override below if needed
+  type: "heteroscedastic_nll"
+  warmup_epochs: 10
+  thermocline_weight: 2.0
+  lambda_grad: 0.01
+  lambda_phys: 0.001
+
+training:
+  seed: 42
+  epochs: 300
+  batch_size: 128
+  lr: 5e-4
+  weight_decay: 1e-4
+  patience: 30
+  n_seeds: 3
+
+output:
+  checkpoint_dir: "checkpoints/tier_b"
+  save_config: true
