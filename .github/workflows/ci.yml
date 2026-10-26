@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 env:
-  PYTHON_VERSION: "3.11"
+  PYTHON_VERSION: "3.12"
 
 jobs:
   # ── 1. Lint & format ─────────────────────────────────────────────────────
@@ -70,12 +70,20 @@ jobs:
         run: uv pip install --system -e ".[dev]"
       - name: Run tests
         run: |
+          set -o pipefail
           python -m pytest tests/ \
             --cov=aquasphere \
             --cov-report=term-missing \
             --cov-report=xml \
             --cov-fail-under=80 \
-            -v
+            -v 2>&1 | tee pytest_output.log
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "### Test Execution Output" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -n 80 pytest_output.log >> $GITHUB_STEP_SUMMARY || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         if: always()
