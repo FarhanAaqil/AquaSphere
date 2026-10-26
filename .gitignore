@@ -30,6 +30,7 @@ model/model.joblib
 checkpoints/
 
 # Large data — re-downloadable; track only manifests + parquet schema files
+cache/
 data/cache/
 data/store/
 data/processed/argo_profiles.parquet

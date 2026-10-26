@@ -133,6 +133,10 @@ class ValidationProfileResponse(BaseModel):
     pred_temperatures: list[float]
     uncertainties: list[float]
     rmse: float
+    data_source: str = Field(
+        default="local_store",
+        description="Data provenance: 'local_store' | 'disk_cache' | 'live' | 'offline_synthetic'",
+    )
 
 
 class ExplainResponse(BaseModel):

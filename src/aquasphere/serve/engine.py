@@ -321,6 +321,7 @@ class InferenceEngine:
             "pred_temperatures": pred["temperatures"],
             "uncertainties": pred["uncertainties"],
             "rmse": rmse,
+            "data_source": "local_store",
         }
 
     def explain_point(

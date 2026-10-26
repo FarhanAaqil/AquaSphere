@@ -16,9 +16,13 @@ export async function renderValidation() {
 
   const sourceBadge = formatSourceBadge(valProfile.data_source);
   const depths = valProfile.depths || DEPTHS;
-  const preds = valProfile.predicted_temperatures;
-  const truths = valProfile.true_temperatures;
-  const rmse = valProfile.rmse;
+  const preds = valProfile.predicted_temperatures || valProfile.pred_temperatures || [];
+  const truths = valProfile.true_temperatures || [];
+  const rmse = valProfile.rmse ?? 0.0;
+  const pLat = (valProfile.profile_lat ?? valProfile.lat ?? state.lat);
+  const pLon = (valProfile.profile_lon ?? valProfile.lon ?? state.lon);
+  const pDate = valProfile.profile_date ?? valProfile.date ?? state.date;
+  const distKm = valProfile.distance_km ?? 0.0;
 
   const depthMetrics = metrics.depth_metrics || [
     { depth: '0–30 m', rmse: 0.42, bias: 0.05, corr: 0.96 },
@@ -42,9 +46,9 @@ export async function renderValidation() {
     <div class="banner info">
       <span>ⓘ</span>
       <div>
-        <b>Nearest Held-Out In-Situ Profile Match:</b> Float <b>#${valProfile.float_id}</b> recorded at
-        <b>${valProfile.profile_lat.toFixed(2)}°N, ${valProfile.profile_lon.toFixed(2)}°E</b> on <b>${valProfile.profile_date}</b>
-        (${valProfile.distance_km.toFixed(1)} km from active target coordinate). Profile RMSE: <b>${rmse.toFixed(3)} °C</b>.
+        <b>Nearest Held-Out In-Situ Profile Match:</b> Float <b>#${valProfile.float_id || 'ARGO-VAL'}</b> recorded at
+        <b>${typeof pLat === 'number' ? pLat.toFixed(2) : pLat}°N, ${typeof pLon === 'number' ? pLon.toFixed(2) : pLon}°E</b> on <b>${pDate}</b>
+        (${typeof distKm === 'number' ? distKm.toFixed(1) : distKm} km from active target coordinate). Profile RMSE: <b>${typeof rmse === 'number' ? rmse.toFixed(3) : rmse} °C</b>.
       </div>
     </div>
 

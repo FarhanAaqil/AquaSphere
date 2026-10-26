@@ -60,10 +60,10 @@ export async function renderExplore() {
       <div>
         <label class="fl">Quick Monsoon Season Presets</label>
         <div class="chip-row">
-          <span class="chip preset-btn" data-date="2024-01-15">NE Monsoon (Jan)</span>
-          <span class="chip preset-btn" data-date="2024-04-15">Pre-Monsoon (Apr)</span>
-          <span class="chip preset-btn" data-date="2024-07-15">SW Monsoon (Jul)</span>
-          <span class="chip preset-btn" data-date="2024-10-15">Post-Monsoon (Oct)</span>
+          <span class="chip preset-btn" data-date="2025-03-31">Pre-Monsoon (Mar)</span>
+          <span class="chip preset-btn" data-date="2025-05-15">Pre-Monsoon Peak (May)</span>
+          <span class="chip preset-btn" data-date="2025-07-15">SW Monsoon (Jul)</span>
+          <span class="chip preset-btn" data-date="2025-09-15">Late Monsoon (Sep)</span>
         </div>
       </div>
 

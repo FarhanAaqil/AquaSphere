@@ -162,7 +162,7 @@ export async function fetchPredict(lat, lon, date, features = null) {
 
 export async function fetchPredictBatch(points) {
   try {
-    return await cachedFetch('/predict_batch', 'POST', { points });
+    return await cachedFetch('/predict_batch', 'POST', { items: points });
   } catch (err) {
     console.warn('API /predict_batch offline; using synthetic batch generator:', err);
     const predictions = points.map(p => {
@@ -215,15 +215,24 @@ export async function fetchValidationProfile(lat, lon, date = null) {
   const params = { lat, lon };
   if (date) params.date = date;
   try {
-    return await cachedFetch('/validation/profile', 'GET', null, params);
+    const res = await cachedFetch('/validation/profile', 'GET', null, params);
+    return {
+      ...res,
+      predicted_temperatures: res.predicted_temperatures || res.pred_temperatures,
+      pred_temperatures: res.pred_temperatures || res.predicted_temperatures,
+      profile_lat: res.profile_lat ?? res.lat,
+      profile_lon: res.profile_lon ?? res.lon,
+      profile_date: res.profile_date ?? res.date,
+      data_source: res.data_source || 'local_store',
+    };
   } catch (err) {
     console.warn('API /validation/profile offline; providing synthetic validation match:', err);
-    const temps = getSyntheticProfile(lat, lon, date || '2024-05-15');
+    const temps = getSyntheticProfile(lat, lon, date || '2025-05-15');
     const truth = temps.map((t, i) => +(t + (hash(i + lat + lon) - 0.5) * 0.7).toFixed(2));
     const rmse = Math.sqrt(temps.reduce((acc, v, i) => acc + Math.pow(v - truth[i], 2), 0) / temps.length);
     return {
       float_id: 'ARGO-2902781-SIM',
-      profile_date: date || '2024-05-15',
+      profile_date: date || '2025-05-15',
       profile_lat: lat,
       profile_lon: lon,
       distance_km: 14.2,
