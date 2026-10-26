@@ -5,16 +5,42 @@ __pycache__/
 .venv/
 venv/
 env/
+*.egg-info/
+dist/
+build/
+.eggs/
 
-# Model outputs (large binaries committed separately)
-# model/model.pt   — committed when generated
-# model/model.joblib — committed when generated
+# Virtual envs (uv / pip / conda)
+.venv/
+.uv/
 
-# Cache (re-downloadable, don't bloat the repo)
+# Tooling caches
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Large model artefacts — use Git LFS or GitHub Release assets
+model/model.pt
+model/model.joblib
+checkpoints/
+
+# Large data — re-downloadable; track only manifests + parquet schema files
 data/cache/
+data/store/
+data/processed/argo_profiles.parquet
+data/collect.log
 
 # Logs
-data/collect.log
+*.log
+
+# Secrets / credentials
+.env
+*.env
 
 # OS
 .DS_Store
