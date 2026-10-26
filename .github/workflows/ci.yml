@@ -70,11 +70,12 @@ jobs:
         run: uv pip install --system -e ".[dev]"
       - name: Run tests
         run: |
-          pytest tests/ \
+          python -m pytest tests/ \
             --cov=aquasphere \
+            --cov-report=term-missing \
             --cov-report=xml \
             --cov-fail-under=80 \
-            -q
+            -v
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         if: always()

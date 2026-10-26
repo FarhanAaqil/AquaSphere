@@ -126,17 +126,20 @@ follow_imports = "skip"
 # ---------------------------------------------------------------------------
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
 addopts = [
     "--cov=aquasphere",
     "--cov-report=term-missing",
     "--cov-fail-under=80",
     "--tb=short",
-    "-q",
 ]
 asyncio_mode = "auto"
+filterwarnings = [
+    "ignore:.*Module aquasphere was previously imported.*",
+]
 
 [tool.coverage.run]
-source = ["src/aquasphere"]
+source = ["src/aquasphere", "aquasphere"]
 omit = ["*/tests/*", "*/__init__.py"]
 
 [tool.coverage.report]
