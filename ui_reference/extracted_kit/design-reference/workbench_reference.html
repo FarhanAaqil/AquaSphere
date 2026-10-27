@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AquaSphere Workbench (static visual reference)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2dd4bf}a:hover{color:#5eead4}
+@media (max-width:1180px){.mainGrid{grid-template-columns:minmax(0,1fr) !important}}
+</style>
+</head>
+<body>
+<div style="min-height: 1080px; box-sizing: border-box; background: #060b14; color: #eaf2ff; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column;">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 32px; padding: 12px 24px; border-bottom: 1px solid rgba(255,255,255,.1);">
+<div style="display: flex; flex-direction: column;">
+<strong style="font-family: 'Space Grotesk', sans-serif; font-size: 20px; letter-spacing: .01em;">AquaSphere</strong>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9fb0c8;">OceanEmbed · SIH 26066</span>
+</div>
+<nav style="display: flex; gap: 8px;">
+<a href="#" style="min-height: 44px; display: flex; align-items: center; padding: 0 12px; color: #eaf2ff; text-decoration: none; border-bottom: 2px solid #2dd4bf;">Explorer</a>
+<a href="#" style="min-height: 44px; display: flex; align-items: center; padding: 0 12px; color: #9fb0c8; text-decoration: none;">Compare</a>
+<a href="#" style="min-height: 44px; display: flex; align-items: center; padding: 0 12px; color: #9fb0c8; text-decoration: none;">Evidence</a>
+<a href="#" style="min-height: 44px; display: flex; align-items: center; padding: 0 12px; color: #9fb0c8; text-decoration: none;">Method</a>
+</nav>
+<div style="margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 12px;">
+<div style="display: flex; border: 1px solid rgba(255,255,255,.16); border-radius: 10px; overflow: hidden;">
+<button type="button" style="min-height: 44px; padding: 0 16px; border: 0; background: transparent; color: #9fb0c8; font: 500 14px Inter, sans-serif;">Nowcast</button>
+<button type="button" style="min-height: 44px; padding: 0 16px; border: 0; background: #2dd4bf; color: #04121a; font: 600 14px Inter, sans-serif;">Delayed</button>
+</div>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #9fb0c8;">Date
+<input type="text" value="[range from /meta]" style="height: 44px; box-sizing: border-box; width: 170px; background: #0d1726; border: 1px solid rgba(255,255,255,.16); border-radius: 8px; color: #eaf2ff; padding: 0 12px; font: 13px 'JetBrains Mono', monospace;">
+</label>
+<span style="display: inline-flex; align-items: center; min-height: 28px; padding: 0 10px; border: 1px solid #f5a524; border-radius: 999px; color: #f5a524; font: 500 11px 'JetBrains Mono', monospace; letter-spacing: .04em;">SAMPLE / SYNTHETIC</span>
+</div>
+</header>
+
+<main class="mainGrid" style="flex: 1; display: grid; grid-template-columns: 300px minmax(0,1fr) 400px; gap: 16px; padding: 16px 24px 24px; align-items: start;">
+
+<section aria-labelledby="ctl" style="background: #0d1726; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 20px;">
+<h2 id="ctl" style="margin: 0; font: 700 16px 'Space Grotesk', sans-serif;">Location</h2>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+<label style="display: flex; flex-direction: column; gap: 6px; font: 12px 'JetBrains Mono', monospace; color: #9fb0c8;">LAT
+<input type="text" value="[lat]" style="height: 44px; box-sizing: border-box; width: 100%; background: #060b14; border: 1px solid rgba(255,255,255,.16); border-radius: 8px; color: #eaf2ff; padding: 0 12px; font: 14px 'JetBrains Mono', monospace;">
+</label>
+<label style="display: flex; flex-direction: column; gap: 6px; font: 12px 'JetBrains Mono', monospace; color: #9fb0c8;">LON
+<input type="text" value="[lon]" style="height: 44px; box-sizing: border-box; width: 100%; background: #060b14; border: 1px solid rgba(255,255,255,.16); border-radius: 8px; color: #eaf2ff; padding: 0 12px; font: 14px 'JetBrains Mono', monospace;">
+</label>
+</div>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #9fb0c8;">Click the map to choose a point inside the North Indian Ocean domain.</p>
+<label style="display: flex; flex-direction: column; gap: 8px; font: 12px 'JetBrains Mono', monospace; color: #9fb0c8;">MAP DEPTH
+<input type="range" min="0" max="1000" value="100" style="width: 100%; min-height: 44px; accent-color: #2dd4bf;">
+<span style="display: flex; justify-content: space-between;"><span>0 m</span><span>1000 m</span></span>
+</label>
+<fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 4px;">
+<legend style="padding: 0 0 8px; font: 12px 'JetBrains Mono', monospace; color: #9fb0c8;">LAYERS</legend>
+<label style="display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px;"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #2dd4bf;">Predicted temperature</label>
+<label style="display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px;"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #2dd4bf;">Held-out Argo profiles</label>
+<label style="display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px;"><input type="checkbox" style="width: 18px; height: 18px; accent-color: #2dd4bf;">Uncertainty width</label>
+<label style="display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px;"><input type="checkbox" style="width: 18px; height: 18px; accent-color: #2dd4bf;">Outside applicability domain</label>
+</fieldset>
+<p style="margin: 0; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.08); font-size: 12px; line-height: 1.5; color: #9fb0c8;">Nowcast uses SST and sea-level anomaly only. Delayed adds salinity and winds.</p>
+</section>
+
+<section aria-labelledby="mp" style="background: #0d1726; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0;">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px;">
+<h2 id="mp" style="margin: 0; font: 700 16px 'Space Grotesk', sans-serif;">North Indian Ocean <span style="font: 400 12px 'JetBrains Mono', monospace; color: #9fb0c8;">5–30°N · 45–105°E</span></h2>
+<span style="font: 500 11px 'JetBrains Mono', monospace; color: #f5a524;">SAMPLE / SYNTHETIC FIELD</span>
+</div>
+<svg viewBox="0 0 720 440" role="img" aria-label="Schematic map of the North Indian Ocean with a selected point and held-out Argo markers" style="width: 100%; height: auto; border-radius: 10px; display: block;">
+<defs>
+<linearGradient id="fld" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e4e8c"/><stop offset=".55" stop-color="#2dd4bf"/><stop offset="1" stop-color="#fde7b0"/></linearGradient>
+</defs>
+<rect width="720" height="440" fill="url(#fld)" opacity=".85"/>
+<g stroke="rgba(255,255,255,.14)" stroke-width="1">
+<line x1="60" y1="0" x2="60" y2="440"/><line x1="180" y1="0" x2="180" y2="440"/><line x1="300" y1="0" x2="300" y2="440"/><line x1="420" y1="0" x2="420" y2="440"/><line x1="540" y1="0" x2="540" y2="440"/><line x1="660" y1="0" x2="660" y2="440"/>
+<line x1="0" y1="88" x2="720" y2="88"/><line x1="0" y1="176" x2="720" y2="176"/><line x1="0" y1="264" x2="720" y2="264"/><line x1="0" y1="352" x2="720" y2="352"/>
+</g>
+<g fill="#10192a" stroke="rgba(255,255,255,.2)" stroke-width="1">
+<path d="M0 0 L285 0 L282 114 L252 88 L204 88 L144 70 L178 132 L150 190 L108 229 L40 270 L0 299 Z"/>
+<path d="M285 0 L720 0 L720 440 L672 440 L650 405 L630 352 L588 246 L564 158 L516 141 L470 220 L424 299 L395 360 L390 387 L376 352 L348 255 L334 194 L300 158 L282 114 Z"/>
+<ellipse cx="428" cy="396" rx="8" ry="12"/>
+</g>
+<g fill="#eaf2ff" font-family="JetBrains Mono, monospace" font-size="10">
+<text x="62" y="434">50°E</text><text x="302" y="434">70°E</text><text x="542" y="434">90°E</text>
+<text x="4" y="92">25°N</text><text x="4" y="268">15°N</text>
+</g>
+<g fill="none" stroke="#eaf2ff" stroke-width="1.5"><circle cx="190" cy="250" r="5"/><circle cx="260" cy="330" r="5"/><circle cx="510" cy="262" r="5"/><circle cx="560" cy="330" r="5"/><circle cx="330" cy="60" r="5" opacity="0"/></g>
+<g stroke="#04121a" stroke-width="1.5"><line x1="470" y1="282" x2="470" y2="318"/><line x1="452" y1="300" x2="488" y2="300"/></g>
+<circle cx="470" cy="300" r="12" fill="none" stroke="#04121a" stroke-width="2.5"/>
+<circle cx="470" cy="300" r="5" fill="#04121a"/>
+</svg>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px;">
+<div style="display: flex; align-items: center; gap: 8px; font: 12px 'JetBrains Mono', monospace; color: #9fb0c8;"><span>[min °C]</span><span style="width: 140px; height: 10px; border-radius: 5px; background: linear-gradient(90deg,#1e4e8c,#2dd4bf,#fde7b0);"></span><span>[max °C]</span></div>
+<span style="font: 12px 'JetBrains Mono', monospace; color: #9fb0c8;">○ held-out Argo profile</span>
+<span style="font: 12px 'JetBrains Mono', monospace; color: #9fb0c8;">⊕ selected point</span>
+</div>
+<p style="margin: 0; font-size: 12px; color: #9fb0c8;">Layout preview: map shapes are schematic. Real fields load from <span style="font-family: 'JetBrains Mono', monospace;">/grid</span> using the date range from <span style="font-family: 'JetBrains Mono', monospace;">/meta</span>.</p>
+</section>
+
+<section aria-labelledby="pr" style="background: #0d1726; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+<h2 id="pr" style="margin: 0; font: 700 16px 'Space Grotesk', sans-serif;">Profile at selected point</h2>
+<svg viewBox="0 0 360 350" role="img" aria-label="Schematic temperature versus depth profile with prediction, uncertainty band, climatology and held-out Argo points" style="width: 100%; height: auto; display: block;">
+<rect x="60" y="50" width="290" height="60" fill="#f5a524" opacity=".12"/>
+<text x="66" y="63" fill="#f5a524" font-family="JetBrains Mono, monospace" font-size="10">THERMOCLINE 50–150 m</text>
+<g stroke="rgba(255,255,255,.12)"><line x1="60" y1="20" x2="350" y2="20"/><line x1="60" y1="80" x2="350" y2="80"/><line x1="60" y1="140" x2="350" y2="140"/><line x1="60" y1="200" x2="350" y2="200"/><line x1="60" y1="234" x2="350" y2="234"/><line x1="60" y1="320" x2="350" y2="320"/></g>
+<line x1="60" y1="20" x2="60" y2="320" stroke="#9fb0c8"/>
+<g fill="#9fb0c8" font-family="JetBrains Mono, monospace" font-size="10" text-anchor="end"><text x="54" y="24">0</text><text x="54" y="84">100</text><text x="54" y="144">200</text><text x="54" y="204">300</text><text x="54" y="238">500</text><text x="54" y="324">1000</text></g>
+<polygon points="312,20 310,38 306,50 292,65 258,80 226,95 202,110 174,140 144,200 118,234 96,320 80,320 98,234 120,200 146,140 170,110 190,95 222,80 260,65 286,50 294,38 296,20" fill="#2dd4bf" opacity=".22"/>
+<polyline points="300,20 296,50 270,80 234,110 206,140 172,200 142,234 110,320" fill="none" stroke="#9fb0c8" stroke-width="1.5" stroke-dasharray="5 4"/>
+<polyline points="304,20 302,38 296,50 276,65 240,80 208,95 186,110 160,140 132,200 108,234 88,320" fill="none" stroke="#2dd4bf" stroke-width="2.5" stroke-linejoin="round"/>
+<g fill="#060b14" stroke="#eaf2ff" stroke-width="1.5"><circle cx="306" cy="22" r="3.5"/><circle cx="292" cy="50" r="3.5"/><circle cx="262" cy="74" r="3.5"/><circle cx="214" cy="102" r="3.5"/><circle cx="158" cy="146" r="3.5"/><circle cx="128" cy="204" r="3.5"/><circle cx="104" cy="238" r="3.5"/><circle cx="92" cy="320" r="3.5"/></g>
+<g fill="#9fb0c8" font-family="JetBrains Mono, monospace" font-size="10" text-anchor="middle"><text x="90" y="338">[°C]</text><text x="205" y="338">temperature</text><text x="320" y="338">[°C]</text></g>
+<text x="4" y="12" fill="#9fb0c8" font-family="JetBrains Mono, monospace" font-size="10">depth (m), stretched above 300 m</text>
+</svg>
+<div style="display: flex; flex-wrap: wrap; gap: 8px 16px; font: 12px 'JetBrains Mono', monospace; color: #9fb0c8;">
+<span><span style="color: #2dd4bf;">━</span> predicted + 90% interval</span>
+<span>┅ climatology</span>
+<span>○ held-out Argo</span>
+</div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+<div style="background: #060b14; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 12px;"><div style="font: 11px 'JetBrains Mono', monospace; color: #9fb0c8;">D20 DEPTH</div><div style="font: 700 22px 'Space Grotesk', sans-serif;">— <span style="font-size: 12px; color: #9fb0c8;">m</span></div></div>
+<div style="background: #060b14; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 12px;"><div style="font: 11px 'JetBrains Mono', monospace; color: #9fb0c8;">MIXED LAYER</div><div style="font: 700 22px 'Space Grotesk', sans-serif;">— <span style="font-size: 12px; color: #9fb0c8;">m</span></div></div>
+<div style="background: #060b14; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 12px;"><div style="font: 11px 'JetBrains Mono', monospace; color: #9fb0c8;">HEAT CONTENT 0–300 m</div><div style="font: 700 22px 'Space Grotesk', sans-serif;">—</div></div>
+<div style="background: #060b14; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 12px;"><div style="font: 11px 'JetBrains Mono', monospace; color: #9fb0c8;">APPLICABILITY</div><div style="font: 700 22px 'Space Grotesk', sans-serif; color: #2dd4bf;">[in / out]</div></div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #9fb0c8;">Values fill from <span style="font-family: 'JetBrains Mono', monospace;">/predict</span>. Nearest held-out Argo profile and its distance come from <span style="font-family: 'JetBrains Mono', monospace;">/validation/profile</span>.</p>
+</section>
+
+<section aria-labelledby="ev" style="grid-column: 1 / -1; background: #0d1726; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px;">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px;">
+<h2 id="ev" style="margin: 0; font: 700 16px 'Space Grotesk', sans-serif;">Evidence · thermocline error on held-out floats</h2>
+<span style="font: 12px 'JetBrains Mono', monospace; color: #9fb0c8;">RMSE 50–150 m · 242 profiles · 15 floats · lower is better</span>
+</div>
+<div style="display: grid; grid-template-columns: 220px minmax(0,1fr) 64px; align-items: center; gap: 10px 16px; font-size: 14px;">
+<span>Climatology</span><span style="height: 12px; border-radius: 6px; background: #5b6b82; width: 100%;"></span><span style="font-family: 'JetBrains Mono', monospace; text-align: right;">2.29</span>
+<span>Climatology + ridge</span><span style="height: 12px; border-radius: 6px; background: #5b6b82; width: 96%;"></span><span style="font-family: 'JetBrains Mono', monospace; text-align: right;">2.20</span>
+<span>v1 OceanEmbedNet</span><span style="height: 12px; border-radius: 6px; background: #2dd4bf; opacity: .6; width: 69%;"></span><span style="font-family: 'JetBrains Mono', monospace; text-align: right;">1.59</span>
+<span>Gradient-boosted trees <span style="font-size: 11px; color: #2dd4bf;">best so far</span></span><span style="height: 12px; border-radius: 6px; background: #2dd4bf; width: 64%;"></span><span style="font-family: 'JetBrains Mono', monospace; text-align: right;">1.46</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.08); font: 12px 'JetBrains Mono', monospace; color: #9fb0c8;">
+<span>model v0.2-baseline · data argo-2025-snapshot · satellite fields: sample fixture</span>
+<a href="#" style="min-height: 24px;">Open ablation and limitations →</a>
+</div>
+</section>
+
+</main>
+</div>
+</body>
+</html>

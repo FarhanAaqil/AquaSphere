@@ -46,3 +46,5 @@ data/collect.log
 # OS
 .DS_Store
 Thumbs.db
+docs
+ui reference
