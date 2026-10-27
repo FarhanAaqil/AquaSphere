@@ -224,11 +224,16 @@ def test_frontend_static_serving() -> None:
     assert "<nav" in resp_root.text
 
     # Check CSS asset serving
-    resp_css = client.get("/css/styles.css")
+    resp_css = client.get("/css/landing.css")
     assert resp_css.status_code == 200
-    assert "--deep:" in resp_css.text
+    assert "card" in resp_css.text
 
     # Check JS module asset serving
-    resp_js = client.get("/js/app.js")
+    resp_js = client.get("/js/landing/main.js")
     assert resp_js.status_code == 200
-    assert "renderCurrentView" in resp_js.text
+    assert "initScene" in resp_js.text
+
+    # Check Explorer page serving
+    resp_exp = client.get("/explorer")
+    assert resp_exp.status_code == 200
+    assert "Explorer" in resp_exp.text

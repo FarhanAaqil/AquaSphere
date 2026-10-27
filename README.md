@@ -112,17 +112,10 @@ flowchart TD
 
 ## 🖥️ Modular Interactive Frontend (`web/`)
 
-AquaSphere provides a native ES module browser interface (no build step or bundler needed) organized into **9 specialized ocean intelligence views**:
+AquaSphere provides a high-performance, native web experience (no build step, no bundler, no frontend framework) organized into two unified interfaces:
 
-1. **Overview:** System flowline, real location snapshot, decision summary, and live regime monitoring alerts.
-2. **Explore:** Basin-wide spatial map bounded dynamically by `/meta` date ranges with quick seasonal monsoon presets.
-3. **Location Profile:** Calibrated 0–1000m vertical profile with conformal uncertainty bands ($\pm q\sigma$), MLD/D20 indicators, and integrated gradients explainability.
-4. **Depth View:** Horizontal temperature slicing across all 15 standard pressure levels (0m to 1000m).
-5. **Time View:** Multi-date temporal progression tracking seasonal thermocline shoaling and warming.
-6. **Compare:** Simultaneous side-by-side vertical profile comparison across distinct hydrographic regimes.
-7. **Embedding:** 2D PCA projection of the 16-D latent manifold contrasting Arabian Sea vs. Bay of Bengal states.
-8. **Validation:** Direct benchmark against unseen, held-out Argo float profiles with float ID, distance (km), and RMSE.
-9. **Reports:** Verifiable exportable decision-support summary including model version, provenance, and limitations disclaimer.
+1. **Descent (`/`):** A cinematic, 3D scroll-driven ocean dive powered by Three.js (r128) and GSAP ScrollTrigger (3.12.5). Users descend through 8 calibrated ocean strata from the sunlit surface to 1000m abyssal depths, observing satellite orbits, buoyant drifting particles, floating Argo soundings, and live baseline metrics.
+2. **Explorer (`/explorer`):** A precision scientific workbench featuring an interactive SVG map (5–30°N, 45–105°E), click-to-predict profile reconstruction, 0–1000m depth-stretched profile charts with conformal 90% prediction intervals, live stat tiles (D20, MLD, Heat Content), and nearest held-out Argo profile comparisons.
 
 ---
 
@@ -178,9 +171,12 @@ AquaSphere/
 │   ├── eval/                   # Metrics (RMSE, D20, MLD, SS), baseline ladder, ablation runner
 │   └── serve/                  # FastAPI app, Pydantic schemas, 4-stage honest resolver, engine
 ├── web/                        # Native ES module browser frontend
-│   ├── index.html              # Shell layout with navigation rail and context bar
-│   ├── css/styles.css          # Design system, glassmorphic cards, color-blind safe palettes
-│   └── js/                     # API client, central state, and 9 view renderers
+│   ├── index.html              # Descent 3D cinematic landing page
+│   ├── explorer.html           # Precision ocean intelligence workbench
+│   ├── css/                    # tokens.css, landing.css, workbench.css
+│   ├── js/                     # landing/ (scene, scroll, main) & workbench/ (api, map, profile, evidence, main)
+│   ├── vendor/                 # Local Three.js r128, GSAP & ScrollTrigger 3.12.5
+│   └── data/                   # metrics.json benchmark store
 ├── tests/                      # Unit, ML behavior, API contract, and data integrity tests
 └── docs/                       # ARCHITECTURE.md, MODEL_CARD.md, DATA_CARD.md, REPRODUCE.md
 ```
