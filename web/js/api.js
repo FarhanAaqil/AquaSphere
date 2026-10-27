@@ -293,12 +293,14 @@ export async function fetchExplain(lat, lon, date) {
  */
 export function formatSourceBadge(source) {
   if (source === 'local_store') {
-    return '<span class="source-pill local">● Local Zarr</span>';
-  } else if (source === 'disk_cache') {
-    return '<span class="source-pill cache">● Disk Cache</span>';
+    return '<span class="badge-provenance local-store">● LOCAL STORE</span>';
+  } else if (source === 'disk_cache' || source === 'cached') {
+    return '<span class="badge-provenance cached">● CACHED</span>';
   } else if (source === 'live') {
-    return '<span class="source-pill live">● Live ERDDAP</span>';
+    return '<span class="badge-provenance live">● LIVE API</span>';
+  } else if (source === 'calibrated') {
+    return '<span class="badge-provenance calibrated">● CALIBRATED</span>';
   } else {
-    return '<span class="source-pill offline">● Offline Demo (Synthetic)</span>';
+    return '<span class="badge-provenance synthetic">● SAMPLE / SYNTHETIC</span>';
   }
 }
