@@ -5,6 +5,7 @@
 import { fetchMeta, formatSourceBadge, regionName } from './api.js';
 import { state, subscribe, setPage, setLocation } from './state.js';
 import { CinematicController } from './components/cinematic.js';
+import { renderLanding } from './views/landing.js';
 import { renderStudio } from './views/studio.js';
 import { renderOverview } from './views/overview.js';
 import { renderExplore } from './views/explore.js';
@@ -17,10 +18,10 @@ import { renderValidation } from './views/validation.js';
 import { renderReports } from './views/reports.js';
 
 const NAV = [
-  { id: 'studio', label: 'Studio 3D', icon: 'cube' },
-  { id: 'overview', label: 'Overview', icon: 'grid' },
+  { id: 'landing', label: 'Descent 3D', icon: 'cube' },
+  { id: 'location', label: 'Profile', icon: 'pin' },
   { id: 'explore', label: 'Explore', icon: 'map' },
-  { id: 'location', label: 'Location', icon: 'pin' },
+  { id: 'overview', label: 'Overview', icon: 'grid' },
   { id: 'depth', label: 'Depth', icon: 'layers' },
   { id: 'time', label: 'Time', icon: 'clock' },
   { id: 'compare', label: 'Compare', icon: 'split' },
@@ -93,14 +94,14 @@ function renderContextBar() {
 
 async function renderCurrentView() {
   // Sync body mode
-  const isStudio = state.page === 'studio';
-  document.body.className = isStudio ? 'mode-studio' : 'mode-workstation';
+  const isCinematic = state.page === 'landing' || state.page === 'studio';
+  document.body.className = isCinematic ? 'mode-studio' : 'mode-workstation';
 
   // Sync mode switcher buttons
   const btnMode3D = document.getElementById('btnMode3D');
   const btnModeWork = document.getElementById('btnModeWorkstation');
-  if (btnMode3D) btnMode3D.classList.toggle('active', isStudio);
-  if (btnModeWork) btnModeWork.classList.toggle('active', !isStudio);
+  if (btnMode3D) btnMode3D.classList.toggle('active', isCinematic);
+  if (btnModeWork) btnModeWork.classList.toggle('active', !isCinematic);
 
   // Update nav active classes
   document.querySelectorAll('.navbtn').forEach(b => {
@@ -114,8 +115,9 @@ async function renderCurrentView() {
 
   let viewEl = null;
   switch (state.page) {
+    case 'landing':
     case 'studio':
-      viewEl = await renderStudio();
+      viewEl = await renderLanding();
       break;
     case 'overview':
       viewEl = await renderOverview();
@@ -211,32 +213,32 @@ function renderGuidedDemo() {
 function setupTopNav() {
   const brandBtn = document.getElementById('topNavBrandBtn');
   if (brandBtn) {
-    brandBtn.onclick = () => setPage('studio');
+    brandBtn.onclick = () => setPage('landing');
   }
 
   const btnMode3D = document.getElementById('btnMode3D');
   if (btnMode3D) {
-    btnMode3D.onclick = () => setPage('studio');
+    btnMode3D.onclick = () => setPage('landing');
   }
 
   const btnModeWork = document.getElementById('btnModeWorkstation');
   if (btnModeWork) {
     btnModeWork.onclick = () => {
-      setPage(state.page === 'studio' ? 'overview' : state.page);
+      setPage(state.page === 'landing' || state.page === 'studio' ? 'location' : state.page);
     };
   }
 
   const ctaBtn = document.getElementById('navCtaConsoleBtn');
   if (ctaBtn) {
-    ctaBtn.onclick = () => setPage('overview');
+    ctaBtn.onclick = () => setPage('location');
   }
 
-  // Anchor navigation links for studio sections
+  // Anchor navigation links for descent narrative sections
   const anchors = [
-    { id: 'navLinkStrata', target: '#strata' },
-    { id: 'navLinkBenchmarks', target: '#benchmarks' },
-    { id: 'navLinkRegimes', target: '#stratum-gallery' },
-    { id: 'navLinkConsole', target: '#console' },
+    { id: 'navLinkProblem', target: '#problem' },
+    { id: 'navLinkStrata', target: '#how-it-works' },
+    { id: 'navLinkBenchmarks', target: '#evidence' },
+    { id: 'navLinkRegimes', target: '#limits' },
   ];
 
   anchors.forEach(({ id, target }) => {
@@ -244,8 +246,8 @@ function setupTopNav() {
     if (!el) return;
     el.onclick = (e) => {
       e.preventDefault();
-      if (state.page !== 'studio') {
-        setPage('studio');
+      if (state.page !== 'landing' && state.page !== 'studio') {
+        setPage('landing');
         setTimeout(() => {
           document.querySelector(target)?.scrollIntoView({ behavior: 'smooth' });
         }, 150);
