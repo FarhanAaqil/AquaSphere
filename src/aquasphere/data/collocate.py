@@ -30,6 +30,13 @@ class Collocator:
         else:
             self.store = store
         self.available_dates = sorted(self.store.get_available_dates())
+        self._day_cache: dict[str, dict[str, np.ndarray]] = {}
+
+    def _get_day_fields(self, date_str: str) -> dict[str, np.ndarray]:
+        """Fetch and cache all 2D surface fields for a date."""
+        if date_str not in self._day_cache:
+            self._day_cache[date_str] = self.store.read_day(date_str)
+        return self._day_cache[date_str]
 
     def find_nearest_date(self, target_date: str) -> str:
         """Find the closest date in the store to target_date."""
@@ -89,9 +96,18 @@ class Collocator:
             lon = float(row[lon_col])
             date = str(row[date_col])
 
-            res = self.collocate_profile(lat, lon, date, patch_size=patch_size)
-            scalar_records.append(res["scalars"])
-            mask_records.append(res["masks"])
+            matched_date = self.find_nearest_date(date)
+            fields = self._get_day_fields(matched_date)
+            lat_idx, lon_idx = self.store.snap_indices(lat, lon)
+            scalars = {v: float(fields[v][lat_idx, lon_idx]) for v in SATELLITE_VARS if v in fields}
+            masks = {
+                f"mask_{v}": int(
+                    ~np.isnan(scalars.get(v, np.nan)) and scalars.get(v, np.nan) != 0.0
+                )
+                for v in SATELLITE_VARS
+            }
+            scalar_records.append(scalars)
+            mask_records.append(masks)
 
         # Add scalar columns
         scalars_df = pd.DataFrame(scalar_records, index=df_out.index)

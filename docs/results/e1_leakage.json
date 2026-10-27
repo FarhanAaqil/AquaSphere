@@ -1,0 +1,147 @@
+{
+  "_experiment": "E1: Random vs Blocked Leakage Gap Analysis",
+  "_generated_at": "2026-10-27T06:20:33.087994+00:00",
+  "n_profiles_total": 2253,
+  "train_ratio": 0.75,
+  "seed": 42,
+  "protocols": {
+    "random": {
+      "protocol": "Random (Naive)",
+      "n_train": 1689,
+      "n_eval": 564,
+      "n_eval_floats": 101,
+      "metrics": {
+        "Climatology": {
+          "overall_rmse": 1.7985,
+          "overall_mae": 1.4751,
+          "thermocline_rmse": 1.9271,
+          "skill_score": 0.0
+        },
+        "Climatology + Ridge": {
+          "overall_rmse": 1.6937,
+          "overall_mae": 1.3311,
+          "thermocline_rmse": 1.9142,
+          "skill_score": 0.1132
+        },
+        "Gradient Boosted Trees (HistGBDT)": {
+          "overall_rmse": 0.7703,
+          "overall_mae": 0.4672,
+          "thermocline_rmse": 1.0363,
+          "skill_score": 0.8166
+        },
+        "v1 OceanEmbedNet": {
+          "overall_rmse": 1.0874,
+          "overall_mae": 0.7324,
+          "thermocline_rmse": 1.3332,
+          "skill_score": 0.6344
+        }
+      }
+    },
+    "float_grouped": {
+      "protocol": "Float-Grouped",
+      "n_train": 1708,
+      "n_eval": 545,
+      "n_eval_floats": 26,
+      "metrics": {
+        "Climatology": {
+          "overall_rmse": 1.9157,
+          "overall_mae": 1.5455,
+          "thermocline_rmse": 2.1874,
+          "skill_score": 0.0
+        },
+        "Climatology + Ridge": {
+          "overall_rmse": 1.8288,
+          "overall_mae": 1.4196,
+          "thermocline_rmse": 2.1498,
+          "skill_score": 0.0887
+        },
+        "Gradient Boosted Trees (HistGBDT)": {
+          "overall_rmse": 1.0828,
+          "overall_mae": 0.6456,
+          "thermocline_rmse": 1.507,
+          "skill_score": 0.6805
+        },
+        "v1 OceanEmbedNet": {
+          "overall_rmse": 1.1713,
+          "overall_mae": 0.7734,
+          "thermocline_rmse": 1.5047,
+          "skill_score": 0.6261
+        }
+      }
+    },
+    "time_blocked": {
+      "protocol": "Time-Blocked",
+      "n_train": 1689,
+      "n_eval": 564,
+      "n_eval_floats": 96,
+      "metrics": {
+        "Climatology": {
+          "overall_rmse": 2.051,
+          "overall_mae": 1.5983,
+          "thermocline_rmse": 2.3475,
+          "skill_score": 0.0
+        },
+        "Climatology + Ridge": {
+          "overall_rmse": 1.8355,
+          "overall_mae": 1.3587,
+          "thermocline_rmse": 2.2804,
+          "skill_score": 0.1991
+        },
+        "Gradient Boosted Trees (HistGBDT)": {
+          "overall_rmse": 1.0272,
+          "overall_mae": 0.6343,
+          "thermocline_rmse": 1.3903,
+          "skill_score": 0.7492
+        },
+        "v1 OceanEmbedNet": {
+          "overall_rmse": 1.6562,
+          "overall_mae": 1.1785,
+          "thermocline_rmse": 1.9967,
+          "skill_score": 0.348
+        }
+      }
+    }
+  },
+  "leakage_gaps": {
+    "Climatology": {
+      "rand_thermo_rmse": 1.9271,
+      "flt_thermo_rmse": 2.1874,
+      "time_thermo_rmse": 2.3475,
+      "delta_float_leakage": 0.2603,
+      "delta_time_leakage": 0.4204,
+      "rand_skill": 0.0,
+      "flt_skill": 0.0,
+      "time_skill": 0.0
+    },
+    "Climatology + Ridge": {
+      "rand_thermo_rmse": 1.9142,
+      "flt_thermo_rmse": 2.1498,
+      "time_thermo_rmse": 2.2804,
+      "delta_float_leakage": 0.2356,
+      "delta_time_leakage": 0.3662,
+      "rand_skill": 0.1132,
+      "flt_skill": 0.0887,
+      "time_skill": 0.1991
+    },
+    "Gradient Boosted Trees (HistGBDT)": {
+      "rand_thermo_rmse": 1.0363,
+      "flt_thermo_rmse": 1.507,
+      "time_thermo_rmse": 1.3903,
+      "delta_float_leakage": 0.4707,
+      "delta_time_leakage": 0.354,
+      "rand_skill": 0.8166,
+      "flt_skill": 0.6805,
+      "time_skill": 0.7492
+    },
+    "v1 OceanEmbedNet": {
+      "rand_thermo_rmse": 1.3332,
+      "flt_thermo_rmse": 1.5047,
+      "time_thermo_rmse": 1.9967,
+      "delta_float_leakage": 0.1715,
+      "delta_time_leakage": 0.6635,
+      "rand_skill": 0.6344,
+      "flt_skill": 0.6261,
+      "time_skill": 0.348
+    }
+  }
+}

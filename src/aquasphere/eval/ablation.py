@@ -16,6 +16,7 @@ Outputs structured Markdown table and JSON metrics.
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 from pathlib import Path
 from typing import Any
@@ -171,12 +172,11 @@ def evaluate_ablation_rung(
     thermo_diff = diff[:, thermo_idx]
     thermo_rmse = float(np.sqrt(np.mean(thermo_diff[thermo_mask]))) if np.any(thermo_mask) else 0.0
 
-    # Skill score vs climatology on thermocline
+    # Skill score vs climatology on thermocline (Master Blueprint SS_k = 1 - MSE_k(model)/MSE_k(climatology))
     clim_diff = (y_clim_val[:, thermo_idx] - y_val[:, thermo_idx]) ** 2
-    clim_thermo_rmse = (
-        float(np.sqrt(np.mean(clim_diff[thermo_mask]))) if np.any(thermo_mask) else 1e-4
-    )
-    ss = float(1.0 - (thermo_rmse / max(1e-4, clim_thermo_rmse)))
+    clim_thermo_mse = float(np.mean(clim_diff[thermo_mask])) if np.any(thermo_mask) else 1e-8
+    thermo_mse = float(np.mean(thermo_diff[thermo_mask])) if np.any(thermo_mask) else 0.0
+    ss = float(1.0 - (thermo_mse / max(1e-8, clim_thermo_mse)))
 
     return {
         "overall_rmse": overall_rmse,
@@ -366,7 +366,9 @@ def main() -> None:
     out_p = Path(args.output)
     out_p.parent.mkdir(parents=True, exist_ok=True)
     out_p.write_text(table_md, encoding="utf-8")
-    print(f"[*] Saved ablation table to {out_p}")
+    json_path = out_p.parent / "ablation.json"
+    json_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    print(f"[*] Saved ablation table to {out_p} and {json_path}")
 
 
 if __name__ == "__main__":

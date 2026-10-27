@@ -24,6 +24,12 @@ eval:
 eval-test:
 	python -m aquasphere.eval.report --split test
 
+ablate:
+	python -m aquasphere.eval.ablation --fixture data/processed/argo_profiles.parquet --epochs 4
+
+leakage:
+	python -m aquasphere.eval.leakage
+
 # ── Serve ────────────────────────────────────────────────────────────────────
 serve:
 	uvicorn aquasphere.serve.app:app --reload --port 8000

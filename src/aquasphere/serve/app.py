@@ -125,7 +125,7 @@ def get_metadata() -> MetaResponse:
             "lon_max": LON_MAX,
         },
         standard_depths=list(STANDARD_DEPTHS),
-        available_sources=["local_store", "disk_cache", "live"],
+        available_sources=["offline_synthetic", "disk_cache", "live"],
     )
 
 

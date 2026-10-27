@@ -182,10 +182,10 @@ class SurfaceResolver:
         if cache_key in self.mem_cache:
             return self.mem_cache[cache_key]["features"], self.mem_cache[cache_key]["source"]
 
-        # 1. Priority 1: Local Zarr Store
+        # 1. Priority 1: Local Zarr Store (Offline Synthetic Fixture)
         zarr_obs = self._query_zarr_store(lat, lon, date)
         if zarr_obs is not None:
-            source = "local_store"
+            source = "offline_synthetic"
             self._write_disk_cache(cache_key, {"features": zarr_obs, "source": source})
             self._update_mem_cache(cache_key, zarr_obs, source)
             return zarr_obs, source

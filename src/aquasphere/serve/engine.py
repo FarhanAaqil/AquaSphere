@@ -158,7 +158,7 @@ class InferenceEngine:
         lon: float,
         date: str,
         features: dict[str, float],
-        source: str = "local_store",
+        source: str = "offline_synthetic",
     ) -> dict[str, Any]:
         """Perform single point inference."""
         if self.model is None:
@@ -321,7 +321,7 @@ class InferenceEngine:
             "pred_temperatures": pred["temperatures"],
             "uncertainties": pred["uncertainties"],
             "rmse": rmse,
-            "data_source": "local_store",
+            "data_source": "offline_synthetic",
         }
 
     def explain_point(

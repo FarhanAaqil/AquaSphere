@@ -197,16 +197,22 @@ class GradientBoostedBaseline(BaseReconstructionModel):
         y = targets if targets is not None else extract_targets(df)
 
         self.models = []
+        self.fallback_means = []
         for i in range(y.shape[1]):
             valid = ~np.isnan(y[:, i])
+            mean_val = float(np.nanmean(y[valid, i])) if np.any(valid) else 20.0
+            self.fallback_means.append(mean_val)
+
             gbr = HistGradientBoostingRegressor(
                 max_iter=self.max_iter,
                 max_depth=self.max_depth,
                 random_state=self.random_state,
             )
-            if np.sum(valid) > 10:
+            if np.sum(valid) >= 5:
                 gbr.fit(x[valid], y[valid, i])
-            self.models.append(gbr)
+                self.models.append(gbr)
+            else:
+                self.models.append(None)
 
         return self
 
@@ -214,7 +220,11 @@ class GradientBoostedBaseline(BaseReconstructionModel):
         x = prepare_features(df)
         preds = np.zeros((len(df), len(self.models)), dtype=np.float64)
         for i, m in enumerate(self.models):
-            preds[:, i] = m.predict(x)
+            if m is not None:
+                preds[:, i] = m.predict(x)
+            else:
+                fallback = self.fallback_means[i] if hasattr(self, "fallback_means") else 20.0
+                preds[:, i] = fallback
         return preds
 
 

@@ -44,13 +44,24 @@
 <!-- ABLATION:START -->
 | Run | SST | +SLA | +SSS | +Wind/Curr | +Patch | +SSL | Thermo RMSE (°C) | Skill Score | Conformal Cov. |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| A1 (SST only) | Yes | - | - | - | - | - | 1.585 ± 0.123 | 0.084 ± 0.071 | 99.6% ± 0.0% |
-| A2 (+ SLA) | Yes | Yes | - | - | - | - | 1.585 ± 0.123 | 0.084 ± 0.071 | 99.6% ± 0.0% |
-| A3 (+ SSS) | Yes | Yes | Yes | - | - | - | 1.585 ± 0.123 | 0.084 ± 0.071 | 99.6% ± 0.0% |
-| A4 (+ Wind/Curr) | Yes | Yes | Yes | Yes | - | - | 1.585 ± 0.123 | 0.084 ± 0.071 | 99.6% ± 0.0% |
-| B (+ Patch CNN) | Yes | Yes | Yes | Yes | Yes | - | 1.635 ± 0.059 | 0.055 ± 0.034 | 99.6% ± 0.0% |
-| C (+ SSL Pretrain) | Yes | Yes | Yes | Yes | Yes | Yes | 1.722 ± 0.154 | 0.005 ± 0.089 | 99.6% ± 0.0% |
+| A1 (SST only) | Yes | - | - | - | - | - | 1.930 ± 0.039 | 0.195 ± 0.032 | 90.3% ± 0.0% |
+| A2 (+ SLA) | Yes | Yes | - | - | - | - | 1.945 ± 0.036 | 0.183 ± 0.030 | 90.3% ± 0.0% |
+| A3 (+ SSS) | Yes | Yes | Yes | - | - | - | 1.952 ± 0.024 | 0.177 ± 0.020 | 90.3% ± 0.0% |
+| A4 (+ Wind/Curr) | Yes | Yes | Yes | Yes | - | - | 1.989 ± 0.009 | 0.145 ± 0.008 | 90.3% ± 0.0% |
+| B (+ Patch CNN) | Yes | Yes | Yes | Yes | Yes | - | 2.060 ± 0.013 | 0.084 ± 0.012 | 90.3% ± 0.0% |
+| C (+ SSL Pretrain) | Yes | Yes | Yes | Yes | Yes | Yes | 2.093 ± 0.040 | 0.053 ± 0.036 | 90.3% ± 0.0% |
 <!-- ABLATION:END -->
+
+---
+
+## 4. Experiment E1: Leakage Gap Analysis
+
+| Model | Random Split (Naive) | Float-Grouped | Time-Blocked | Float Leakage Gap (ΔRMSE) | Temporal Gap (ΔRMSE) |
+|---|:---:|:---:|:---:|:---:|:---:|
+| **Climatology** | 1.927 °C | 2.187 °C | 2.348 °C | **+0.260 °C** | **+0.420 °C** |
+| **Climatology + Ridge** | 1.914 °C | 2.150 °C | 2.280 °C | **+0.236 °C** | **+0.366 °C** |
+| **Gradient Boosted Trees (HistGBDT)** | 1.036 °C | 1.507 °C | 1.390 °C | **+0.471 °C** | **+0.354 °C** |
+| **v1 OceanEmbedNet** | 1.333 °C | 1.505 °C | 1.997 °C | **+0.172 °C** | **+0.663 °C** |
 
 ---
 

@@ -24,6 +24,7 @@ class ConformalCalibrator:
     nominal_coverage: float
     n_calibration_samples: int
     empirical_val_coverage: float
+    scale_factors: np.ndarray | None = None
 
     def predict_interval(
         self,
@@ -39,7 +40,10 @@ class ConformalCalibrator:
         Returns:
             lower, upper prediction bounds of shape [N, D] (°C)
         """
-        half_width = self.scale_factor * sigma
+        if self.scale_factors is not None and self.scale_factors.shape == (sigma.shape[-1],):
+            half_width = self.scale_factors * sigma
+        else:
+            half_width = self.scale_factor * sigma
         lower = y_pred - half_width
         upper = y_pred + half_width
         return lower, upper
@@ -48,6 +52,9 @@ class ConformalCalibrator:
         """Serialize calibrator parameters to dictionary."""
         return {
             "scale_factor": float(self.scale_factor),
+            "scale_factors": self.scale_factors.tolist()
+            if self.scale_factors is not None
+            else None,
             "nominal_coverage": float(self.nominal_coverage),
             "n_calibration_samples": int(self.n_calibration_samples),
             "empirical_val_coverage": float(self.empirical_val_coverage),
@@ -56,11 +63,17 @@ class ConformalCalibrator:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ConformalCalibrator:
         """Load calibrator from dictionary."""
+        scale_factors = (
+            np.array(data["scale_factors"], dtype=np.float64)
+            if data.get("scale_factors") is not None
+            else None
+        )
         return cls(
             scale_factor=float(data["scale_factor"]),
             nominal_coverage=float(data.get("nominal_coverage", 0.90)),
             n_calibration_samples=int(data.get("n_calibration_samples", 0)),
             empirical_val_coverage=float(data.get("empirical_val_coverage", 0.90)),
+            scale_factors=scale_factors,
         )
 
 
@@ -94,7 +107,7 @@ def fit_conformal_calibrator(
             f"Shape mismatch: y_true {y_true.shape}, y_pred {y_pred.shape}, sigma {sigma.shape}"
         )
 
-    n_samples, _ = y_true.shape
+    _n_samples, n_depths = y_true.shape
     if mask is None:
         mask = (~np.isnan(y_true)).astype(np.float32)
 
@@ -103,53 +116,52 @@ def fit_conformal_calibrator(
     residuals = np.abs(y_true - y_pred)
     normalized_errors = residuals / safe_sigma
 
-    # Compute max non-conformity per profile across valid unmasked depths
-    scores: list[float] = []
-    for i in range(n_samples):
-        valid_k = mask[i] > 0
-        if np.any(valid_k):
-            profile_max_score = float(np.max(normalized_errors[i, valid_k]))
-            if np.isfinite(profile_max_score):
-                scores.append(profile_max_score)
+    # Compute depth-stratified non-conformity quantiles (per-depth conformal calibration)
+    scale_factors = np.zeros(n_depths, dtype=np.float64)
+    for k in range(n_depths):
+        valid_k = (mask[:, k] > 0) & np.isfinite(normalized_errors[:, k])
+        scores_k = normalized_errors[valid_k, k]
+        if len(scores_k) > 5:
+            q_level = min(1.0, np.ceil((len(scores_k) + 1) * (1.0 - alpha)) / len(scores_k))
+            scale_factors[k] = float(np.quantile(scores_k, q_level))
+        else:
+            scale_factors[k] = 1.645
 
-    if not scores:
+    mean_scale_factor = float(np.mean(scale_factors))
+
+    # Measure empirical coverage on calibration set
+    lower = y_pred - scale_factors * safe_sigma
+    upper = y_pred + scale_factors * safe_sigma
+
+    valid_mask = mask > 0
+    total_valid_obs = int(np.sum(valid_mask))
+    valid_samples = int(np.sum(np.any(valid_mask, axis=1)))
+
+    if total_valid_obs == 0:
         logger.warning("No valid observations to fit conformal calibrator. Defaulting to 1.645.")
         return ConformalCalibrator(
             scale_factor=1.645,
             nominal_coverage=1.0 - alpha,
             n_calibration_samples=0,
-            empirical_val_coverage=0.90,
+            empirical_val_coverage=round(1.0 - alpha, 4),
+            scale_factors=np.full(n_depths, 1.645),
         )
 
-    scores_arr = np.array(scores)
-    n = len(scores_arr)
-    # Standard conformal quantile: ceil((n + 1) * (1 - alpha)) / n
-    quantile_level = min(1.0, np.ceil((n + 1) * (1.0 - alpha)) / n)
-    scale_factor = float(np.quantile(scores_arr, quantile_level))
-
-    # Measure empirical coverage on calibration set
-    emp_covered = 0
-    total_valid_obs = 0
-    lower = y_pred - scale_factor * safe_sigma
-    upper = y_pred + scale_factor * safe_sigma
-
-    valid_mask = mask > 0
     inside = (y_true >= lower) & (y_true <= upper)
     emp_covered = int(np.sum(inside[valid_mask]))
-    total_valid_obs = int(np.sum(valid_mask))
-
-    empirical_coverage = float(emp_covered / total_valid_obs) if total_valid_obs > 0 else 0.90
+    empirical_coverage = float(emp_covered / total_valid_obs)
 
     logger.info(
-        "Fitted Conformal Calibrator: scale_factor=%.3f, empirical_coverage=%.2f%% (nominal %.1f%%)",
-        scale_factor,
+        "Fitted Per-Depth Conformal Calibrator: mean_scale=%.3f, empirical_coverage=%.2f%% (nominal %.1f%%)",
+        mean_scale_factor,
         empirical_coverage * 100.0,
         (1.0 - alpha) * 100.0,
     )
 
     return ConformalCalibrator(
-        scale_factor=scale_factor,
+        scale_factor=mean_scale_factor,
         nominal_coverage=1.0 - alpha,
-        n_calibration_samples=n,
-        empirical_val_coverage=empirical_coverage,
+        n_calibration_samples=valid_samples,
+        empirical_val_coverage=round(empirical_coverage, 4),
+        scale_factors=scale_factors,
     )
