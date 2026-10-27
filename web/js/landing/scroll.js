@@ -1,6 +1,6 @@
 /**
  * GSAP + ScrollTrigger controller for Landing Page ("Descent")
- * Verbatim port of scroll motion from landing_reference.html
+ * Verbatim port of scroll motion from landing_reference.html with data-driven evidence bars.
  */
 
 export function initScroll(S, reduce) {
@@ -44,22 +44,59 @@ export function initScroll(S, reduce) {
       gsap.set('#hline', { scaleY: 1 });
     }
 
-    document.querySelectorAll('.bar').forEach(function(b) {
-      var o = { v: 0 };
-      var n = b.querySelector('b');
-      var target = parseFloat(b.dataset.v);
+    if (document.fonts) {
+      document.fonts.ready.then(function() {
+        ScrollTrigger.refresh();
+      });
+    }
+  }
+}
+
+export function setupEvidenceBars(data, reduce) {
+  if (!data || !data.baselines) return;
+
+  const profEl = document.getElementById('ev-profiles');
+  const floatsEl = document.getElementById('ev-floats');
+  if (profEl && data.n_eval_profiles) profEl.textContent = data.n_eval_profiles;
+  if (floatsEl && data.n_eval_floats) floatsEl.textContent = data.n_eval_floats;
+
+  const climRmse = data.baselines["Climatology"]?.thermocline_rmse || 2.29;
+  const ridgeRmse = data.baselines["Climatology + Ridge"]?.thermocline_rmse || 2.1952;
+  const v1Rmse = data.baselines["v1 OceanEmbedNet (Re-evaluated)"]?.thermocline_rmse || 1.5903;
+  const treesRmse = data.baselines["Gradient Boosted Trees (HistGBDT)"]?.thermocline_rmse || 1.4602;
+
+  const mapping = [
+    { id: 'bar-climatology', val: climRmse },
+    { id: 'bar-climatology-ridge', val: ridgeRmse },
+    { id: 'bar-v1-network', val: v1Rmse },
+    { id: 'bar-gradient-trees', val: treesRmse }
+  ];
+
+  mapping.forEach(item => {
+    const el = document.getElementById(item.id);
+    if (!el) return;
+    const targetVal = item.val;
+    const targetPct = Math.round((targetVal / climRmse) * 100);
+    el.dataset.v = targetVal.toFixed(2);
+    el.dataset.w = targetPct;
+
+    const n = el.querySelector('b');
+    const barFill = el.querySelector('i');
+
+    if (window.gsap && window.ScrollTrigger) {
+      const o = { v: 0 };
       ScrollTrigger.create({
-        trigger: b,
+        trigger: el,
         start: 'top 88%',
         once: true,
         onEnter: function() {
-          gsap.from(b.querySelector('i'), {
-            width: 0,
+          gsap.fromTo(barFill, { width: 0 }, {
+            width: targetPct + '%',
             duration: reduce ? 0 : 1.2,
             ease: 'power3.out'
           });
           gsap.to(o, {
-            v: target,
+            v: targetVal,
             duration: reduce ? 0 : 1.4,
             ease: 'power2.out',
             onUpdate: function() {
@@ -68,18 +105,13 @@ export function initScroll(S, reduce) {
           });
         }
       });
-    });
-
-    if (document.fonts) {
-      document.fonts.ready.then(function() {
-        ScrollTrigger.refresh();
-      });
+    } else {
+      if (barFill) barFill.style.width = targetPct + '%';
+      if (n) n.textContent = targetVal.toFixed(2);
     }
-  } else {
-    document.querySelectorAll('.bar b').forEach(function(n) {
-      if (n.parentNode && n.parentNode.dataset.v) {
-        n.textContent = n.parentNode.dataset.v;
-      }
-    });
+  });
+
+  if (window.ScrollTrigger) {
+    ScrollTrigger.refresh();
   }
 }

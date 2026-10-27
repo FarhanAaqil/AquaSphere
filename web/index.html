@@ -54,11 +54,11 @@
 <div class="card wide r">
 <p class="mono rv">Evidence</p>
 <h2 class="rv">What the held-out floats say</h2>
-<p class="mono rv">Thermocline error, RMSE 50–150 m (°C) · 242 profiles · 15 floats · lower is better</p>
-<div class="bar rv" data-v="2.29" data-w="100"><span>Climatology</span><i style="width:100%"></i><b>0</b></div>
-<div class="bar rv" data-v="2.20" data-w="96"><span>Climatology + ridge</span><i style="width:96%"></i><b>0</b></div>
-<div class="bar rv m" data-v="1.59" data-w="69"><span>Neural network (v1)</span><i style="width:69%;opacity:.6"></i><b>0</b></div>
-<div class="bar rv m" data-v="1.46" data-w="64"><span>Gradient-boosted trees</span><i style="width:64%"></i><b>0</b></div>
+<p class="mono rv">Thermocline error, RMSE 50–150 m (°C) · <span id="ev-profiles">—</span> profiles · <span id="ev-floats">—</span> floats · lower is better</p>
+<div class="bar rv" id="bar-climatology"><span>Climatology</span><i></i><b>—</b></div>
+<div class="bar rv" id="bar-climatology-ridge"><span>Climatology + ridge</span><i></i><b>—</b></div>
+<div class="bar rv m" id="bar-v1-network"><span>Neural network (v1)</span><i style="opacity:.6"></i><b>—</b></div>
+<div class="bar rv m" id="bar-gradient-trees"><span>Gradient-boosted trees</span><i></i><b>—</b></div>
 <p class="rv">Trees currently beat our neural network. We show that on purpose.</p>
 </div>
 </section>
