@@ -1,94 +1,94 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>AquaSphere — North Indian Ocean Subsurface Intelligence</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <script src="/js/vendor/three.min.js"></script>
-  <script src="/js/vendor/gsap.min.js"></script>
-  <script src="/js/vendor/ScrollTrigger.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="/css/styles.css">
-  <link rel="stylesheet" href="/css/landing.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>AquaSphere: Descent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/landing.css">
 </head>
-<body class="mode-studio">
+<body>
+<canvas id="gl" aria-hidden="true"></canvas>
+<header><b>AquaSphere</b><nav aria-label="Sections"><a href="#problem">Problem</a><a href="#how">How</a><a href="#evidence">Evidence</a><a href="#limits">Limits</a></nav></header>
+<div id="gauge" aria-hidden="true"><div id="gfill"></div><div id="gtxt" class="mono">0 m</div></div>
+<button id="pause" type="button" aria-pressed="false">Pause motion</button>
 
-  <!-- Cinematic Staged Preloader -->
-  <div class="cinematic-loader" id="cinematicLoader" aria-live="assertive">
-    <div class="loader-content">
-      <div class="loader-brand">AQUASPHERE // IOC-UNESCO 2024</div>
-      <div class="loader-count">00%</div>
-      <div class="loader-track"><div class="loader-fill"></div></div>
-      <div class="loader-sub">CALIBRATING NORTH INDIAN OCEAN BATHYMETRIC STRATA (0–1000m)...</div>
-    </div>
-  </div>
+<main>
+<section id="hero">
+<div class="card hero">
+<p class="mono rv">North Indian Ocean · 0–1000 m</p>
+<h1 class="rv">See beneath<br>the surface.</h1>
+<p class="rv">AquaSphere estimates ocean temperature from the surface down to 1000 m using satellite observations, and shows how uncertain each estimate is.</p>
+<div class="rv"><a class="btn p" href="#evidence">See the evidence</a><a class="btn g" href="#limits">Read the limits</a></div>
+<p class="mono rv" style="margin-top:36px">Scroll to descend ↓</p>
+</div>
+</section>
 
-  <!-- Top Sticky Navigation Bar -->
-  <header class="top-nav-bar" id="topNavBar">
-    <div class="nav-brand-group" id="topNavBrandBtn">
-      <div class="nav-brand-square">AS</div>
-      <span class="nav-brand-title">AQUASPHERE // 01</span>
-      <span class="nav-coords-badge">NIO 15.0°N 88.0°E</span>
-      <span class="nav-status-badge">
-        <span class="pip green pulse"></span> LIVE TELEMETRY
-      </span>
-    </div>
+<section id="problem">
+<div class="card r">
+<p class="mono rv">The gap</p>
+<h2 class="rv">Satellites see the surface. Floats feel the depth.</h2>
+<p class="rv">Argo floats measure true temperature profiles, but each float reports roughly every 10 days and the array is sparse. Satellites watch the whole ocean daily, yet only see its top layer.</p>
+<p class="rv">AquaSphere learns the link between the two.</p>
+</div>
+</section>
 
-    <nav class="nav-links-cluster">
-      <a href="#problem" class="nav-link" id="navLinkProblem">PROBLEM</a>
-      <a href="#how-it-works" class="nav-link" id="navLinkStrata">PIPELINE</a>
-      <a href="#evidence" class="nav-link" id="navLinkBenchmarks">EVIDENCE</a>
-      <a href="#limits" class="nav-link" id="navLinkRegimes">LIMITS</a>
-    </nav>
+<section id="how">
+<div class="card wide">
+<p class="mono rv">How it works</p>
+<h2 class="rv">From surface signals to a profile</h2>
+<ol class="rv"><div id="hline"></div>
+<li><b>Sensors</b><span>Sea-surface temperature, sea-level anomaly, salinity and wind.</span></li>
+<li><b>Embedding</b><span>A compact numeric summary of the local surface state.</span></li>
+<li><b>Profile</b><span>Temperature at 15 depths between 0 and 1000 m.</span></li>
+<li><b>Uncertainty</b><span>A range around every estimate, checked against floats the model never saw.</span></li>
+</ol>
+</div>
+</section>
 
-    <div class="nav-actions-cluster">
-      <div class="mode-switch-group">
-        <button class="mode-btn active" id="btnMode3D">3D DESCENT</button>
-        <button class="mode-btn" id="btnModeWorkstation">DATA WORKBENCH</button>
-      </div>
-      <button class="btn-primary small" id="navCtaConsoleBtn">
-        OPEN WORKBENCH →
-      </button>
-    </div>
-  </header>
+<section id="evidence">
+<div class="card wide r">
+<p class="mono rv">Evidence</p>
+<h2 class="rv">What the held-out floats say</h2>
+<p class="mono rv">Thermocline error, RMSE 50–150 m (°C) · 242 profiles · 15 floats · lower is better</p>
+<div class="bar rv" data-v="2.29" data-w="100"><span>Climatology</span><i style="width:100%"></i><b>0</b></div>
+<div class="bar rv" data-v="2.20" data-w="96"><span>Climatology + ridge</span><i style="width:96%"></i><b>0</b></div>
+<div class="bar rv m" data-v="1.59" data-w="69"><span>Neural network (v1)</span><i style="width:69%;opacity:.6"></i><b>0</b></div>
+<div class="bar rv m" data-v="1.46" data-w="64"><span>Gradient-boosted trees</span><i style="width:64%"></i><b>0</b></div>
+<p class="rv">Trees currently beat our neural network. We show that on purpose.</p>
+</div>
+</section>
 
-  <!-- Offline Banner (shown only when API is unreachable) -->
-  <div class="offline-banner" id="offlineBanner" style="display: none;">
-    <span class="badge">Offline Demo</span>
-    <span><b>Backend Unreachable:</b> Live API server is not connected. Displaying deterministic synthetic demonstration values.</span>
-  </div>
+<section id="limits">
+<div class="card">
+<p class="mono rv" style="color:var(--warm)">Limits</p>
+<h2 class="rv">What this is not yet</h2>
+<ul class="rv">
+<li>Satellite inputs in this build are a sample fixture, not real SMAP, altimetry or ERA5 fields.</li>
+<li>Training data: 2,253 Argo profiles from March to September 2025.</li>
+<li>Self-supervised pre-training has not improved results in our first test.</li>
+<li>The final held-out test year has not been evaluated.</li>
+</ul>
+</div>
+</section>
 
-  <div class="shell" id="appShell">
-    <!-- Left Navigation Rail -->
-    <nav class="rail" id="rail" aria-label="Primary Navigation">
-      <div class="brand" title="AquaSphere / OceanEmbed" id="brandBtn">AS</div>
-      <!-- Nav buttons will be injected dynamically by app.js -->
-    </nav>
+<section id="cta">
+<div class="card c">
+<h2 class="rv">Dive in.</h2>
+<p class="rv">Code, results and model cards are open.</p>
+<div class="rv"><a class="btn p" href="https://github.com/FarhanAaqil/AquaSphere">View on GitHub</a></div>
+</div>
+</section>
+</main>
+<footer class="mono">Prototype · SIH 26066 · model v0.2-baseline</footer>
 
-    <!-- Main Viewport -->
-    <div class="main">
-      <!-- Context Bar -->
-      <header class="ctxbar" id="ctxbar" aria-label="Current Coordinate Context">
-        <!-- Rendered by app.js -->
-      </header>
-
-      <!-- Dynamic Page Content -->
-      <main class="content" id="content" role="main">
-        <!-- Injected by active view renderer -->
-      </main>
-
-      <footer class="credit">
-        AquaSphere — MoES/INCOIS SIH 26066 · North Indian Ocean (5°–30°N, 45°–105°E) · Subsurface Reconstructions
-      </footer>
-    </div>
-  </div>
-
-  <!-- Interactive Guided Demo Walkthrough Card -->
-  <aside class="demo-badge" id="demoBadge" style="display: none;" aria-live="polite"></aside>
-
-  <script type="module" src="/js/app.js"></script>
+<script src="/vendor/gsap.min.js"></script>
+<script src="/vendor/ScrollTrigger.min.js"></script>
+<script src="/vendor/three.min.js"></script>
+<script type="module" src="/js/landing/main.js"></script>
 </body>
 </html>

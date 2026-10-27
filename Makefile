@@ -1,4 +1,4 @@
-.PHONY: setup data train eval serve test lint typecheck audit reproduce clean
+.PHONY: setup data train eval serve ui-data test lint typecheck audit reproduce clean
 
 # ── Setup ────────────────────────────────────────────────────────────────────
 setup:
@@ -27,6 +27,9 @@ eval-test:
 # ── Serve ────────────────────────────────────────────────────────────────────
 serve:
 	uvicorn aquasphere.serve.app:app --reload --port 8000
+
+ui-data:
+	python -c "import shutil, pathlib; (pathlib.Path('web/data')).mkdir(parents=True, exist_ok=True); shutil.copy('docs/results/metrics.json', 'web/data/metrics.json')"
 
 # ── Tests ────────────────────────────────────────────────────────────────────
 test:

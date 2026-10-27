@@ -293,6 +293,10 @@ HTML_PROTOTYPE = Path("oceanembed-prototype.html")
 if WEB_DIR.exists():
     app.mount("/js", StaticFiles(directory=str(WEB_DIR / "js")), name="js")
     app.mount("/css", StaticFiles(directory=str(WEB_DIR / "css")), name="css")
+    if (WEB_DIR / "vendor").exists():
+        app.mount("/vendor", StaticFiles(directory=str(WEB_DIR / "vendor")), name="vendor")
+    if (WEB_DIR / "data").exists():
+        app.mount("/data", StaticFiles(directory=str(WEB_DIR / "data")), name="data")
 
     @app.get("/", include_in_schema=False)
     def serve_index() -> FileResponse:
@@ -301,6 +305,14 @@ if WEB_DIR.exists():
     @app.get("/index.html", include_in_schema=False)
     def serve_index_html() -> FileResponse:
         return FileResponse(WEB_DIR / "index.html")
+
+    @app.get("/explorer", include_in_schema=False)
+    def serve_explorer() -> FileResponse:
+        return FileResponse(WEB_DIR / "explorer.html")
+
+    @app.get("/explorer.html", include_in_schema=False)
+    def serve_explorer_html() -> FileResponse:
+        return FileResponse(WEB_DIR / "explorer.html")
 
 elif HTML_PROTOTYPE.exists():
 
