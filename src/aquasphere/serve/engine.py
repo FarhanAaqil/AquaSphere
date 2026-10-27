@@ -20,7 +20,7 @@ import pandas as pd
 import torch
 
 from aquasphere.constants import DEPTH_COLS, STANDARD_DEPTHS
-from aquasphere.eval.metrics import compute_d20, compute_mld
+from aquasphere.eval.metrics import compute_d20, compute_mld, compute_ohc300
 from aquasphere.models.decoder import TierAModel
 from aquasphere.train.calibrate import ConformalCalibrator
 from aquasphere.train.train import compute_doy_features
@@ -187,6 +187,7 @@ class InferenceEngine:
         # Oceanographic indices
         mld = compute_mld(pred_abs)
         d20 = compute_d20(pred_abs)
+        ohc = compute_ohc300(pred_abs)
 
         return {
             "lat": lat,
@@ -200,6 +201,8 @@ class InferenceEngine:
             "embedding": [float(e) for e in emb_vec],
             "mld": float(mld) if not np.isnan(mld) else None,
             "d20": float(d20) if not np.isnan(d20) else None,
+            "ohc300": float(ohc) if not np.isnan(ohc) else None,
+            "climatology": [float(c) for c in clim_profile],
             "data_source": source,
             "model_version": self.model_version,
             "data_version": self.data_version,

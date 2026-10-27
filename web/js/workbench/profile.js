@@ -114,11 +114,12 @@ export function updateStatTiles(pred) {
     mldEl.innerHTML = pred.mld != null ? `${pred.mld.toFixed(1)} <span style="font-size:12px;color:var(--fg2);">m</span>` : '—';
   }
   if (ohcEl) {
-    ohcEl.textContent = pred.heat_content != null ? `${pred.heat_content.toFixed(2)} GJ/m²` : '—';
+    const val = pred.ohc300 != null ? pred.ohc300 : pred.heat_content;
+    ohcEl.innerHTML = val != null ? `${val.toFixed(1)} <span style="font-size:12px;color:var(--fg2);">°C avg</span>` : '—';
   }
   if (appEl) {
-    const isApp = pred.in_training_set !== false;
-    appEl.textContent = isApp ? 'IN DOMAIN' : 'OUTSIDE DOMAIN';
-    appEl.style.color = isApp ? 'var(--acc)' : 'var(--warm)';
+    const inDomain = pred.lat >= 5 && pred.lat <= 30 && pred.lon >= 45 && pred.lon <= 105;
+    appEl.textContent = inDomain ? 'IN DOMAIN' : 'OUTSIDE DOMAIN';
+    appEl.style.color = inDomain ? 'var(--acc)' : 'var(--warm)';
   }
 }

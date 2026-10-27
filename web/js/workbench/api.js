@@ -70,3 +70,16 @@ export async function fetchMetrics() {
   }
   return await fallback.json();
 }
+
+export async function fetchAblation() {
+  const res = await fetch('/data/ablation.json');
+  if (!res.ok) throw new Error('Failed to load ablation data');
+  return await res.json();
+}
+
+export async function fetchLeakage() {
+  const res = await fetch('/data/e1_leakage.json');
+  if (!res.ok) throw new Error('Failed to load leakage analysis data');
+  return await res.json();
+}
+

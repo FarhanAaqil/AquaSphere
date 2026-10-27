@@ -308,11 +308,11 @@ if WEB_DIR.exists():
 
     @app.get("/explorer", include_in_schema=False)
     def serve_explorer() -> FileResponse:
-        return FileResponse(WEB_DIR / "explorer.html")
+        return FileResponse(WEB_DIR / "index.html")
 
     @app.get("/explorer.html", include_in_schema=False)
     def serve_explorer_html() -> FileResponse:
-        return FileResponse(WEB_DIR / "explorer.html")
+        return FileResponse(WEB_DIR / "index.html")
 
 elif HTML_PROTOTYPE.exists():
 

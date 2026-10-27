@@ -1,12 +1,5 @@
 @import './tokens.css';
 
-:root {
-  color-scheme: dark;
-  box-sizing: border-box;
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
 html {
   scroll-padding-top: env(safe-area-inset-top, 0px);
   scroll-behavior: smooth;
@@ -314,7 +307,7 @@ footer {
   text-align: center;
 }
 
-@media (max-width: 700px) {
+@media(max-width: 700px) {
   section {
     padding: 84px 16px;
   }

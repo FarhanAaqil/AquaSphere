@@ -69,6 +69,14 @@ class PredictResponse(BaseModel):
     embedding: list[float] = Field(description="L2-normalized ocean embedding vector")
     mld: float | None = Field(description="Mixed Layer Depth (m)")
     d20: float | None = Field(description="Depth of 20°C Isotherm (m)")
+    climatology: list[float] | None = Field(
+        default=None,
+        description="Monthly climatology reference temperature profile (°C)",
+    )
+    ohc300: float | None = Field(
+        default=None,
+        description="Upper 300 m depth-averaged ocean heat content index (°C)",
+    )
     data_source: str = Field(
         description="Provenance of surface observations: 'local_store' | 'disk_cache' | 'live' | 'unavailable'"
     )

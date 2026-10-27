@@ -1,0 +1,101 @@
+{
+  "n_train": 162,
+  "n_val": 38,
+  "seeds": [
+    42,
+    123,
+    7
+  ],
+  "results": [
+    {
+      "run": "A1 (SST only)",
+      "sst": "Yes",
+      "sla": "-",
+      "sss": "-",
+      "wind": "-",
+      "patch": "-",
+      "ssl": "-",
+      "thermo_rmse_mean": 1.3166215419769287,
+      "thermo_rmse_std": 0.14019254434314596,
+      "skill_score_mean": 0.4147174237521291,
+      "skill_score_std": 0.12395150665324955,
+      "coverage_mean": 0.9471000000000002,
+      "coverage_std": 1.1102230246251565e-16
+    },
+    {
+      "run": "A2 (+ SLA)",
+      "sst": "Yes",
+      "sla": "Yes",
+      "sss": "-",
+      "wind": "-",
+      "patch": "-",
+      "ssl": "-",
+      "thermo_rmse_mean": 1.3406447172164917,
+      "thermo_rmse_std": 0.14108970232707435,
+      "skill_score_mean": 0.3933217776850227,
+      "skill_score_std": 0.12676711906091506,
+      "coverage_mean": 0.9471000000000002,
+      "coverage_std": 1.1102230246251565e-16
+    },
+    {
+      "run": "A3 (+ SSS)",
+      "sst": "Yes",
+      "sla": "Yes",
+      "sss": "Yes",
+      "wind": "-",
+      "patch": "-",
+      "ssl": "-",
+      "thermo_rmse_mean": 1.3115180333455403,
+      "thermo_rmse_std": 0.09797846550330612,
+      "skill_score_mean": 0.4225518052098797,
+      "skill_score_std": 0.08437145232928449,
+      "coverage_mean": 0.9471000000000002,
+      "coverage_std": 1.1102230246251565e-16
+    },
+    {
+      "run": "A4 (+ Wind/Curr)",
+      "sst": "Yes",
+      "sla": "Yes",
+      "sss": "Yes",
+      "wind": "Yes",
+      "patch": "-",
+      "ssl": "-",
+      "thermo_rmse_mean": 1.4043599764506023,
+      "thermo_rmse_std": 0.10272978599832476,
+      "skill_score_mean": 0.3380547949559598,
+      "skill_score_std": 0.09410255798334358,
+      "coverage_mean": 0.9471000000000002,
+      "coverage_std": 1.1102230246251565e-16
+    },
+    {
+      "run": "B (+ Patch CNN)",
+      "sst": "Yes",
+      "sla": "Yes",
+      "sss": "Yes",
+      "wind": "Yes",
+      "patch": "Yes",
+      "ssl": "-",
+      "thermo_rmse_mean": 1.5323649644851685,
+      "thermo_rmse_std": 0.04256926099159476,
+      "skill_score_mean": 0.21547482096293405,
+      "skill_score_std": 0.04376086162610516,
+      "coverage_mean": 0.9471000000000002,
+      "coverage_std": 1.1102230246251565e-16
+    },
+    {
+      "run": "C (+ SSL Pretrain)",
+      "sst": "Yes",
+      "sla": "Yes",
+      "sss": "Yes",
+      "wind": "Yes",
+      "patch": "Yes",
+      "ssl": "Yes",
+      "thermo_rmse_mean": 1.6017608245213826,
+      "thermo_rmse_std": 0.11523834827955594,
+      "skill_score_mean": 0.13903617339245777,
+      "skill_score_std": 0.12420412291062319,
+      "coverage_mean": 0.9471000000000002,
+      "coverage_std": 1.1102230246251565e-16
+    }
+  ]
+}
