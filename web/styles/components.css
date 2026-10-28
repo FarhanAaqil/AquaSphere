@@ -4,7 +4,7 @@
   min-height: 38px; padding: 0 var(--sp-4);
   border-radius: var(--radius-sm); border: 1px solid transparent;
   background: linear-gradient(180deg, #22d3ee, #0ea5b7);
-  color: #03202a; font-weight: 600; font-size: var(--fs-sm); cursor: pointer;
+  color: #03202a; font-weight: 600; font-size: var(--fs-sm); cursor: pointer; text-decoration: none;
   transition: transform var(--dur-fast), box-shadow var(--dur-fast), background var(--dur-fast);
 }
 .btn svg { width: 18px; height: 18px; }

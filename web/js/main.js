@@ -5,6 +5,7 @@ import { initSidebar } from './ui/sidebar.js';
 import { initTopbar, populateDates } from './ui/topbar.js';
 import { toast } from './ui/toasts.js';
 import { DOMAIN } from './geo.js';
+import { registerDepthSink, setDepth } from './depth.js';
 
 const body = document.body;
 const STATUS_POLL_MS = 30000;
@@ -35,7 +36,7 @@ async function syncBackground() {
     body.classList.remove('has-3d');
   }
 }
-export const background = () => bg;
+registerDepthSink((t) => bg?.setDepth(t));
 
 // ── API status ────────────────────────────────────────────────────────────────
 async function refreshStatus() {
@@ -97,7 +98,7 @@ function init() {
     sidebar.setActive(route.id);
     document.getElementById('view-title').textContent = route.label;
     document.title = route.id === 'overview' ? 'AquaSphere' : `${route.label} · AquaSphere`;
-    bg?.setDepth?.(0);
+    setDepth(0);
   });
 
   subscribe((s, changed) => {
