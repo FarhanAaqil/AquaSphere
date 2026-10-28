@@ -286,9 +286,8 @@ async def explain_prediction(
     )
 
 
-# Serve static frontend from web/ or fallback to oceanembed-prototype.html
+# Serve static frontend from web/
 WEB_DIR = Path("web")
-HTML_PROTOTYPE = Path("oceanembed-prototype.html")
 
 if WEB_DIR.exists():
     app.mount("/js", StaticFiles(directory=str(WEB_DIR / "js")), name="js")
@@ -308,17 +307,11 @@ if WEB_DIR.exists():
 
     @app.get("/explorer", include_in_schema=False)
     def serve_explorer() -> FileResponse:
-        return FileResponse(WEB_DIR / "index.html")
+        return FileResponse(WEB_DIR / "explorer.html")
 
     @app.get("/explorer.html", include_in_schema=False)
     def serve_explorer_html() -> FileResponse:
-        return FileResponse(WEB_DIR / "index.html")
-
-elif HTML_PROTOTYPE.exists():
-
-    @app.get("/", include_in_schema=False)
-    def serve_prototype_html() -> FileResponse:
-        return FileResponse(HTML_PROTOTYPE)
+        return FileResponse(WEB_DIR / "explorer.html")
 
 
 def main() -> None:

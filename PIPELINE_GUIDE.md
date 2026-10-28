@@ -27,21 +27,14 @@ Traditional ocean temperature observation relies heavily on autonomous ARGO prof
 
 ```text
 AquaSphere/
-├── data/
-│   ├── collect.py              # Ingests Argo profiles (Argovis) & collocates NOAA OISST (ERDDAP)
-│   ├── argo_sst_training.csv   # Collocated training dataset with 15 depth targets
-│   └── cache/                  # Disk cache for Argovis & NOAA OISST HTTP responses
-├── model/
-│   ├── train.py                # PyTorch neural network training & evaluation script
-│   ├── model.pt                # Checkpointed PyTorch model weights (Encoder + Decoder)
-│   ├── scaler.json             # Input standardisation statistics (mean & standard deviation)
-│   └── validation_metrics.json # Computed validation metrics (RMSE, bias, Pearson r per depth group)
-├── server/
-│   └── main.py                 # FastAPI serving layer (port 8000, CORS enabled)
-├── oceanembed-prototype.html   # Standalone interactive dashboard UI
-├── requirements.txt            # Python environment dependencies
-├── PIPELINE_GUIDE.md           # This comprehensive guide
-└── README.md                   # Project overview and real vs. simulated matrix
+├── src/aquasphere/         # Core Python package (data, models, train, eval, serve)
+├── web/                    # Modern AquaSphere frontend (Explorer, 3D Descent, Benchmarks)
+├── checkpoints/            # Trained Tier-A PyTorch model checkpoints and scalers
+├── data/                   # Argo profiles and collocated satellite records
+├── tests/                  # Complete test suite (unit, data, ml, api)
+├── docs/                   # Scientific documentation, model card, reproduce guide
+├── pyproject.toml          # Project configuration and dependency definitions
+└── README.md               # Project overview and architecture guide
 ```
 
 ---
@@ -112,45 +105,28 @@ The FastAPI application provides three endpoints:
 
 ---
 
-## 6. Frontend Dashboard Integration (`oceanembed-prototype.html`)
+## 6. Frontend Dashboard Integration (`web/`)
 
-- **Location View:** When selecting a point in the North Indian Ocean, the dashboard sends an asynchronous request to `http://localhost:8000/predict`. When received, the SVG profile updates and displays a `● Real OISST + model` badge.
-- **Validation View:** Dynamically queries `http://localhost:8000/validation` and renders the real validation metrics table.
-- **Offline Resilience:** If the server is offline, the interface catches errors silently and falls back to deterministic simulation—ensuring the prototype never breaks.
+- **Subsurface Explorer:** Real-time point selection in the North Indian Ocean ($5^\circ\text{N}–30^\circ\text{N}, 45^\circ\text{E}–105^\circ\text{E}$) sending asynchronous queries to `/predict` and `/validation/profile`.
+- **Conformal Uncertainty Bands:** Renders 90% finite-sample calibrated intervals alongside prediction curves and climatological baselines.
+- **3D Descent & Benchmarks:** WebGL Three.js oceanographic depth dive, model comparison ladder, sensor ablation analysis, and E1 leakage evaluation.
 
 ---
 
-## 7. Step-by-Step Run Instructions (From Scratch)
+## 7. Step-by-Step Run Instructions
 
 ### Step 1: Environment Setup
 ```bash
 git clone https://github.com/FarhanAaqil/AquaSphere.git
 cd AquaSphere
-pip install -r requirements.txt
+pip install -e .
 ```
 
-### Step 2: Ingest Real Data (Optional if dataset already exists)
+### Step 2: Start the AquaSphere Serving Engine
 ```bash
-python data/collect.py
+python -m aquasphere.serve.app --host 0.0.0.0 --port 8000
 ```
-*Note: An initial dataset with ~1,800+ profiles is already included in `data/argo_sst_training.csv`.*
+Verify the server is running by opening `http://127.0.0.1:8000/health` or `http://127.0.0.1:8000/ready`.
 
-### Step 3: Train the PyTorch Model
-```bash
-python model/train.py --epochs 200 --hidden 64
-```
-This produces `model/model.pt`, `model/scaler.json`, and `model/validation_metrics.json`.
-
-### Step 4: Start the API Server
-```bash
-python -m uvicorn server.main:app --host 0.0.0.0 --port 8000
-```
-Verify the server is running by opening `http://localhost:8000/health` in your browser.
-
-### Step 5: Launch the Frontend
-Open `oceanembed-prototype.html` directly in your browser:
-- On Windows: Double-click `oceanembed-prototype.html` or run:
-  ```powershell
-  Start-Process oceanembed-prototype.html
-  ```
-Navigate to **Location** and **Validation** to view the live model reconstructions.
+### Step 3: Access the Frontend
+Open `http://127.0.0.1:8000/` in your browser to experience the 3D Descent landing page and `http://127.0.0.1:8000/explorer` for the interactive Subsurface Explorer.
