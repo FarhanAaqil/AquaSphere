@@ -223,17 +223,12 @@ def test_frontend_static_serving() -> None:
     assert "AquaSphere" in resp_root.text
     assert "<nav" in resp_root.text
 
-    # Check CSS asset serving
-    resp_css = client.get("/css/landing.css")
+    # Design tokens, vendored libraries, fonts and data files are all served locally
+    resp_css = client.get("/styles/tokens.css")
     assert resp_css.status_code == 200
-    assert "card" in resp_css.text
+    assert "--abyss-0" in resp_css.text
 
-    # Check JS module asset serving
-    resp_js = client.get("/js/landing/main.js")
-    assert resp_js.status_code == 200
-    assert "initScene" in resp_js.text
-
-    # Check Explorer page serving
-    resp_exp = client.get("/explorer")
-    assert resp_exp.status_code == 200
-    assert "Explorer" in resp_exp.text
+    assert client.get("/vendor/three/three.module.min.js").status_code == 200
+    assert client.get("/fonts/inter-variable.woff2").status_code == 200
+    assert client.get("/assets/icons.svg").status_code == 200
+    assert client.get("/data/heldout.json").status_code == 200

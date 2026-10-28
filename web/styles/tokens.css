@@ -1,0 +1,107 @@
+/* AquaSphere design tokens — "descent into the deep ocean" */
+
+@font-face {
+  font-family: "Sora";
+  src: url("../fonts/sora-variable.woff2") format("woff2-variations"), url("../fonts/sora-variable.woff2") format("woff2");
+  font-weight: 100 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("../fonts/inter-variable.woff2") format("woff2-variations"), url("../fonts/inter-variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../fonts/jetbrains-mono-variable.woff2") format("woff2-variations"), url("../fonts/jetbrains-mono-variable.woff2") format("woff2");
+  font-weight: 100 800;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* Abyss */
+  --abyss-0: #020617;
+  --abyss-1: #041530;
+  --abyss-2: #062a4a;
+  --abyss-gradient: linear-gradient(180deg, var(--abyss-2) 0%, var(--abyss-1) 45%, var(--abyss-0) 100%);
+
+  /* Water column */
+  --warm-coral: #fb7185;
+  --warm-amber: #fbbf24;
+  --thermo-teal: #14b8a6;
+  --deep-indigo: #4f46e5;
+  --deep-night: #1e1b4b;
+
+  /* Bioluminescence */
+  --bio-cyan: #22d3ee;
+  --bio-glow: #67e8f9;
+  --band-cyan: rgba(34, 211, 238, 0.18);
+
+  /* Status */
+  --warn: #f97316;
+  --error: #f43f5e;
+  --ok: #34d399;
+
+  /* Text (all pass AA on --abyss-1) */
+  --text: #e6f1ff;
+  --text-muted: #9fb3c8;
+  --text-faint: #7f93a8;
+
+  /* Glass */
+  --glass: rgba(255, 255, 255, 0.04);
+  --glass-strong: rgba(255, 255, 255, 0.07);
+  --glass-border: rgba(103, 232, 249, 0.16);
+  --glass-border-hover: rgba(103, 232, 249, 0.42);
+  --glass-blur: 14px;
+  --glow: 0 0 0 1px rgba(103, 232, 249, 0.18), 0 8px 32px rgba(2, 6, 23, 0.55);
+  --glow-hover: 0 0 0 1px rgba(103, 232, 249, 0.45), 0 0 24px rgba(34, 211, 238, 0.18), 0 8px 32px rgba(2, 6, 23, 0.6);
+
+  /* Type */
+  --font-head: "Sora", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-md: 0.9375rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.5rem;
+  --fs-2xl: 2.25rem;
+  --fs-hero: clamp(2.25rem, 5vw, 4rem);
+
+  /* Space & shape */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --radius-sm: 8px;
+  --radius: 14px;
+  --radius-lg: 20px;
+
+  /* Layout */
+  --sidebar-w: 232px;
+  --sidebar-w-collapsed: 68px;
+  --topbar-h: 60px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 140ms;
+  --dur: 280ms;
+  --dur-slow: 600ms;
+
+  /* Scroll-descent progress (0 = surface, 1 = 1000 m); set from JS */
+  --depth-t: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur: 0ms;
+    --dur-slow: 0ms;
+  }
+}

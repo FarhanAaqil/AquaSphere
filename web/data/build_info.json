@@ -1,0 +1,31 @@
+{
+ "generated_at": "2026-10-28T20:40:56+00:00",
+ "git_sha": "605453f3d1e6b400c2dd9f0a0125d4702b7f3b63",
+ "git_branch": "ui-redesign",
+ "git_dirty": true,
+ "metrics_model_version": "v0.2-baseline",
+ "metrics_data_version": "argo-2025-snapshot",
+ "metrics_split": "val_float_grouped",
+ "artifacts": [
+  {
+   "key": "argo_sst_training_csv",
+   "path": "data/argo_sst_training.csv",
+   "description": "Real Argo profiles collocated with NOAA OISST v2.1 for North Indian Ocean (v1 baseline snapshot).",
+   "source_url": "https://argovis-api.colorado.edu",
+   "date_range": [
+    "2025-03-25",
+    "2025-09-15"
+   ],
+   "row_count": 2253,
+   "sha256": "30e1ef3ecf9bc9d3e89b5b0339ae15455b7ff83a10e551ce1273c807338aeffa",
+   "verified": true
+  },
+  {
+   "key": "heldout_store",
+   "path": "tests/fixtures/argo_200.parquet",
+   "description": "Profiles the serving API uses for /validation/profile lookups.",
+   "sha256": "4dc197e1a5f1e3ef624d213c81b26adcf9feea22c163a7605d4703fb99183e19",
+   "verified": null
+  }
+ ]
+}

@@ -1,0 +1,1806 @@
+{
+ "source": "tests/fixtures/argo_200.parquet",
+ "split_rule": "float-grouped 70/15/15, seed 42 (same as aquasphere.eval.report)",
+ "profiles": [
+  {
+   "profile_id": "2903137_086",
+   "float_id": "2903137",
+   "lat": 8.993,
+   "lon": 51.611,
+   "date": "2025-03-31",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2902203_332",
+   "float_id": "2902203",
+   "lat": 16.976,
+   "lon": 64.683,
+   "date": "2025-03-31",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "3902669_004",
+   "float_id": "3902669",
+   "lat": 19.667,
+   "lon": 64.65,
+   "date": "2025-03-31",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "5907082_057",
+   "float_id": "5907082",
+   "lat": 18.317,
+   "lon": 86.583,
+   "date": "2025-03-31",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903140_327",
+   "float_id": "6903140",
+   "lat": 23.946,
+   "lon": 63.05,
+   "date": "2025-03-31",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903141_327",
+   "float_id": "6903141",
+   "lat": 24.305,
+   "lon": 59.462,
+   "date": "2025-03-31",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903138_331",
+   "float_id": "6903138",
+   "lat": 10.177,
+   "lon": 55.592,
+   "date": "2025-03-31",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "7902287_003",
+   "float_id": "7902287",
+   "lat": 8.8,
+   "lon": 68.117,
+   "date": "2025-03-30",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903139_331",
+   "float_id": "6903139",
+   "lat": 11.439,
+   "lon": 47.404,
+   "date": "2025-03-30",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "2903989_005",
+   "float_id": "2903989",
+   "lat": 16.267,
+   "lon": 87.883,
+   "date": "2025-03-30",
+   "region": "Bay of Bengal",
+   "split": "val"
+  },
+  {
+   "profile_id": "5907085_053",
+   "float_id": "5907085",
+   "lat": 8.533,
+   "lon": 69.4,
+   "date": "2025-03-30",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "2902201_332",
+   "float_id": "2902201",
+   "lat": 18.844,
+   "lon": 58.541,
+   "date": "2025-03-30",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "7902251_009",
+   "float_id": "7902251",
+   "lat": 10.367,
+   "lon": 86.1,
+   "date": "2025-03-29",
+   "region": "Bay of Bengal",
+   "split": "val"
+  },
+  {
+   "profile_id": "1902673_053",
+   "float_id": "1902673",
+   "lat": 10.95,
+   "lon": 69.333,
+   "date": "2025-03-29",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "2902775_229",
+   "float_id": "2902775",
+   "lat": 7.661,
+   "lon": 88.865,
+   "date": "2025-03-29",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903140_326",
+   "float_id": "6903140",
+   "lat": 23.995,
+   "lon": 62.895,
+   "date": "2025-03-29",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903139_330",
+   "float_id": "6903139",
+   "lat": 11.522,
+   "lon": 47.323,
+   "date": "2025-03-29",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "6903141_326",
+   "float_id": "6903141",
+   "lat": 23.96,
+   "lon": 59.409,
+   "date": "2025-03-29",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903138_330",
+   "float_id": "6903138",
+   "lat": 10.297,
+   "lon": 55.442,
+   "date": "2025-03-29",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903145_050",
+   "float_id": "2903145",
+   "lat": 9.234,
+   "lon": 55.497,
+   "date": "2025-03-29",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903142_086",
+   "float_id": "2903142",
+   "lat": 13.397,
+   "lon": 62.346,
+   "date": "2025-03-29",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "7902249_009",
+   "float_id": "7902249",
+   "lat": 10.483,
+   "lon": 84.233,
+   "date": "2025-03-29",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "1901898_250",
+   "float_id": "1901898",
+   "lat": 13.114,
+   "lon": 48.976,
+   "date": "2025-03-28",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "4903794_017",
+   "float_id": "4903794",
+   "lat": 7.229,
+   "lon": 88.305,
+   "date": "2025-03-28",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "7902190_034",
+   "float_id": "7902190",
+   "lat": 15.838,
+   "lon": 83.173,
+   "date": "2025-03-28",
+   "region": "Bay of Bengal",
+   "split": "test"
+  },
+  {
+   "profile_id": "7901016_059",
+   "float_id": "7901016",
+   "lat": 11.985,
+   "lon": 56.115,
+   "date": "2025-03-28",
+   "region": "Arabian Sea",
+   "split": "val"
+  },
+  {
+   "profile_id": "5907179_003",
+   "float_id": "5907179",
+   "lat": 12.317,
+   "lon": 68.15,
+   "date": "2025-03-28",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903149_050",
+   "float_id": "2903149",
+   "lat": 13.313,
+   "lon": 62.82,
+   "date": "2025-03-28",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "7902248_009",
+   "float_id": "7902248",
+   "lat": 9.217,
+   "lon": 87.033,
+   "date": "2025-03-28",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "6990612_053",
+   "float_id": "6990612",
+   "lat": 10.967,
+   "lon": 68.983,
+   "date": "2025-03-28",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "1902756_002",
+   "float_id": "1902756",
+   "lat": 14.441,
+   "lon": 52.762,
+   "date": "2025-03-28",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "1902681_035",
+   "float_id": "1902681",
+   "lat": 10.936,
+   "lon": 83.556,
+   "date": "2025-03-28",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903147_050",
+   "float_id": "2903147",
+   "lat": 14.636,
+   "lon": 58.814,
+   "date": "2025-03-27",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "4903793_017",
+   "float_id": "4903793",
+   "lat": 6.261,
+   "lon": 90.998,
+   "date": "2025-03-27",
+   "region": "Bay of Bengal",
+   "split": "val"
+  },
+  {
+   "profile_id": "2903988_007",
+   "float_id": "2903988",
+   "lat": 13.85,
+   "lon": 85.85,
+   "date": "2025-03-27",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903895_043",
+   "float_id": "2903895",
+   "lat": 10.067,
+   "lon": 63.717,
+   "date": "2025-03-27",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "3902573_043",
+   "float_id": "3902573",
+   "lat": 8.65,
+   "lon": 65.8,
+   "date": "2025-03-27",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "7901136_067",
+   "float_id": "7901136",
+   "lat": 15.727,
+   "lon": 69.21,
+   "date": "2025-03-27",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2902765_188",
+   "float_id": "2902765",
+   "lat": 9.867,
+   "lon": 84.473,
+   "date": "2025-03-27",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903139_329",
+   "float_id": "6903139",
+   "lat": 11.616,
+   "lon": 47.248,
+   "date": "2025-03-27",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "6903140_325",
+   "float_id": "6903140",
+   "lat": 24.037,
+   "lon": 62.74,
+   "date": "2025-03-27",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903138_329",
+   "float_id": "6903138",
+   "lat": 10.412,
+   "lon": 55.329,
+   "date": "2025-03-27",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903141_325",
+   "float_id": "6903141",
+   "lat": 24.012,
+   "lon": 59.541,
+   "date": "2025-03-27",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "5907180_003",
+   "float_id": "5907180",
+   "lat": 16.533,
+   "lon": 68.667,
+   "date": "2025-03-26",
+   "region": "Arabian Sea",
+   "split": "val"
+  },
+  {
+   "profile_id": "1902458_066",
+   "float_id": "1902458",
+   "lat": 12.396,
+   "lon": 67.261,
+   "date": "2025-03-26",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "5907171_004",
+   "float_id": "5907171",
+   "lat": 13.667,
+   "lon": 88.8,
+   "date": "2025-03-26",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "6990608_070",
+   "float_id": "6990608",
+   "lat": 8.183,
+   "lon": 88.683,
+   "date": "2025-03-26",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "4903869_003",
+   "float_id": "4903869",
+   "lat": 15.667,
+   "lon": 87.3,
+   "date": "2025-03-26",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903892_056",
+   "float_id": "2903892",
+   "lat": 12.833,
+   "lon": 83.633,
+   "date": "2025-03-26",
+   "region": "Bay of Bengal",
+   "split": "val"
+  },
+  {
+   "profile_id": "5907092_065",
+   "float_id": "5907092",
+   "lat": 15.165,
+   "lon": 64.11,
+   "date": "2025-03-26",
+   "region": "Arabian Sea",
+   "split": "val"
+  },
+  {
+   "profile_id": "4903783_043",
+   "float_id": "4903783",
+   "lat": 6.354,
+   "lon": 67.772,
+   "date": "2025-03-26",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "4903777_043",
+   "float_id": "4903777",
+   "lat": 6.583,
+   "lon": 63.117,
+   "date": "2025-03-26",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "1902198_247",
+   "float_id": "1902198",
+   "lat": 6.095,
+   "lon": 84.51,
+   "date": "2025-03-25",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903059_476",
+   "float_id": "6903059",
+   "lat": 19.342,
+   "lon": 61.285,
+   "date": "2025-03-25",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6990705_003",
+   "float_id": "6990705",
+   "lat": 6.417,
+   "lon": 88.75,
+   "date": "2025-03-25",
+   "region": "Bay of Bengal",
+   "split": "val"
+  },
+  {
+   "profile_id": "6990609_056",
+   "float_id": "6990609",
+   "lat": 10.417,
+   "lon": 89.467,
+   "date": "2025-03-25",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "7901127_056",
+   "float_id": "7901127",
+   "lat": 8.817,
+   "lon": 92.05,
+   "date": "2025-03-25",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "1902594_071",
+   "float_id": "1902594",
+   "lat": 9.376,
+   "lon": 86.499,
+   "date": "2025-03-25",
+   "region": "Bay of Bengal",
+   "split": "test"
+  },
+  {
+   "profile_id": "6990611_054",
+   "float_id": "6990611",
+   "lat": 21.6,
+   "lon": 66.883,
+   "date": "2025-03-25",
+   "region": "Arabian Sea",
+   "split": "val"
+  },
+  {
+   "profile_id": "7902200_024",
+   "float_id": "7902200",
+   "lat": 6.304,
+   "lon": 65.188,
+   "date": "2025-03-25",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903138_328",
+   "float_id": "6903138",
+   "lat": 10.558,
+   "lon": 55.205,
+   "date": "2025-03-25",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903140_324",
+   "float_id": "6903140",
+   "lat": 24.038,
+   "lon": 62.579,
+   "date": "2025-03-25",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903141_324",
+   "float_id": "6903141",
+   "lat": 23.865,
+   "lon": 59.207,
+   "date": "2025-03-25",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903149_051",
+   "float_id": "2903149",
+   "lat": 13.213,
+   "lon": 63.016,
+   "date": "2025-04-07",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903139_335",
+   "float_id": "6903139",
+   "lat": 11.342,
+   "lon": 47.45,
+   "date": "2025-04-07",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "7902190_035",
+   "float_id": "7902190",
+   "lat": 15.903,
+   "lon": 82.785,
+   "date": "2025-04-07",
+   "region": "Bay of Bengal",
+   "split": "test"
+  },
+  {
+   "profile_id": "1901898_251",
+   "float_id": "1901898",
+   "lat": 13.089,
+   "lon": 48.892,
+   "date": "2025-04-07",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "4903794_018",
+   "float_id": "4903794",
+   "lat": 7.41,
+   "lon": 88.293,
+   "date": "2025-04-07",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "7901016_060",
+   "float_id": "7901016",
+   "lat": 12.47,
+   "lon": 56.387,
+   "date": "2025-04-07",
+   "region": "Arabian Sea",
+   "split": "val"
+  },
+  {
+   "profile_id": "5907179_004",
+   "float_id": "5907179",
+   "lat": 12.1,
+   "lon": 68.0,
+   "date": "2025-04-07",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "7902248_010",
+   "float_id": "7902248",
+   "lat": 9.483,
+   "lon": 86.917,
+   "date": "2025-04-07",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "6990612_054",
+   "float_id": "6990612",
+   "lat": 11.167,
+   "lon": 69.017,
+   "date": "2025-04-07",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "1902756_003",
+   "float_id": "1902756",
+   "lat": 14.346,
+   "lon": 52.794,
+   "date": "2025-04-07",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "2903147_051",
+   "float_id": "2903147",
+   "lat": 14.18,
+   "lon": 58.942,
+   "date": "2025-04-07",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "1902289_025",
+   "float_id": "1902289",
+   "lat": 5.837,
+   "lon": 68.121,
+   "date": "2025-04-07",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "1902681_036",
+   "float_id": "1902681",
+   "lat": 10.796,
+   "lon": 83.363,
+   "date": "2025-04-06",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903988_008",
+   "float_id": "2903988",
+   "lat": 13.783,
+   "lon": 86.0,
+   "date": "2025-04-06",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903895_044",
+   "float_id": "2903895",
+   "lat": 9.9,
+   "lon": 63.283,
+   "date": "2025-04-06",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "3902573_044",
+   "float_id": "3902573",
+   "lat": 8.383,
+   "lon": 65.783,
+   "date": "2025-04-06",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "7901136_068",
+   "float_id": "7901136",
+   "lat": 15.151,
+   "lon": 69.392,
+   "date": "2025-04-06",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903141_330",
+   "float_id": "6903141",
+   "lat": 23.588,
+   "lon": 59.891,
+   "date": "2025-04-06",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903140_330",
+   "float_id": "6903140",
+   "lat": 23.307,
+   "lon": 63.364,
+   "date": "2025-04-06",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903138_334",
+   "float_id": "6903138",
+   "lat": 10.141,
+   "lon": 55.983,
+   "date": "2025-04-06",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2902765_189",
+   "float_id": "2902765",
+   "lat": 9.632,
+   "lon": 84.56,
+   "date": "2025-04-06",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "4903793_018",
+   "float_id": "4903793",
+   "lat": 5.824,
+   "lon": 91.046,
+   "date": "2025-04-06",
+   "region": "Bay of Bengal",
+   "split": "val"
+  },
+  {
+   "profile_id": "4903839_002",
+   "float_id": "4903839",
+   "lat": 23.997,
+   "lon": 59.528,
+   "date": "2025-04-06",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "5907141_002",
+   "float_id": "5907141",
+   "lat": 24.194,
+   "lon": 58.558,
+   "date": "2025-04-06",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903955_001",
+   "float_id": "2903955",
+   "lat": 23.892,
+   "lon": 59.584,
+   "date": "2025-04-05",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "1902458_067",
+   "float_id": "1902458",
+   "lat": 12.414,
+   "lon": 67.248,
+   "date": "2025-04-05",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903139_334",
+   "float_id": "6903139",
+   "lat": 11.345,
+   "lon": 47.444,
+   "date": "2025-04-05",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "5907180_004",
+   "float_id": "5907180",
+   "lat": 16.333,
+   "lon": 69.05,
+   "date": "2025-04-05",
+   "region": "Arabian Sea",
+   "split": "val"
+  },
+  {
+   "profile_id": "5907171_005",
+   "float_id": "5907171",
+   "lat": 13.683,
+   "lon": 88.55,
+   "date": "2025-04-05",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "4903869_004",
+   "float_id": "4903869",
+   "lat": 15.267,
+   "lon": 87.367,
+   "date": "2025-04-05",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903892_057",
+   "float_id": "2903892",
+   "lat": 13.15,
+   "lon": 83.983,
+   "date": "2025-04-05",
+   "region": "Bay of Bengal",
+   "split": "val"
+  },
+  {
+   "profile_id": "4903777_044",
+   "float_id": "4903777",
+   "lat": 6.683,
+   "lon": 63.667,
+   "date": "2025-04-05",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6990608_071",
+   "float_id": "6990608",
+   "lat": 8.45,
+   "lon": 88.783,
+   "date": "2025-04-05",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "5907092_066",
+   "float_id": "5907092",
+   "lat": 14.819,
+   "lon": 64.012,
+   "date": "2025-04-05",
+   "region": "Arabian Sea",
+   "split": "val"
+  },
+  {
+   "profile_id": "4903783_044",
+   "float_id": "4903783",
+   "lat": 6.367,
+   "lon": 67.736,
+   "date": "2025-04-05",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "1902198_248",
+   "float_id": "1902198",
+   "lat": 6.365,
+   "lon": 84.764,
+   "date": "2025-04-04",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "1902457_068",
+   "float_id": "1902457",
+   "lat": 5.783,
+   "lon": 68.182,
+   "date": "2025-04-04",
+   "region": "Arabian Sea",
+   "split": "val"
+  },
+  {
+   "profile_id": "6990609_057",
+   "float_id": "6990609",
+   "lat": 10.6,
+   "lon": 89.767,
+   "date": "2025-04-04",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "6990705_004",
+   "float_id": "6990705",
+   "lat": 6.733,
+   "lon": 88.967,
+   "date": "2025-04-04",
+   "region": "Bay of Bengal",
+   "split": "val"
+  },
+  {
+   "profile_id": "6990611_055",
+   "float_id": "6990611",
+   "lat": 21.533,
+   "lon": 67.083,
+   "date": "2025-04-04",
+   "region": "Arabian Sea",
+   "split": "val"
+  },
+  {
+   "profile_id": "7901127_057",
+   "float_id": "7901127",
+   "lat": 9.217,
+   "lon": 91.867,
+   "date": "2025-04-04",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903141_329",
+   "float_id": "6903141",
+   "lat": 23.925,
+   "lon": 60.047,
+   "date": "2025-04-04",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903140_329",
+   "float_id": "6903140",
+   "lat": 23.637,
+   "lon": 63.306,
+   "date": "2025-04-04",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903138_333",
+   "float_id": "6903138",
+   "lat": 10.111,
+   "lon": 55.881,
+   "date": "2025-04-04",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903059_477",
+   "float_id": "6903059",
+   "lat": 19.581,
+   "lon": 61.35,
+   "date": "2025-04-04",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "7902200_025",
+   "float_id": "7902200",
+   "lat": 6.102,
+   "lon": 65.609,
+   "date": "2025-04-04",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "1902594_072",
+   "float_id": "1902594",
+   "lat": 9.771,
+   "lon": 86.467,
+   "date": "2025-04-04",
+   "region": "Bay of Bengal",
+   "split": "test"
+  },
+  {
+   "profile_id": "2903955_001D",
+   "float_id": "2903955",
+   "lat": 23.964,
+   "lon": 59.648,
+   "date": "2025-04-04",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "4903839_001",
+   "float_id": "4903839",
+   "lat": 23.788,
+   "lon": 59.558,
+   "date": "2025-04-03",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "5907141_001",
+   "float_id": "5907141",
+   "lat": 24.213,
+   "lon": 58.408,
+   "date": "2025-04-03",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903139_333",
+   "float_id": "6903139",
+   "lat": 11.334,
+   "lon": 47.512,
+   "date": "2025-04-03",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "2903891_057",
+   "float_id": "2903891",
+   "lat": 12.933,
+   "lon": 89.817,
+   "date": "2025-04-03",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "7901126_057",
+   "float_id": "7901126",
+   "lat": 11.167,
+   "lon": 90.117,
+   "date": "2025-04-03",
+   "region": "Bay of Bengal",
+   "split": "val"
+  },
+  {
+   "profile_id": "4903776_057",
+   "float_id": "4903776",
+   "lat": 10.3,
+   "lon": 88.467,
+   "date": "2025-04-03",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "2902766_194",
+   "float_id": "2902766",
+   "lat": 15.388,
+   "lon": 87.026,
+   "date": "2025-04-03",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "4903839_001D",
+   "float_id": "4903839",
+   "lat": 23.845,
+   "lon": 59.635,
+   "date": "2025-04-02",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903434_036",
+   "float_id": "2903434",
+   "lat": 9.863,
+   "lon": 84.743,
+   "date": "2025-04-02",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "7901125_057",
+   "float_id": "7901125",
+   "lat": 13.35,
+   "lon": 90.05,
+   "date": "2025-04-02",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "1902672_055",
+   "float_id": "1902672",
+   "lat": 17.533,
+   "lon": 70.567,
+   "date": "2025-04-02",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "5907084_055",
+   "float_id": "5907084",
+   "lat": 19.683,
+   "lon": 64.567,
+   "date": "2025-04-02",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "7901128_055",
+   "float_id": "7901128",
+   "lat": 17.933,
+   "lon": 67.65,
+   "date": "2025-04-02",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6990610_055",
+   "float_id": "6990610",
+   "lat": 20.25,
+   "lon": 62.333,
+   "date": "2025-04-02",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903141_328",
+   "float_id": "6903141",
+   "lat": 24.304,
+   "lon": 59.914,
+   "date": "2025-04-02",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903140_328",
+   "float_id": "6903140",
+   "lat": 23.855,
+   "lon": 63.181,
+   "date": "2025-04-02",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903138_332",
+   "float_id": "6903138",
+   "lat": 10.143,
+   "lon": 55.759,
+   "date": "2025-04-02",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6990514_091",
+   "float_id": "6990514",
+   "lat": 18.13,
+   "lon": 64.731,
+   "date": "2025-04-02",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "4903660_091",
+   "float_id": "4903660",
+   "lat": 16.003,
+   "lon": 59.586,
+   "date": "2025-04-02",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "2902272_217",
+   "float_id": "2902272",
+   "lat": 18.796,
+   "lon": 59.822,
+   "date": "2025-04-02",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "5907141_001D",
+   "float_id": "5907141",
+   "lat": 24.276,
+   "lon": 58.407,
+   "date": "2025-04-02",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2902306_034",
+   "float_id": "2902306",
+   "lat": 20.328,
+   "lon": 63.001,
+   "date": "2025-04-02",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6990715_003",
+   "float_id": "6990715",
+   "lat": 9.4,
+   "lon": 68.45,
+   "date": "2025-04-01",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2902768_188",
+   "float_id": "2902768",
+   "lat": 13.258,
+   "lon": 84.303,
+   "date": "2025-04-01",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "2902770_187",
+   "float_id": "2902770",
+   "lat": 11.778,
+   "lon": 90.231,
+   "date": "2025-04-01",
+   "region": "Bay of Bengal",
+   "split": "val"
+  },
+  {
+   "profile_id": "2902772_187",
+   "float_id": "2902772",
+   "lat": 14.466,
+   "lon": 85.169,
+   "date": "2025-04-01",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903139_332",
+   "float_id": "6903139",
+   "lat": 11.344,
+   "lon": 47.486,
+   "date": "2025-04-01",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "2903138_086",
+   "float_id": "2903138",
+   "lat": 6.745,
+   "lon": 67.559,
+   "date": "2025-04-01",
+   "region": "Arabian Sea",
+   "split": "val"
+  },
+  {
+   "profile_id": "5907083_057",
+   "float_id": "5907083",
+   "lat": 11.75,
+   "lon": 86.167,
+   "date": "2025-04-01",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "1902671_055",
+   "float_id": "1902671",
+   "lat": 16.933,
+   "lon": 70.167,
+   "date": "2025-04-01",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "4903775_057",
+   "float_id": "4903775",
+   "lat": 13.567,
+   "lon": 90.667,
+   "date": "2025-04-01",
+   "region": "Bay of Bengal",
+   "split": "val"
+  },
+  {
+   "profile_id": "1902669_057",
+   "float_id": "1902669",
+   "lat": 15.0,
+   "lon": 86.7,
+   "date": "2025-04-01",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "1901897_251",
+   "float_id": "1901897",
+   "lat": 18.0,
+   "lon": 60.999,
+   "date": "2025-04-01",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903140_086",
+   "float_id": "2903140",
+   "lat": 5.96,
+   "lon": 65.823,
+   "date": "2025-04-01",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "6903138_338",
+   "float_id": "6903138",
+   "lat": 10.384,
+   "lon": 56.515,
+   "date": "2025-04-14",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903140_334",
+   "float_id": "6903140",
+   "lat": 22.418,
+   "lon": 63.092,
+   "date": "2025-04-14",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "1902457_069",
+   "float_id": "1902457",
+   "lat": 6.093,
+   "lon": 68.546,
+   "date": "2025-04-14",
+   "region": "Arabian Sea",
+   "split": "val"
+  },
+  {
+   "profile_id": "6990609_058",
+   "float_id": "6990609",
+   "lat": 10.75,
+   "lon": 89.917,
+   "date": "2025-04-14",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903139_338",
+   "float_id": "6903139",
+   "lat": 11.519,
+   "lon": 47.453,
+   "date": "2025-04-14",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "6990705_005",
+   "float_id": "6990705",
+   "lat": 6.883,
+   "lon": 89.1,
+   "date": "2025-04-14",
+   "region": "Bay of Bengal",
+   "split": "val"
+  },
+  {
+   "profile_id": "6990611_056",
+   "float_id": "6990611",
+   "lat": 21.617,
+   "lon": 67.05,
+   "date": "2025-04-14",
+   "region": "Arabian Sea",
+   "split": "val"
+  },
+  {
+   "profile_id": "7901127_058",
+   "float_id": "7901127",
+   "lat": 9.4,
+   "lon": 91.517,
+   "date": "2025-04-14",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903141_334",
+   "float_id": "6903141",
+   "lat": 23.021,
+   "lon": 59.413,
+   "date": "2025-04-14",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903955_005",
+   "float_id": "2903955",
+   "lat": 24.564,
+   "lon": 59.075,
+   "date": "2025-04-14",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903059_478",
+   "float_id": "6903059",
+   "lat": 19.886,
+   "lon": 61.361,
+   "date": "2025-04-14",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "7902200_026",
+   "float_id": "7902200",
+   "lat": 5.954,
+   "lon": 65.876,
+   "date": "2025-04-14",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "1902594_073",
+   "float_id": "1902594",
+   "lat": 10.144,
+   "lon": 86.27,
+   "date": "2025-04-14",
+   "region": "Bay of Bengal",
+   "split": "test"
+  },
+  {
+   "profile_id": "4903839_006",
+   "float_id": "4903839",
+   "lat": 24.675,
+   "lon": 59.419,
+   "date": "2025-04-13",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903891_058",
+   "float_id": "2903891",
+   "lat": 12.933,
+   "lon": 89.817,
+   "date": "2025-04-13",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "4903776_058",
+   "float_id": "4903776",
+   "lat": 10.317,
+   "lon": 88.5,
+   "date": "2025-04-13",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "7901126_058",
+   "float_id": "7901126",
+   "lat": 11.383,
+   "lon": 90.3,
+   "date": "2025-04-13",
+   "region": "Bay of Bengal",
+   "split": "val"
+  },
+  {
+   "profile_id": "5907141_006",
+   "float_id": "5907141",
+   "lat": 25.091,
+   "lon": 59.31,
+   "date": "2025-04-13",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903434_037",
+   "float_id": "2903434",
+   "lat": 9.941,
+   "lon": 84.777,
+   "date": "2025-04-12",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "2902766_195",
+   "float_id": "2902766",
+   "lat": 14.993,
+   "lon": 87.026,
+   "date": "2025-04-12",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903141_333",
+   "float_id": "6903141",
+   "lat": 23.119,
+   "lon": 59.437,
+   "date": "2025-04-12",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903138_337",
+   "float_id": "6903138",
+   "lat": 10.282,
+   "lon": 56.406,
+   "date": "2025-04-12",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903140_333",
+   "float_id": "6903140",
+   "lat": 22.569,
+   "lon": 63.096,
+   "date": "2025-04-12",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "7901125_058",
+   "float_id": "7901125",
+   "lat": 13.533,
+   "lon": 90.283,
+   "date": "2025-04-12",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "5907084_056",
+   "float_id": "5907084",
+   "lat": 19.683,
+   "lon": 64.55,
+   "date": "2025-04-12",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "1902672_056",
+   "float_id": "1902672",
+   "lat": 17.75,
+   "lon": 70.467,
+   "date": "2025-04-12",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "7901128_056",
+   "float_id": "7901128",
+   "lat": 17.867,
+   "lon": 67.417,
+   "date": "2025-04-12",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6990610_056",
+   "float_id": "6990610",
+   "lat": 20.767,
+   "lon": 62.35,
+   "date": "2025-04-12",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "4903839_005",
+   "float_id": "4903839",
+   "lat": 24.4,
+   "lon": 59.007,
+   "date": "2025-04-12",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2902272_218",
+   "float_id": "2902272",
+   "lat": 18.924,
+   "lon": 59.848,
+   "date": "2025-04-12",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903955_004",
+   "float_id": "2903955",
+   "lat": 24.207,
+   "lon": 58.866,
+   "date": "2025-04-12",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903139_337",
+   "float_id": "6903139",
+   "lat": 11.448,
+   "lon": 47.379,
+   "date": "2025-04-12",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "2902306_035",
+   "float_id": "2902306",
+   "lat": 20.588,
+   "lon": 62.79,
+   "date": "2025-04-12",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903138_087",
+   "float_id": "2903138",
+   "lat": 6.907,
+   "lon": 67.461,
+   "date": "2025-04-11",
+   "region": "Arabian Sea",
+   "split": "val"
+  },
+  {
+   "profile_id": "2902768_189",
+   "float_id": "2902768",
+   "lat": 13.638,
+   "lon": 84.547,
+   "date": "2025-04-11",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "2902770_188",
+   "float_id": "2902770",
+   "lat": 11.864,
+   "lon": 90.222,
+   "date": "2025-04-11",
+   "region": "Bay of Bengal",
+   "split": "val"
+  },
+  {
+   "profile_id": "2902772_188",
+   "float_id": "2902772",
+   "lat": 14.716,
+   "lon": 85.104,
+   "date": "2025-04-11",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "6990715_004",
+   "float_id": "6990715",
+   "lat": 9.467,
+   "lon": 68.033,
+   "date": "2025-04-11",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "5907141_005",
+   "float_id": "5907141",
+   "lat": 24.949,
+   "lon": 59.219,
+   "date": "2025-04-11",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "4903775_058",
+   "float_id": "4903775",
+   "lat": 13.817,
+   "lon": 90.9,
+   "date": "2025-04-11",
+   "region": "Bay of Bengal",
+   "split": "val"
+  },
+  {
+   "profile_id": "5907083_058",
+   "float_id": "5907083",
+   "lat": 11.633,
+   "lon": 85.933,
+   "date": "2025-04-11",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "1902669_058",
+   "float_id": "1902669",
+   "lat": 14.933,
+   "lon": 86.5,
+   "date": "2025-04-11",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "1902671_056",
+   "float_id": "1902671",
+   "lat": 17.133,
+   "lon": 69.783,
+   "date": "2025-04-11",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "1901897_252",
+   "float_id": "1901897",
+   "lat": 17.966,
+   "lon": 61.081,
+   "date": "2025-04-11",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903140_087",
+   "float_id": "2903140",
+   "lat": 6.122,
+   "lon": 66.211,
+   "date": "2025-04-11",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "4903660_092",
+   "float_id": "4903660",
+   "lat": 16.121,
+   "lon": 59.646,
+   "date": "2025-04-11",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "6990514_092",
+   "float_id": "6990514",
+   "lat": 17.957,
+   "lon": 64.931,
+   "date": "2025-04-11",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "2903137_087",
+   "float_id": "2903137",
+   "lat": 8.941,
+   "lon": 54.05,
+   "date": "2025-04-10",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "1902190_254",
+   "float_id": "1902190",
+   "lat": 5.239,
+   "lon": 49.695,
+   "date": "2025-04-10",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903138_336",
+   "float_id": "6903138",
+   "lat": 10.202,
+   "lon": 56.263,
+   "date": "2025-04-10",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903141_332",
+   "float_id": "6903141",
+   "lat": 23.211,
+   "lon": 59.493,
+   "date": "2025-04-10",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "6903140_332",
+   "float_id": "6903140",
+   "lat": 22.734,
+   "lon": 63.18,
+   "date": "2025-04-10",
+   "region": "Arabian Sea",
+   "split": "train"
+  },
+  {
+   "profile_id": "5907082_058",
+   "float_id": "5907082",
+   "lat": 17.833,
+   "lon": 86.4,
+   "date": "2025-04-10",
+   "region": "Bay of Bengal",
+   "split": "train"
+  },
+  {
+   "profile_id": "2902203_333",
+   "float_id": "2902203",
+   "lat": 16.672,
+   "lon": 64.634,
+   "date": "2025-04-10",
+   "region": "Arabian Sea",
+   "split": "test"
+  },
+  {
+   "profile_id": "3902669_005",
+   "float_id": "3902669",
+   "lat": 19.667,
+   "lon": 64.617,
+   "date": "2025-04-10",
+   "region": "Arabian Sea",
+   "split": "train"
+  }
+ ]
+}
