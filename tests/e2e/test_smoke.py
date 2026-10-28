@@ -63,7 +63,9 @@ def base_url() -> Iterator[str]:
         proc.wait(timeout=10)
 
 
-@pytest.fixture(scope="session")
+# Module scope: the sync Playwright API runs an event loop for as long as it is open, which
+# would break async tests elsewhere in the suite if it stayed alive for the whole session.
+@pytest.fixture(scope="module")
 def browser() -> Iterator[object]:
     with playwright_api.sync_playwright() as p:
         try:
