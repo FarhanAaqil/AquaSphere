@@ -52,8 +52,8 @@
     <div class="topbar__controls">
       <label class="field field--inline">
         <span class="field__label">Date</span>
-        <input type="date" id="date-picker" class="input input--mono" disabled aria-describedby="date-hint">
-        <span class="sr-only" id="date-hint">Only dates inside the API's available range can be chosen.</span>
+        <select id="date-picker" class="select input--mono" disabled aria-describedby="date-hint"><option>Loading…</option></select>
+        <span class="sr-only" id="date-hint">Only dates with surface observations inside the API's date range can be chosen.</span>
       </label>
       <div class="segmented" role="radiogroup" aria-label="Sensor mode" id="mode-switch">
         <button role="radio" aria-checked="true" data-mode="delayed">Delayed</button>
