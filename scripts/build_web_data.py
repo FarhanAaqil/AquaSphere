@@ -7,6 +7,7 @@ Outputs (all derived from real artefacts, nothing simulated):
     web/data/build_info.json   git SHA, branch, data manifest hashes, model/data versions
     web/data/floats.json       last known position of every Argo float in the processed archive
     web/data/heldout.json      positions of the profiles in the validation lookup store
+    web/data/dates.json        dates present in the local surface store (/meta only gives a range)
 """
 
 from __future__ import annotations
@@ -173,12 +174,22 @@ def heldout() -> dict:
     }
 
 
+def store_dates() -> dict:
+    """Read the date index straight from the Zarr v3 group metadata (no zarr import needed)."""
+    meta = ROOT / "data" / "store" / "surface.zarr" / "zarr.json"
+    if not meta.exists():
+        return {"source": None, "dates": []}
+    attrs = json.loads(meta.read_text(encoding="utf-8")).get("attributes", {})
+    return {"source": "data/store/surface.zarr", "dates": sorted(attrs.get("dates", []))}
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     for name, payload in (
         ("build_info.json", build_info()),
         ("floats.json", floats()),
         ("heldout.json", heldout()),
+        ("dates.json", store_dates()),
     ):
         (OUT / name).write_text(json.dumps(payload, indent=1), encoding="utf-8")
         print(f"wrote web/data/{name}")
