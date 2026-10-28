@@ -1,11 +1,44 @@
 :root {
-  --bg: #060b14;
-  --bg1: #0d1726;
-  --fg: #eaf2ff;
-  --fg2: #9fb0c8;
-  --acc: #2dd4bf;            /* the only accent */
-  --warm: #f5a524;           /* ONLY for: thermocline highlight, SYNTHETIC badge, "Limits" label */
+  /* Core Oceanographic Dark Palette */
+  --bg: #030712;
+  --bg-deep: #02050e;
+  --bg-surface: #060e1d;
+  --bg-card: rgba(8, 18, 34, 0.78);
+  --bg-card-hover: rgba(13, 27, 49, 0.88);
+  --bg-glass: rgba(6, 14, 28, 0.7);
+  --bg-glass-elevated: rgba(12, 25, 48, 0.85);
+
+  /* Borders & Highlights */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-glow: rgba(45, 212, 191, 0.25);
+  --border-glow-active: rgba(45, 212, 191, 0.6);
+  --border-amber: rgba(245, 158, 11, 0.4);
+
+  /* Typography Colors */
+  --fg: #f0f6fc;
+  --fg-muted: #9fb0c8;
+  --fg-subtle: #627288;
+  --fg-dim: #3d4a5d;
+
+  /* Scientific Accents */
+  --acc: #2dd4bf;              /* Primary Tactical Teal */
+  --acc-bright: #00f2fe;       /* Neon Cyan Glow */
+  --acc-dim: rgba(45, 212, 191, 0.15);
+  --warm: #f59e0b;             /* Thermocline 50–150m, Synthetic Badge, Limits */
+  --warm-glow: rgba(245, 158, 11, 0.2);
+  --danger: #ef4444;
+  --success: #10b981;
+
+  /* Radii & Shadows */
+  --r-sm: 8px;
   --r-md: 14px;
   --r-lg: 20px;
-  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --r-full: 9999px;
+  --shadow-hud: 0 8px 32px 0 rgba(0, 8, 20, 0.45);
+  --shadow-glow: 0 0 24px rgba(45, 212, 191, 0.2);
+
+  /* Transitions & Animation */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: 0.15s var(--ease-out);
+  --transition-normal: 0.25s var(--ease-out);
 }
