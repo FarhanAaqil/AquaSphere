@@ -59,7 +59,7 @@ export async function createMap(container, { onPick, label = 'Map of the North I
     overlay.append(t);
   };
   for (let lon = 50; lon <= 100; lon += 10) text('map-tick', `${lon}°E`, VIEW.lat0 + 0.9, lon);
-  for (let lat = 10; lat <= 30; lat += 10) text('map-tick', `${lat}°N`, lat, VIEW.lon0 + 1.4);
+  for (let lat = 10; lat <= 30; lat += 10) text('map-tick', `${lat}°N`, lat, VIEW.lon0 + 0.3, 'transform:translate(0,-50%)');
   if (regions) {
     text('map-region', 'Arabian Sea', 14.5, 63);
     text('map-region', 'Bay of Bengal', 14.5, 88.5);
