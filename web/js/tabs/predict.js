@@ -179,7 +179,7 @@ export default {
         await renderWidth(root, p, ctx);
       } catch (err) {
         if (ctx.signal.aborted || my !== req) return;
-        badges.replaceChildren(badge(err.kind === 'unavailable' ? 'unavailable' : 'pending'));
+        badges.replaceChildren(badge(err.kind === 'unavailable' ? 'unavailable' : 'offline'));
         clearResult();
         errorState(chart, err, { retry: () => run(lat, lon) });
       }

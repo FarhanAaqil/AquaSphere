@@ -275,7 +275,7 @@ function initDescentSection(root, ctx) {
       profileNote = err.kind === 'unavailable' ? 'Data unavailable (503)' : 'API unreachable';
       const note = document.createElement('span');
       note.textContent = `${profileNote} `;
-      where.append(note, badge(err.kind === 'unavailable' ? 'unavailable' : 'pending'));
+      where.append(note, badge(err.kind === 'unavailable' ? 'unavailable' : 'offline'));
     }
     paintTemp();
   });

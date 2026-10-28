@@ -19,6 +19,7 @@ const SOURCES = {
   results: { label: 'Results file', cls: 'results', title: 'Read from an evaluation results file produced by the pipeline (web/data).' },
   unavailable: { label: 'Data unavailable', cls: 'unavailable', title: 'The API returned 503: no observation from store, cache or live.' },
   pending: { label: 'Pending', cls: 'pending', title: 'No results exist for this yet.' },
+  offline: { label: 'API offline', cls: 'unavailable', title: 'The serving API did not respond.' },
   unreported: { label: 'Source not reported', cls: 'muted', title: 'This endpoint returns no provenance field, so the input source cannot be shown.' },
 };
 

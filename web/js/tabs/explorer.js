@@ -121,7 +121,7 @@ export default {
         render(r, p);
       } catch (err) {
         if (ctx.signal.aborted || selected !== p) return;
-        badges.replaceChildren(badge(err.kind === 'unavailable' ? 'unavailable' : 'pending'));
+        badges.replaceChildren(badge(err.kind === 'unavailable' ? 'unavailable' : 'offline'));
         errorState(chart, err, { retry: () => select(p) });
         $(root, '[data-ref="scores"]').replaceChildren();
       }

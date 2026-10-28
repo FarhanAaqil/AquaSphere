@@ -128,10 +128,29 @@ flowchart TD
 
 ## 🖥️ Modular Interactive Frontend (`web/`)
 
-AquaSphere provides a high-performance, native web experience (no build step, no bundler, no frontend framework) organized into two unified interfaces:
+A single-page app in vanilla ES modules: no build step, no bundler, no framework, and no CDN calls at runtime. Three.js r170, GSAP 3.12.5 + ScrollTrigger, Plotly 2.35.2 and the Sora / Inter / JetBrains Mono fonts are all vendored, so it works fully offline.
 
-1. **Descent (`/`):** A cinematic, 3D scroll-driven ocean dive powered by Three.js (r128) and GSAP ScrollTrigger (3.12.5). Users descend through 8 calibrated ocean strata from the sunlit surface to 1000m abyssal depths, observing satellite orbits, buoyant drifting particles, floating Argo soundings, and live baseline metrics.
-2. **Explorer (`/explorer`):** A precision scientific workbench featuring an interactive SVG map (5–30°N, 45–105°E), click-to-predict profile reconstruction, 0–1000m depth-stretched profile charts with conformal 90% prediction intervals, live stat tiles (D20, MLD, Heat Content), and nearest held-out Argo profile comparisons.
+Nine views, served at `/` with hash routes:
+
+| Tab | What it shows | Data |
+|---|---|---|
+| Overview | Zooming globe with real Argo float positions, headline results, live `/health` + `/ready`, scroll descent to 1000 m | metrics.json, `/predict` |
+| Predict | Click-to-predict profile with 90% conformal band, D20/MLD, applicability check, interval width | `/predict` |
+| Profile Explorer | Predicted vs held-out Argo, per-depth errors, Arabian Sea / Bay of Bengal filter, training floats flagged | `/validation/profile` |
+| Ocean Cube | 3-D stacked depth slices + 2-D map, date scrubber | `/predict_batch` |
+| Uncertainty | Coverage, interval-width maps; reliability, region/season and dissimilarity views pending | ablation.json, `/predict_batch` |
+| Sensors & Modes | E3 sensor ladder, E7 nowcast vs delayed | ablation.json |
+| Experiments | E1 leakage gap, E2 baseline ladder; E5, E8 pending | e1_leakage.json, metrics.json |
+| Explain | Feature and sensor-family attribution, embedding map | `/explain`, `/grid` |
+| Data & Model Cards | Build SHA, artefact hashes, splits, source audit, limitations, PDF export | build_info.json, `/ready` |
+
+Every chart carries a provenance badge (Local store, Disk cache, Live, Offline demo (synthetic), Results file). A 503 renders as "Data unavailable"; missing experiment results render as "Pending". Offline demo mode (display settings) is opt-in and watermarked.
+
+```bash
+make ui-data            # copy results into web/data and build dates/floats/held-out/build-info files
+make serve              # API + frontend on http://localhost:8000
+pytest tests/e2e --no-cov   # Playwright smoke tests (playwright install chromium first)
+```
 
 ---
 
@@ -186,13 +205,13 @@ AquaSphere/
 │   ├── train/                  # Training loop, conformal calibration, anomaly modeling
 │   ├── eval/                   # Metrics (RMSE, D20, MLD, SS), baseline ladder, ablation runner
 │   └── serve/                  # FastAPI app, Pydantic schemas, 4-stage honest resolver, engine
-├── web/                        # Native ES module browser frontend
-│   ├── index.html              # Descent 3D cinematic landing page
-│   ├── explorer.html           # Precision ocean intelligence workbench
-│   ├── css/                    # tokens.css, landing.css, workbench.css
-│   ├── js/                     # landing/ (scene, scroll, main) & workbench/ (api, map, profile, evidence, main)
-│   ├── vendor/                 # Local Three.js r128, GSAP & ScrollTrigger 3.12.5
-│   └── data/                   # metrics.json benchmark store
+├── web/                        # Vanilla ES module single-page frontend (no build step)
+│   ├── index.html              # App shell, import map, nine hash-routed tabs
+│   ├── styles/                 # tokens.css, base.css, components.css, tabs/
+│   ├── js/                     # main, router, api, state, demo; three/, charts/, tabs/, ui/
+│   ├── vendor/                 # three r170 (+ OrbitControls), GSAP 3.12.5 + ScrollTrigger, Plotly 2.35.2
+│   ├── fonts/ assets/          # Self-hosted fonts, icon sprite, Natural Earth coastlines
+│   └── data/                   # Results files + files written by scripts/build_web_data.py
 ├── tests/                      # Unit, ML behavior, API contract, and data integrity tests
 └── docs/                       # ARCHITECTURE.md, MODEL_CARD.md, DATA_CARD.md, REPRODUCE.md
 ```
