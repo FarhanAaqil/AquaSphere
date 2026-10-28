@@ -54,7 +54,7 @@ input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.85); cu
   border: 1px solid var(--glass-border); background: var(--glass); color: var(--text-muted);
   font-size: var(--fs-xs); font-weight: 600; cursor: pointer;
 }
-.chip[aria-pressed="true"] { color: var(--text); border-color: var(--bio-cyan); background: rgba(34, 211, 238, 0.14); }
+.chip[aria-pressed="true"], .chip[aria-checked="true"] { color: var(--text); border-color: var(--bio-cyan); background: rgba(34, 211, 238, 0.14); }
 
 .switch { display: grid; grid-template-columns: auto 1fr; gap: 2px var(--sp-3); align-items: center; cursor: pointer; }
 .switch input { width: 18px; height: 18px; accent-color: var(--bio-cyan); }

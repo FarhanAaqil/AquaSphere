@@ -63,3 +63,6 @@
   .rung, .sensor-row { grid-template-columns: 110px 1fr 64px; }
   .mode-compare { grid-template-columns: 1fr; }
 }
+.cube-msg:empty { display: none; }
+.cube-msg { position: absolute; inset: var(--sp-4); z-index: 2; }
+.cube-msg .state { min-height: 100%; background: rgba(2, 6, 23, 0.8); }

@@ -74,6 +74,8 @@ async function request(path, { method = 'GET', body, timeout = 10000, retries = 
 
 const qs = (o) => new URLSearchParams(Object.entries(o).filter(([, v]) => v != null)).toString();
 
+export const isDemo = () => state.demo;
+
 // ── Status endpoints (never answered by the demo: they describe the real API) ──
 export const health = (opts) => request('/health', { timeout: 4000, retries: 0, ...opts });
 export const ready = (opts) => request('/ready', { timeout: 4000, retries: 0, ...opts });
