@@ -35,7 +35,8 @@ serve:
 	uvicorn aquasphere.serve.app:app --reload --port 8000
 
 ui-data:
-	python -c "import shutil, pathlib; (pathlib.Path('web/data')).mkdir(parents=True, exist_ok=True); shutil.copy('docs/results/metrics.json', 'web/data/metrics.json')"
+	python -c "import shutil, pathlib; (pathlib.Path('web/data')).mkdir(parents=True, exist_ok=True); [shutil.copy(f'docs/results/{n}.json', f'web/data/{n}.json') for n in ('metrics', 'ablation', 'e1_leakage')]"
+	python scripts/build_web_data.py
 
 # ── Tests ────────────────────────────────────────────────────────────────────
 test:

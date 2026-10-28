@@ -138,6 +138,7 @@ addopts = [
     "--tb=short",
 ]
 asyncio_mode = "auto"
+markers = ["e2e: browser smoke tests for the web frontend (Playwright, starts the API)"]
 filterwarnings = [
     "ignore:.*Module aquasphere was previously imported.*",
 ]
