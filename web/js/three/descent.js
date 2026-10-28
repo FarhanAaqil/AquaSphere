@@ -41,7 +41,7 @@ export function initDescent(section, onProgress, { stages = [], onStage = () => 
 
   if (ST && gsap) {
     gsap.registerPlugin(ST);
-    const st = ST.create({ trigger: section, start: 'top 60%', end: 'bottom 60%', scrub: reduced ? false : 0.6, onUpdate: (self) => update(self.progress) });
+    const st = ST.create({ trigger: section, start: 'top 60%', end: 'bottom bottom', scrub: reduced ? false : 0.6, onUpdate: (self) => update(self.progress) });
     kills.push(() => st.kill());
     if (!reduced) {
       for (const s of stages) {

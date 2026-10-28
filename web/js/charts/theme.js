@@ -89,7 +89,8 @@ export function layout(extra = {}) {
     font: FONT,
     margin: { l: 56, r: 18, t: 16, b: 48 },
     hoverlabel: { bgcolor: '#041530', bordercolor: C.glow, font: { family: MONO, size: 12, color: C.text } },
-    legend: { orientation: 'h', x: 0, y: -0.18, font: { size: 11, color: C.muted }, bgcolor: 'rgba(0,0,0,0)' },
+    // Legend above the plot so it never collides with bottom axis titles
+    legend: { orientation: 'h', x: 0, y: 1.02, yanchor: 'bottom', font: { size: 11, color: C.muted }, bgcolor: 'rgba(0,0,0,0)' },
     xaxis: axis(xaxis),
     yaxis: axis(yaxis),
     ...rest,
@@ -114,6 +115,9 @@ export function config(name = 'aquasphere') {
 export async function plot(el, traces, lay, ctx, name) {
   const Plotly = await loadPlotly();
   if (ctx?.signal.aborted) return null;
+  // If a loading/error state replaced the chart's DOM, Plotly still holds stale state on the
+  // element and react() would draw nothing. Purge so it rebuilds from scratch.
+  if (el._fullLayout && !el.querySelector('.plot-container')) Plotly.purge(el);
   await Plotly.react(el, traces, layout(lay), config(name));
   if (ctx && !el.dataset.purgeHooked) {
     el.dataset.purgeHooked = '1';

@@ -35,6 +35,8 @@ export function createOceanCube(host, { land, labelsEl, reduced }) {
   controls.minDistance = 4;
   controls.maxDistance = 14;
   controls.target.set(0, -SY / 2, 0);
+  controls.minPolarAngle = 0.25;          // keep the volume readable: no looking straight down
+  controls.maxPolarAngle = Math.PI * 0.62; // or from far underneath
   controls.autoRotate = !reduced;
   controls.autoRotateSpeed = 0.35;
   controls.addEventListener('start', () => { controls.autoRotate = false; });
@@ -149,7 +151,10 @@ export function createOceanCube(host, { land, labelsEl, reduced }) {
     const h = host.clientHeight;
     for (const s of slices) {
       anchor.set(SX / 2 + 0.12, s.mesh.position.y, SZ / 2).project(camera);
-      s.label.style.transform = `translate(${((anchor.x + 1) / 2) * w}px, ${((1 - anchor.y) / 2) * h - 8}px)`;
+      // keep labels inside the stage whatever the camera angle
+      const lx = Math.min(w - 64, Math.max(4, ((anchor.x + 1) / 2) * w));
+      const ly = Math.min(h - 18, Math.max(4, ((1 - anchor.y) / 2) * h - 8));
+      s.label.style.transform = `translate(${lx}px, ${ly}px)`;
     }
   };
 

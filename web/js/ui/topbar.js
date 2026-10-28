@@ -97,6 +97,7 @@ export function initTopbar({ onExport }) {
   btn.addEventListener('click', () => setOpen(pop.hidden));
   document.addEventListener('click', (e) => { if (!pop.hidden && !pop.contains(e.target) && !btn.contains(e.target)) setOpen(false); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !pop.hidden) { setOpen(false); btn.focus(); } });
+  window.addEventListener('hashchange', () => setOpen(false));
 
   const perf = document.getElementById('perf-toggle');
   const demo = document.getElementById('demo-toggle');

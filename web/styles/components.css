@@ -149,7 +149,7 @@ input[type="range"] { accent-color: var(--bio-cyan); width: 100%; }
 
 .kv { display: grid; grid-template-columns: auto 1fr; gap: 6px var(--sp-4); margin: 0; font-size: var(--fs-sm); }
 .kv dt { color: var(--text-muted); }
-.kv dd { margin: 0; font-family: var(--font-mono); font-size: var(--fs-xs); word-break: break-all; color: var(--text); }
+.kv dd { margin: 0; font-family: var(--font-mono); font-size: var(--fs-xs); overflow-wrap: anywhere; color: var(--text); }
 
 .table-wrap { overflow-x: auto; }
 .table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }

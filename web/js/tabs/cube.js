@@ -78,19 +78,25 @@ export default {
     $(root, '[data-ref="layer"]').addEventListener('change', (e) => { layer = e.target.value; drawMap(); });
 
     // Date scrubber over the same list the top-bar picker offers
-    const picker = document.getElementById('date-picker');
-    const dates = picker?.tagName === 'SELECT' ? [...picker.options].map((o) => o.value).filter((v) => /^\d{4}-/.test(v)) : [];
+    // The picker is filled once /meta resolves, which can be after this tab mounts, so the
+    // list is re-read every time the date settles (see show()).
+    let dates = [];
     const scrub = $(root, '[data-ref="scrub"]');
     const out = $(root, '[data-ref="scrub-out"]');
-    scrub.max = String(Math.max(0, dates.length - 1));
-    scrub.disabled = dates.length < 2;
+    const playBtn = $(root, '[data-ref="play"]');
+    const syncDates = () => {
+      const picker = document.getElementById('date-picker');
+      dates = picker?.tagName === 'SELECT' ? [...picker.options].map((o) => o.value).filter((v) => /^\d{4}-/.test(v)) : [];
+      scrub.max = String(Math.max(0, dates.length - 1));
+      scrub.disabled = dates.length < 2;
+      playBtn.disabled = dates.length < 2;
+    };
+    syncDates();
     scrub.addEventListener('input', () => { out.textContent = dates[+scrub.value] || '—'; });
     scrub.addEventListener('change', () => { if (dates[+scrub.value]) set({ date: dates[+scrub.value] }); });
 
     let playing = false;
     let busy = false;
-    const playBtn = $(root, '[data-ref="play"]');
-    playBtn.disabled = dates.length < 2;
     const setPlaying = (on) => {
       playing = on;
       playBtn.setAttribute('aria-label', on ? 'Pause' : 'Play through dates');
@@ -133,6 +139,7 @@ export default {
     }
 
     async function show(date) {
+      syncDates();
       out.textContent = date || '—';
       if (dates.includes(date)) scrub.value = String(dates.indexOf(date));
       const b3 = $(root, '[data-ref="badges3d"]');

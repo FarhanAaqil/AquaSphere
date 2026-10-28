@@ -48,7 +48,6 @@ export function errorState(el, err, { retry } = {}) {
 /** "Pending" — an experiment or view whose results have not been produced yet. */
 export function pending(el, { title, detail, needs } = {}) {
   const box = render(el, 'state--pending', `${icon('i-clock')}<div class="state__title"></div><div class="state__detail"></div>`);
-  box.prepend(badge('pending'));
   box.querySelector('.state__title').textContent = title || 'Pending';
   box.querySelector('.state__detail').textContent = detail || 'No results have been produced for this yet.';
   if (needs) {

@@ -64,7 +64,7 @@ export default {
         ['Checkpoint', state.ready?.details?.checkpoint_path],
         ['Evaluated model', metrics ? `${metrics.model_version} (metrics.json)` : null],
         ['Evaluated data', metrics?.data_version],
-        ['Git SHA', info?.git_sha ? `${info.git_sha.slice(0, 12)}${info.git_dirty ? ' (uncommitted changes)' : ''}` : 'not recorded'],
+        ['Web data built at commit', info?.git_sha ? `${info.git_sha.slice(0, 12)}${info.git_dirty ? ' (uncommitted changes)' : ''}` : 'not recorded'],
         ['Branch', info?.git_branch],
         ['Web data built', info?.generated_at],
         ['Architecture', 'Encoder → 16-d L2-normalised embedding → heteroscedastic decoder (15 depths, mean + σ) → split conformal 90%'],
@@ -83,7 +83,7 @@ export default {
         <div class="stat__label">Used for evaluation · ${metrics.split}</div>
         <div class="split-bar" role="img" aria-label="Training ${metrics.n_train_profiles} profiles, held-out ${metrics.n_eval_profiles} profiles">
           <div style="width:${tr}%;background:${C.teal}">Train ${metrics.n_train_profiles}</div>
-          <div style="width:${100 - tr}%;background:${C.cyan}">Held out ${metrics.n_eval_profiles}</div></div>
+          <div style="width:${100 - tr}%;background:${C.cyan}" title="Held out ${metrics.n_eval_profiles}">${metrics.n_eval_profiles}</div></div>
         <p class="card__foot">Float-grouped 70 / 15 / 15 by float ID, seed 42. Held-out = validation partition (${metrics.n_eval_floats} floats); test partition kept aside.</p>
         <div class="stat__label" style="margin-top:var(--sp-3)">Documented temporal split</div>
         <div class="split-bar" style="opacity:.55"><div style="width:61%;background:${C.teal}">Train 2015–22</div><div style="width:13%;background:${C.amber}">Val 2023</div><div style="width:26%;background:${C.coral}">Test 2024–25</div></div>
