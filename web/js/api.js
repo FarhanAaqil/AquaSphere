@@ -115,7 +115,16 @@ export function explain({ lat, lon, date }, opts) {
 
 // ── Static results files shipped in web/data (produced by the eval pipeline) ──
 const staticCache = new Map();
-export function results(name) {
+let indexPromise;
+/** web/data/index.json lists the results files that exist; null if the index itself is missing. */
+function resultsIndex() {
+  indexPromise ||= fetch('data/index.json').then((r) => (r.ok ? r.json() : null)).then((d) => (d ? new Set(d.files) : null)).catch(() => null);
+  return indexPromise;
+}
+
+export async function results(name) {
+  const index = await resultsIndex();
+  if (index && !index.has(name)) throw new ApiError('not_found', `${name}.json not produced yet`, { status: 404 });
   if (!staticCache.has(name)) {
     staticCache.set(
       name,

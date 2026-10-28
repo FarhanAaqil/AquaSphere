@@ -8,6 +8,8 @@ Outputs (all derived from real artefacts, nothing simulated):
     web/data/floats.json       last known position of every Argo float in the processed archive
     web/data/heldout.json      positions of the profiles in the validation lookup store
     web/data/dates.json        dates present in the local surface store (/meta only gives a range)
+    web/data/index.json        names of every results file present, so the UI can show "Pending"
+                               for missing ones without probing for 404s
 """
 
 from __future__ import annotations
@@ -193,6 +195,9 @@ def main() -> None:
     ):
         (OUT / name).write_text(json.dumps(payload, indent=1), encoding="utf-8")
         print(f"wrote web/data/{name}")
+    present = sorted(p.stem for p in OUT.glob("*.json") if p.name != "index.json")
+    (OUT / "index.json").write_text(json.dumps({"files": present}, indent=1), encoding="utf-8")
+    print(f"wrote web/data/index.json ({len(present)} files)")
 
 
 if __name__ == "__main__":
