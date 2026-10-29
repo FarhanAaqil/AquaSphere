@@ -30,7 +30,7 @@
 
 ## ⏱️ Minute 2:00 – 3:30 | Live Interactive System Tour
 
-*(Screen sharing the live web application on `http://localhost:8000`)*
+*(Screen sharing the live web application on `http://127.0.0.1:8000`)*
 
 1. **Overview View (0:20):**
    > *"Here on the Overview, you see our 5-stage pipeline flowline. Notice our real-time regime monitoring card: it's evaluating key North Indian Ocean coordinates via vectorized batch inference to flag upper-ocean heat anomalies in the Bay of Bengal and upwelling in the Arabian Sea."*

@@ -29,7 +29,7 @@ python -m aquasphere.eval.report --split val
 python -m aquasphere.serve.app --host 0.0.0.0 --port 8000
 ```
 
-Open **`http://localhost:8000`** in any web browser to explore the 9 interactive views.
+Open **`http://127.0.0.1:8000`** in any web browser to explore the 9 interactive views.
 
 ---
 

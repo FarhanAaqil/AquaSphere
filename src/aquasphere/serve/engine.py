@@ -12,6 +12,7 @@ Features:
 from __future__ import annotations
 
 import logging
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +29,13 @@ from aquasphere.train.calibrate import ConformalCalibrator
 from aquasphere.train.train import compute_doy_features
 
 logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=4096)
+def _season(date: str) -> tuple[float, float, int]:
+    """(sin_doy, cos_doy, month index) for a date, parsed once (same formula as training)."""
+    sin_doy, cos_doy = compute_doy_features(pd.Series([date]))
+    return float(sin_doy[0]), float(cos_doy[0]), int(pd.to_datetime(date).month) - 1
 
 
 class InferenceEngine:
@@ -128,7 +136,7 @@ class InferenceEngine:
         features: dict[str, float],
     ) -> np.ndarray:
         """Construct normalized 18-d input vector."""
-        sin_doy, cos_doy = compute_doy_features(pd.Series([date]))
+        sin_doy, cos_doy, _ = _season(date)
 
         sst = features.get("sst", 28.0)
         sss = features.get("sss", 35.0)
@@ -150,8 +158,8 @@ class InferenceEngine:
             [
                 lat,
                 lon,
-                float(sin_doy[0]),
-                float(cos_doy[0]),
+                sin_doy,
+                cos_doy,
                 sst,
                 sss,
                 sla,
@@ -193,7 +201,7 @@ class InferenceEngine:
             emb_vec = emb.cpu().numpy()[0]
 
         # Climatology addition
-        month = pd.to_datetime(date).month - 1
+        month = _season(date)[2]
         clim_profile = self.climatology[month]
         pred_abs = pred_mean_anom.cpu().numpy()[0] + clim_profile
 
@@ -235,6 +243,8 @@ class InferenceEngine:
         sources_list: list[str],
     ) -> list[dict[str, Any]]:
         """Vectorized batch prediction."""
+        if not points:
+            return []
         if self.model is None:
             raise RuntimeError("Model is not initialized.")
 
@@ -256,7 +266,7 @@ class InferenceEngine:
         results: list[dict[str, Any]] = []
         for i in range(n):
             date = points[i]["date"]
-            month = pd.to_datetime(date).month - 1
+            month = _season(date)[2]
             clim = self.climatology[month]
             pred_abs = anoms[i] + clim
 

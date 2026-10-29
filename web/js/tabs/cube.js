@@ -153,7 +153,7 @@ export default {
       }
       busy = true;
       grid = null;
-      loading(mapEl, `Reconstructing the ${GRID_STEP}° grid for ${date} (first load can take ~15 s)…`);
+      loading(mapEl, `Reconstructing the ${GRID_STEP}° grid for ${date}…`);
       try {
         const g = await loadGrid(date, { signal: ctx.signal });
         if (state.date !== date) return;

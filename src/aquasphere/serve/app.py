@@ -104,6 +104,8 @@ def readiness_check() -> ReadyResponse:
             "model_version": engine.model_version,
             "data_version": engine.data_version,
             "zarr_store_path": str(resolver.store_path),
+            "store_synthetic": resolver.store_synthetic,
+            "store_dates": len(resolver.zarr_store.dates) if resolver.zarr_store else 0,
             "checkpoint_path": str(engine.checkpoint_path),
             "weights": engine.weights,
             "training_membership": engine.membership.source,
@@ -188,18 +190,23 @@ async def predict_single_get(
 async def predict_batch(req: PredictBatchRequest) -> PredictBatchResponse:
     """Vectorized batch prediction for up to 5,000 points."""
     points = [{"lat": item.lat, "lon": item.lon, "date": item.date} for item in req.items]
-    features_list: list[dict[str, float]] = []
-    sources_list: list[str] = []
-
-    for item in req.items:
-        obs, source = await resolver.resolve(
-            lat=item.lat,
-            lon=item.lon,
-            date=item.date,
-            overrides=item.features,
+    resolved = await resolver.resolve_many(
+        [(item.lat, item.lon, item.date, item.features) for item in req.items]
+    )
+    missing = [i for i, r in enumerate(resolved) if r is None]
+    if missing:
+        first = req.items[missing[0]]
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                f"Surface satellite observation unavailable for {len(missing)} of "
+                f"{len(req.items)} points (first: {first.lat:.2f}°N, {first.lon:.2f}°E on "
+                f"{first.date}). Silent simulation is strictly prohibited by AquaSphere "
+                "integrity policies."
+            ),
         )
-        features_list.append(obs)
-        sources_list.append(source)
+    features_list = [r[0] for r in resolved if r is not None]
+    sources_list = [r[1] for r in resolved if r is not None]
 
     preds = engine.predict_batch(points, features_list, sources_list)
     return PredictBatchResponse(
@@ -221,16 +228,18 @@ async def get_grid_predictions(
     lats = np.arange(lat_min, lat_max + 1e-4, step)
     lons = np.arange(lon_min, lon_max + 1e-4, step)
 
-    cells: list[tuple[float, float, dict[str, float], str, dict[str, Any]]] = []
-    for lt in lats:
-        for ln in lons:
-            try:
-                obs, src = await resolver.resolve(float(lt), float(ln), date)
-            except HTTPException:
-                # No observation for this cell: leave it out rather than invent one
-                continue
-            pred = engine.predict_point(float(lt), float(ln), date, obs, src)
-            cells.append((float(lt), float(ln), obs, src, pred))
+    coords = [(float(lt), float(ln)) for lt in lats for ln in lons]
+    resolved = await resolver.resolve_many([(lt, ln, date, None) for lt, ln in coords])
+    # Cells with no observation are left out rather than invented
+    kept = [(c, r) for c, r in zip(coords, resolved, strict=True) if r is not None]
+    preds = engine.predict_batch(
+        [{"lat": lt, "lon": ln, "date": date} for (lt, ln), _ in kept],
+        [r[0] for _, r in kept],
+        [r[1] for _, r in kept],
+    )
+    cells: list[tuple[float, float, dict[str, float], str, dict[str, Any]]] = [
+        (lt, ln, obs, src, pred) for ((lt, ln), (obs, src)), pred in zip(kept, preds, strict=True)
+    ]
 
     # Real PCA of this grid's embeddings (centred, first two right-singular vectors)
     proj = np.zeros((len(cells), 2))
