@@ -20,6 +20,7 @@ import pandas as pd
 from scipy.interpolate import PchipInterpolator
 
 from aquasphere.constants import DEPTH_COLS, STANDARD_DEPTHS
+from aquasphere.data.contracts import validate_argo_profiles
 from aquasphere.data.splits import extract_float_id
 
 logger = logging.getLogger(__name__)
@@ -156,6 +157,8 @@ def process_legacy_argo_csv(
         records.append(entry)
 
     out_df = pd.DataFrame(records)
+    # Fail loudly on bad data instead of writing it (blueprint §15 data contracts)
+    validate_argo_profiles(out_df)
 
     if output_parquet is not None:
         out_p = Path(output_parquet)

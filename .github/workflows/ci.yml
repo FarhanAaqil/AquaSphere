@@ -29,6 +29,8 @@ jobs:
           enable-cache: true
       - name: Install dev deps
         run: uv pip install --system -e ".[dev]"
+      - name: Lockfile in sync with pyproject
+        run: uv lock --check
       - name: ruff check
         run: ruff check src/ tests/ scripts/
       - name: ruff format check
