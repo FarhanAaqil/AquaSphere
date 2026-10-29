@@ -156,7 +156,7 @@ class B1Ridge(_AnomalyModel):
     def predict(self, df: pd.DataFrame) -> np.ndarray:
         x = self._x(df)
         anomaly = np.column_stack([np.asarray(m.predict(x), dtype=np.float64) for m in self.models])
-        return self.clim.predict(df) + anomaly
+        return np.asarray(self.clim.predict(df) + anomaly, dtype=np.float64)
 
 
 class B2LightGBM(_AnomalyModel):
@@ -187,7 +187,7 @@ class B2LightGBM(_AnomalyModel):
     def predict(self, df: pd.DataFrame) -> np.ndarray:
         x = tier_a_features(df)
         anomaly = np.column_stack([np.asarray(m.predict(x), dtype=np.float64) for m in self.models])
-        return self.clim.predict(df) + anomaly
+        return np.asarray(self.clim.predict(df) + anomaly, dtype=np.float64)
 
 
 def _standardise(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:

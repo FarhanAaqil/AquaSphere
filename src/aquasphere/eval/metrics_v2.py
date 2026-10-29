@@ -119,7 +119,7 @@ def anomaly_correlation(
 
 def _float_blocks(groups: np.ndarray) -> list[np.ndarray]:
     _, inverse = np.unique(groups, return_inverse=True)
-    return [np.flatnonzero(inverse == k) for k in range(inverse.max() + 1)]
+    return [np.flatnonzero(inverse == k) for k in range(int(np.max(inverse)) + 1)]
 
 
 def bootstrap_rmse(
@@ -140,7 +140,7 @@ def bootstrap_rmse(
     rng = np.random.default_rng(seed)
     draws = rng.integers(0, len(blocks), size=(n_boot, len(blocks)))
     reps = np.sqrt(b_sq[draws].sum(axis=1) / np.maximum(b_n[draws].sum(axis=1), 1))
-    point = float(np.sqrt(b_sq.sum() / max(b_n.sum(), 1)))
+    point = float(np.sqrt(b_sq.sum() / max(int(b_n.sum()), 1)))
     return {
         "rmse": point,
         "ci_low": float(np.percentile(reps, 2.5)),
@@ -172,7 +172,9 @@ def paired_rmse_difference(
     draws = rng.integers(0, len(blocks), size=(n_boot, len(blocks)))
     n = np.maximum(bn[draws].sum(axis=1), 1)
     diffs = np.sqrt(ba[draws].sum(axis=1) / n) - np.sqrt(bb[draws].sum(axis=1) / n)
-    point = float(np.sqrt(ba.sum() / max(bn.sum(), 1)) - np.sqrt(bb.sum() / max(bn.sum(), 1)))
+    point = float(
+        np.sqrt(ba.sum() / max(int(bn.sum()), 1)) - np.sqrt(bb.sum() / max(int(bn.sum()), 1))
+    )
     # two-sided percentile p-value for H0: difference = 0
     p = float(min(1.0, 2 * min(np.mean(diffs <= 0), np.mean(diffs >= 0))))
     return {
