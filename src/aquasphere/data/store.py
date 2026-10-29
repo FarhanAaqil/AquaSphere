@@ -64,6 +64,7 @@ class SurfaceZarrStore:
         lat_grid: np.ndarray = DEFAULT_LAT_GRID,
         lon_grid: np.ndarray = DEFAULT_LON_GRID,
         overwrite: bool = True,
+        time_chunk: int = 1,
     ) -> SurfaceZarrStore:
         """Create a new Zarr store with initialized coordinate grids and variables."""
         p = Path(store_path)
@@ -91,7 +92,7 @@ class SurfaceZarrStore:
             root.create_array(
                 v,
                 shape=(n_times, n_lats, n_lons),
-                chunks=(1, n_lats, n_lons),
+                chunks=(min(time_chunk, max(1, n_times)), n_lats, n_lons),
                 dtype="float32",
                 fill_value=np.nan,
             )
@@ -101,7 +102,7 @@ class SurfaceZarrStore:
             root.create_array(
                 m,
                 shape=(n_times, n_lats, n_lons),
-                chunks=(1, n_lats, n_lons),
+                chunks=(min(time_chunk, max(1, n_times)), n_lats, n_lons),
                 dtype="uint8",
                 fill_value=0,
             )
@@ -144,6 +145,24 @@ class SurfaceZarrStore:
             for m, arr in mask_arrays.items():
                 if m in self.root:
                     self.root[m][t_idx, :, :] = np.asarray(arr, dtype=np.uint8)
+
+    def write_block(
+        self,
+        first_date: str,
+        var_blocks: dict[str, np.ndarray],
+        mask_blocks: dict[str, np.ndarray] | None = None,
+    ) -> None:
+        """Write [n_days, lat, lon] blocks starting at first_date (consecutive store dates).
+
+        Much faster than write_day for multi-day chunks: each chunk is written once.
+        """
+        t0 = self.date_to_idx[first_date]
+        for v, block in var_blocks.items():
+            if v in self.root:
+                self.root[v][t0 : t0 + block.shape[0], :, :] = np.asarray(block, dtype=np.float32)
+        for m, block in (mask_blocks or {}).items():
+            if m in self.root:
+                self.root[m][t0 : t0 + block.shape[0], :, :] = np.asarray(block, dtype=np.uint8)
 
     def read_day(
         self,

@@ -62,3 +62,25 @@ def test_verify_erddap_dataset_error_handling():
     )
     assert not res["verified"]
     assert "failed" in res["notes"]
+
+
+def test_directory_artefacts_get_a_tree_hash(tmp_path: Path) -> None:
+    store = tmp_path / "s.zarr"
+    (store / "sst").mkdir(parents=True)
+    (store / "zarr.json").write_text("{}", encoding="utf-8")
+    (store / "sst" / "c0").write_bytes(b"\x00\x01")
+    first = compute_file_sha256(store)
+
+    m = DataManifest(manifest_path=tmp_path / "manifest.json")
+    entry = m.register_artifact("store", store, description="test store")
+    assert entry["sha256"] == first
+    assert entry["size_bytes"] == 4  # "{}" + two chunk bytes
+    assert m.verify_artifact("store")
+
+    (store / "sst" / "c0").write_bytes(b"\x00\x02")  # a chunk's content changes
+    assert not m.verify_artifact("store")
+
+    (store / "sst" / "c0").write_bytes(b"\x00\x01")  # restored...
+    assert m.verify_artifact("store")
+    (store / "sst" / "c0").rename(store / "sst" / "c1")  # ...but renamed: still a different tree
+    assert not m.verify_artifact("store")

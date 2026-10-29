@@ -5,6 +5,7 @@ import { badge, tag } from '../ui/badges.js';
 import { setDepth } from '../depth.js';
 import { DEPTHS, initDescent, depthToProgress } from '../three/descent.js';
 import { h, $, onDate, onState, countUp, reveal, fmt } from './_util.js';
+import { ablationSyntheticChannels } from '../audit.js';
 
 const MODEL_KEY = 'v1 OceanEmbedNet (Re-evaluated)';
 
@@ -121,7 +122,13 @@ async function renderMetrics(root, ctx) {
   if (ctx.signal.aborted) return;
   const m = metrics.baselines[MODEL_KEY];
   const best = Object.entries(metrics.baselines).sort((a, b) => a[1].thermocline_rmse - b[1].thermocline_rmse)[0];
-  const cov = ablation?.results?.length ? ablation.results.reduce((a, r) => a + r.coverage_mean, 0) / ablation.results.length : null;
+  // Only runs with real inputs count: the audit may have proven the others used synthetic channels.
+  const synthetic = await ablationSyntheticChannels();
+  const realRuns = (ablation?.results || []).filter((r) => !synthetic.length || ['sla', 'sss', 'wind'].every((s) => r[s] !== 'Yes'));
+  const cov = realRuns.length ? realRuns.reduce((a, r) => a + r.coverage_mean, 0) / realRuns.length : null;
+  const covNote = synthetic.length
+    ? `Empirical, nominal 90% · ${realRuns.map((r) => r.run).join(', ')} only (n = ${ablation.n_val}); runs with synthetic inputs excluded`
+    : `Empirical, nominal 90% · ablation validation set (n = ${ablation?.n_val})`;
   const evalNote = `${metrics.n_eval_profiles} held-out profiles from ${metrics.n_eval_floats} floats`;
 
   const cards = [
@@ -129,7 +136,7 @@ async function renderMetrics(root, ctx) {
     metricCard({ label: 'Skill vs climatology', value: m.skill_score_overall, digits: 2, note: `1 − MSE / MSE(climatology), all depths. Climatology = 0.` }),
     cov == null
       ? null
-      : metricCard({ label: '90% interval coverage', value: cov * 100, digits: 1, suffix: '%', note: `Empirical, nominal 90% · ablation validation set (n = ${ablation.n_val})` }),
+      : metricCard({ label: '90% interval coverage', value: cov * 100, digits: 1, suffix: '%', note: covNote }),
     metricCard({ label: 'D20 / MLD error', value: m.d20_rmse, digits: 1, suffix: 'm', note: `D20 RMSE · MLD RMSE ${fmt(m.mld_rmse, 1)} m` }),
   ].filter(Boolean);
 

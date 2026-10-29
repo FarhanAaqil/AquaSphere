@@ -9,13 +9,50 @@
 
 ## 1. Data Sources & Provenance
 
-| Sensor / Product | Provider | Resolution | Parameter | Licence |
+Every product below is fetched from a public NOAA or Argovis endpoint with no account. The
+registry in code is `aquasphere.data.sources`; `make data` rebuilds everything (≈4 GB on first
+run, cached under `data/cache/` afterwards).
+
+| Product | Server · dataset ID | Resolution | Store variables | Available from |
 |---|---|---|---|---|
-| **Argo Autonomous Floats** | Argo GDAC (Ifremer / US GODAE) | Vertical profiles | In-situ Temperature & Salinity | Open Access (Argo Policy) |
-| **NOAA OISST v2.1** | NOAA NCEI via ERDDAP | $0.25^\circ \times 0.25^\circ$, Daily | Sea Surface Temperature (SST) | Public Domain |
-| **CMEMS DUACS L4** | Copernicus Marine Service | $0.25^\circ \times 0.25^\circ$, Daily | Sea Level Anomaly (SLA), $u_g, v_g$ | Open Data (Copernicus) |
-| **NASA SMAP L3** | NASA PO.DAAC / RSS | $0.25^\circ \times 0.25^\circ$, 8-Day | Sea Surface Salinity (SSS) | NASA Open Data |
-| **ERA5 / CCMP v3** | ECMWF / RSS | $0.25^\circ \times 0.25^\circ$, Daily | 10m Wind Stress ($u_{10}, v_{10}$) | CC-BY 4.0 |
+| **Argo floats** | Argovis API (`/argo`, weekly polygon queries) | Profiles | Labels: T at 15 depths, data mode R/A/D | 2015 in this project |
+| **NOAA OISST v2.1 Final** | CoastWatch PFEG · `ncdcOisst21Agg` | 0.25°, daily | `sst` | 1981-09 |
+| **NOAA CoastWatch altimetry** | CoastWatch PFEG · `nesdisSSH1day` | 0.25°, daily | `sla`, `ug`, `vg` (geostrophic) | **2017-02-13** |
+| **SMAP sea-surface salinity (NRT)** | CoastWatch · `noaacwSMAPsssDaily` | 0.25°, daily (gappy) | `sss` | 2015-04-01 |
+| **NCEI Blended Sea Winds v2** | CoastWatch · `noaacwBlendedWindsDaily` | 0.25°, daily | `u10`, `v10` | 1987-07 |
+| *OISST v2.1 Preliminary* | CoastWatch PFEG · `ncdcOisst21NrtAgg` | 0.25°, daily | (for E7 nowcast tests) | recent ~2 weeks |
+
+Each product is fetched one month at a time with a half-cell margin, bilinearly regridded onto
+the store's 0.25° grid (cell centres on whole quarter degrees, 5–30°N, 45–105°E) and written to
+`data/store/surface_nio.zarr`. A day a product does not cover stays NaN with its mask at 0;
+altimetry before 2017-02-13 and the many SMAP gaps are therefore **masked, never filled**.
+Spot check: store SST matches the original point-by-point OISST collection at 437 Argo
+positions with RMS 0.08 °C.
+
+**Known upstream gaps (masked, verified against the servers):**
+- `nesdisSSH1day` publishes SLA from 2017-02-13 but its geostrophic currents (`ugos`, `vgos`) are
+  empty in every file until **2019-03-15**, so `ug`/`vg` are only available from then.
+- The OISST v2.1 Final aggregation on CoastWatch lacks 17 days (e.g. 2021-03-23 and
+  2023-12-23 to 2023-12-31); ERDDAP silently snaps such requests to a neighbouring day, so both
+  the store builder and the live API fallback reject any value whose date differs from the one
+  requested.
+
+**Result (2015-01-01 to 2025-12-31):** 56,114 QC'd Argo profiles from 418 floats (83% delayed
+mode); at those profiles SST is available 99%, wind 99%, SLA 68%, SSS 48% and currents 44% of the
+time. Full tables: `docs/results/data_coverage.md`.
+
+**Argo QC.** Profiles need position and time QC = 1, levels need temperature *and* pressure QC
+= 1, pressure is converted to depth (UNESCO 1983) before PCHIP interpolation to the 15 standard
+depths, and every profile keeps its data mode (R real-time, A adjusted, D delayed) so headline
+results can prefer delayed-mode data. The table is checked against the pandera contract
+(`aquasphere.data.contracts`) before it is written.
+
+**Synthetic-input finding.** The older tables (`tests/fixtures/argo_200.parquet`,
+`data/processed/argo_profiles.parquet`) carry SSS / SLA / current / wind columns that were
+collocated from the *synthetic* demo store (`make data-demo`); `aquasphere.data.audit` proves
+this by reproducing every value exactly. Only their SST is real. They are superseded by
+`data/processed/argo_nio_collocated.parquet`. Coverage of the real data is in
+`docs/results/data_coverage.md`.
 
 ### 1a. Input independence audit (Blueprint §10.1)
 

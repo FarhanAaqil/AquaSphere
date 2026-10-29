@@ -2,7 +2,7 @@ import { state } from '../state.js';
 import * as api from '../api.js';
 import { badge, tag } from '../ui/badges.js';
 import { pending } from '../ui/loaders.js';
-import { C } from '../charts/theme.js';
+import { C, plot } from '../charts/theme.js';
 import { card, h, $, onState, reveal } from './_util.js';
 
 // Input independence audit (blueprint §10.1): does a product already contain Argo or other
@@ -26,6 +26,7 @@ const SOURCES = [
 ];
 
 const LIMITATIONS = [
+  'The served model and the E3/E7 ablation runs were trained on tables whose SSS, SLA, current and wind columns came from the synthetic demo store (proven by the audit above). Only their SST input is real. They are replaced by models trained on the real 2015–2025 store in roadmap Phase 4.',
   'Decision-support prototype. Not validated for navigation, safety-critical offshore work or search and rescue without independent INCOIS verification.',
   'The API\'s local surface store reports offline_synthetic, so live-looking predictions on this site are driven by fixture inputs unless the source badge says Disk cache or Live.',
   'The Argo archive covers 2025-03-25 → 2025-09-15 only. The documented temporal split (train 2015–22 / val 2023 / test 2024–25) cannot be run on it, so evaluation uses a float-grouped split instead.',
@@ -130,6 +131,76 @@ export default {
       src.body.querySelector('tbody').append(tr);
     }
     $(root, '[data-ref="row2"]').append(src.card);
+
+    // Synthetic-input audit: proven by re-collocating each table against the demo store
+    const audit = await api.results('input_audit').catch(() => null);
+    const aud = card({ title: 'Synthetic-input audit', sub: 'Which tables carry satellite columns copied from the synthetic demo store' });
+    if (audit) {
+      aud.meta.append(badge('results'));
+      aud.body.innerHTML = '<div class="table-wrap" tabindex="0" role="region" aria-label="Synthetic-input audit"><table class="table"><thead><tr><th>Table</th><th>Used by</th><th>Result</th><th>Synthetic columns</th></tr></thead><tbody></tbody></table></div><p class="card__foot"></p>';
+      const label = {
+        synthetic_found: ['Synthetic inputs', 'warn'],
+        clean: ['Clean', 'ok'],
+        no_satellite_columns: ['SST only', 'ok'],
+        not_checked: ['Not checked', 'muted'],
+        store_not_synthetic: ['Not applicable', 'muted'],
+      };
+      for (const t of audit.tables) {
+        const tr = h('<tr><td class="mono"></td><td></td><td></td><td class="mono"></td></tr>');
+        tr.cells[0].textContent = t.table;
+        tr.cells[1].textContent = t.used_by;
+        const [text, cls] = label[t.status] || [t.status, 'muted'];
+        tr.cells[2].append(tag(text, cls));
+        tr.cells[3].textContent = t.synthetic_channels.join(', ') || '—';
+        aud.body.querySelector('tbody').append(tr);
+      }
+      aud.body.querySelector('.card__foot').textContent = `Method: ${audit.tables[0]?.method || '—'}. Generated ${audit.generated_at}.`;
+    } else {
+      aud.meta.append(badge('pending'));
+      pending(aud.body, { needs: 'web/data/input_audit.json (python scripts/build_web_data.py)' });
+    }
+    $(root, '[data-ref="row2"]').append(aud.card);
+
+    // Coverage of the real multi-year data (aquasphere.data.coverage)
+    const cov = await api.results('data_coverage').catch(() => null);
+    const covCard = card({ title: 'Data coverage · real 2015–2025 data', sub: 'What the open-data surface store and the Argo archive actually contain' });
+    if (cov) {
+      covCard.meta.append(badge('results'));
+      const s = cov.store;
+      const a = cov.argo;
+      covCard.body.innerHTML = `
+        <div class="grid grid--2">
+          <div><div class="stat__label">Surface store · ${s.first} → ${s.last} · ${s.n_dates} days</div>
+            <div class="table-wrap" tabindex="0" role="region" aria-label="Satellite variable coverage"><table class="table"><thead><tr><th>Variable</th><th class="num">Days with data</th><th>From</th></tr></thead><tbody data-ref="vars"></tbody></table></div></div>
+          <div><div class="stat__label" data-ref="argo-head"></div><div class="chart chart--short" data-ref="years"></div></div>
+        </div>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Argo profiles by basin and season"><table class="table"><thead><tr><th>Basin · season</th><th class="num">Profiles</th></tr></thead><tbody data-ref="strata"></tbody></table></div>
+        <p class="card__foot" data-ref="foot"></p>`;
+      for (const [v, info] of Object.entries(s.variables)) {
+        const tr = h('<tr><td class="mono"></td><td class="num"></td><td class="mono"></td></tr>');
+        [v, info.days_with_data, info.first_day || '—'].forEach((x, i) => { tr.cells[i].textContent = x; });
+        $(covCard.body, '[data-ref="vars"]').append(tr);
+      }
+      for (const [k, n] of Object.entries(a.by_region_season).sort()) {
+        const tr = h('<tr><td></td><td class="num"></td></tr>');
+        tr.cells[0].textContent = k.replace(' | ', ' · ');
+        tr.cells[1].textContent = n.toLocaleString();
+        $(covCard.body, '[data-ref="strata"]').append(tr);
+      }
+      $(covCard.body, '[data-ref="argo-head"]').textContent = `Argo · ${a.profiles.toLocaleString()} profiles from ${a.floats} floats · ${a.first} → ${a.last}`;
+      const modes = a.by_data_mode ? Object.entries(a.by_data_mode).map(([k, n]) => `${{ D: 'delayed', A: 'adjusted', R: 'real-time' }[k] || k} ${n.toLocaleString()}`).join(' · ') : '';
+      const chans = a.channel_availability ? Object.entries(a.channel_availability).map(([k, v]) => `${k} ${(v * 100).toFixed(0)}%`).join(', ') : '';
+      $(covCard.body, '[data-ref="foot"]').textContent = [modes && `Data mode: ${modes}.`, chans && `Channel availability at profiles: ${chans}.`, `Generated ${cov.generated_at}.`].filter(Boolean).join(' ');
+      const years = Object.keys(a.by_year);
+      plot($(covCard.body, '[data-ref="years"]'), [{
+        type: 'bar', x: years, y: years.map((y) => a.by_year[y]), marker: { color: C.teal },
+        hovertemplate: '%{x}: %{y} profiles<extra></extra>',
+      }], { yaxis: { title: { text: 'Profiles' } }, margin: { l: 56, r: 8, t: 8, b: 32 }, showlegend: false }, ctx, 'aquasphere-argo-by-year');
+    } else {
+      covCard.meta.append(badge('pending'));
+      pending(covCard.body, { title: 'Pending', detail: 'The real 2015–2025 data has not been built on this machine yet.', needs: 'make data && make ui-data' });
+    }
+    $(root, '[data-ref="row2"]').append(covCard.card);
 
     // Artifacts + limitations
     const arts = card({ title: 'Data artefacts', sub: 'SHA-256 from data/manifest.json, re-verified when the web data was built' });

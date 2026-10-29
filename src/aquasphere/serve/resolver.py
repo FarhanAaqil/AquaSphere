@@ -10,10 +10,13 @@ Follows strict 4-stage precedence (never fabricate or silently simulate):
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import logging
+import os
 import time
+from collections import OrderedDict
 from pathlib import Path
 from typing import Any
 
@@ -21,12 +24,23 @@ import httpx
 import numpy as np
 from fastapi import HTTPException
 
+from aquasphere.data.audit import store_is_synthetic
+from aquasphere.data.sources import SOURCES
 from aquasphere.data.store import SurfaceZarrStore
 
 logger = logging.getLogger(__name__)
 
 CACHE_DIR = Path("cache/observations")
-ERDDAP_URL = "https://www.ncei.noaa.gov/erddap/griddap/ncdc_oisst_v2_avhrr_by_time_zlev_lat_lon.csv"
+# OISST v2.1 Final on NOAA CoastWatch (the NCEI ERDDAP dataset this used to point at now 400s)
+ERDDAP_URL = f"{SOURCES['oisst'].griddap}.csv"
+# Which store to serve from: AQUASPHERE_STORE overrides; the default is the demo store the current
+# checkpoint was trained against (see aquasphere.data.audit). Switch to the real multi-year store
+# together with a model trained on it.
+DEFAULT_STORE = Path(os.environ.get("AQUASPHERE_STORE", "data/store/surface.zarr"))
+DAY_CACHE = 8  # days of full fields kept in memory for batch lookups
+# AQUASPHERE_OFFLINE=1 disables live fetching (offline demos, deterministic tests)
+NETWORK_DEFAULT = os.environ.get("AQUASPHERE_OFFLINE", "") not in ("1", "true", "yes")
+LIVE_CONCURRENCY = 8  # live requests in flight at once for a batch of store misses
 
 
 class CircuitBreaker:
@@ -65,9 +79,9 @@ class SurfaceResolver:
 
     def __init__(
         self,
-        store_path: Path | str = "data/store/surface.zarr",
+        store_path: Path | str = DEFAULT_STORE,
         cache_dir: Path | str = CACHE_DIR,
-        enable_network: bool = True,
+        enable_network: bool = NETWORK_DEFAULT,
     ) -> None:
         self.store_path = Path(store_path)
         self.cache_dir = Path(cache_dir)
@@ -75,15 +89,40 @@ class SurfaceResolver:
         self.circuit_breaker = CircuitBreaker()
         self.mem_cache: dict[str, dict[str, Any]] = {}
         self.max_mem_entries = 1000
+        self._days: OrderedDict[str, dict[str, np.ndarray]] = OrderedDict()
 
         # Attempt to open Zarr store if it exists
         self.zarr_store: SurfaceZarrStore | None = None
+        self.store_synthetic = True
         if self.store_path.exists():
             try:
                 self.zarr_store = SurfaceZarrStore(self.store_path, mode="r")
-                logger.info("SurfaceResolver connected to local Zarr store: %s", self.store_path)
+                self.store_synthetic = store_is_synthetic(self.zarr_store)
+                logger.info(
+                    "SurfaceResolver connected to %s Zarr store: %s",
+                    "synthetic demo" if self.store_synthetic else "real",
+                    self.store_path,
+                )
             except Exception as e:
                 logger.warning("Could not open Zarr store at %s: %s", self.store_path, e)
+
+    @property
+    def store_source(self) -> str:
+        """Provenance label for observations served from the local store."""
+        return "offline_synthetic" if self.store_synthetic else "local_store"
+
+    def _day_fields(self, date: str) -> dict[str, np.ndarray] | None:
+        """All fields for one store date, read once and kept in a small LRU."""
+        if self.zarr_store is None or date not in self.zarr_store.date_to_idx:
+            return None
+        if date in self._days:
+            self._days.move_to_end(date)
+            return self._days[date]
+        fields = self.zarr_store.read_day(date)
+        self._days[date] = fields
+        if len(self._days) > DAY_CACHE:
+            self._days.popitem(last=False)
+        return fields
 
     def _hash_key(self, lat: float, lon: float, date: str) -> str:
         """Compute deterministic SHA-256 cache key."""
@@ -116,18 +155,11 @@ class SurfaceResolver:
 
     def _query_zarr_store(self, lat: float, lon: float, date: str) -> dict[str, float] | None:
         """Lookup collocated pixel from local Zarr store."""
-        if self.zarr_store is None:
+        fields = self._day_fields(date)
+        if fields is None or self.zarr_store is None:
             return None
-
-        try:
-            pt = self.zarr_store.extract_point(lat, lon, date)
-            valid = {k: v for k, v in pt.items() if np.isfinite(v) and v > -900}
-            if "sst" in valid:
-                return valid
-            return None
-        except Exception as e:
-            logger.debug("Zarr query error: %s", e)
-            return None
+        i, j = self.zarr_store.snap_indices(lat, lon)
+        return _valid_point({k: float(a[i, j]) for k, a in fields.items()})
 
     async def _fetch_live_erddap(
         self, lat: float, lon: float, date: str
@@ -149,13 +181,20 @@ class SurfaceResolver:
                         if len(lines) >= 3:
                             parts = lines[2].split(",")
                             if len(parts) >= 5:
+                                self.circuit_breaker.record_success()
+                                # ERDDAP snaps to the nearest time it has: a day missing from
+                                # the product comes back as a neighbouring day. That is not an
+                                # observation for the requested date, so don't use it.
+                                if not parts[0].startswith(date):
+                                    logger.info("Live OISST has no %s (nearest %s)", date, parts[0])
+                                    return None
                                 sst_val = float(parts[4])
                                 if np.isfinite(sst_val):
-                                    self.circuit_breaker.record_success()
                                     return {"sst": sst_val}
+                                return None
             except Exception as e:
                 logger.info("Live ERDDAP attempt %d failed: %s", attempt, e)
-                time.sleep(0.2 * attempt)
+                await asyncio.sleep(0.2 * attempt)  # don't block the event loop
 
         self.circuit_breaker.record_failure()
         return None
@@ -182,11 +221,11 @@ class SurfaceResolver:
         if cache_key in self.mem_cache:
             return self.mem_cache[cache_key]["features"], self.mem_cache[cache_key]["source"]
 
-        # 1. Priority 1: Local Zarr Store (Offline Synthetic Fixture)
+        # 1. Priority 1: Local Zarr store (labelled by whether it is real or the demo fixture).
+        # Store hits are not copied into the disk cache: the store is already local.
         zarr_obs = self._query_zarr_store(lat, lon, date)
         if zarr_obs is not None:
-            source = "offline_synthetic"
-            self._write_disk_cache(cache_key, {"features": zarr_obs, "source": source})
+            source = self.store_source
             self._update_mem_cache(cache_key, zarr_obs, source)
             return zarr_obs, source
 
@@ -223,6 +262,63 @@ class SurfaceResolver:
             ),
         )
 
+    async def resolve_many(
+        self, points: list[tuple[float, float, str, dict[str, float] | None]]
+    ) -> list[tuple[dict[str, float], str] | None]:
+        """Resolve many points at once; None marks a point with no observation.
+
+        Store lookups read each date's fields once and index every point on that date with
+        vectorised nearest-cell lookups, instead of one full read per point.
+        """
+        out: list[tuple[dict[str, float], str] | None] = [None] * len(points)
+        pending: list[int] = []
+        by_date: dict[str, list[int]] = {}
+        for k, (lat, lon, date, overrides) in enumerate(points):
+            if overrides and "sst" in overrides:
+                out[k] = (overrides, "user_override")
+                continue
+            hit = self.mem_cache.get(self._hash_key(lat, lon, date))
+            if hit is not None:
+                out[k] = (hit["features"], hit["source"])
+            elif self._day_fields(date) is not None:
+                by_date.setdefault(date, []).append(k)
+            else:
+                pending.append(k)
+
+        store = self.zarr_store
+        for date, idx in by_date.items():
+            fields = self._day_fields(date)
+            if fields is None or store is None:
+                pending.extend(idx)
+                continue
+            lats = np.array([points[k][0] for k in idx])
+            lons = np.array([points[k][1] for k in idx])
+            rows = np.abs(store.lat_grid[None, :] - lats[:, None]).argmin(axis=1)
+            cols = np.abs(store.lon_grid[None, :] - lons[:, None]).argmin(axis=1)
+            values = {v: a[rows, cols] for v, a in fields.items()}
+            for n, k in enumerate(idx):
+                obs = _valid_point({v: float(vals[n]) for v, vals in values.items()})
+                if obs is None:
+                    pending.append(k)
+                    continue
+                out[k] = (obs, self.store_source)
+                self._update_mem_cache(self._hash_key(*points[k][:3]), obs, self.store_source)
+
+        # Store misses go through the normal chain (disk cache, live, 503), a few at a time so a
+        # grid of live lookups doesn't run strictly one after another
+        gate = asyncio.Semaphore(LIVE_CONCURRENCY)
+
+        async def one(k: int) -> None:
+            lat, lon, date, overrides = points[k]
+            async with gate:
+                try:
+                    out[k] = await self.resolve(lat, lon, date, overrides)
+                except HTTPException:
+                    out[k] = None
+
+        await asyncio.gather(*(one(k) for k in pending))
+        return out
+
     def _update_mem_cache(self, key: str, features: dict[str, float], source: str) -> None:
         if len(self.mem_cache) >= self.max_mem_entries:
             # Simple eviction: clear oldest quarter
@@ -230,3 +326,9 @@ class SurfaceResolver:
             for k in keys_to_remove:
                 self.mem_cache.pop(k, None)
         self.mem_cache[key] = {"features": features, "source": source}
+
+
+def _valid_point(point: dict[str, float]) -> dict[str, float] | None:
+    """Drop missing / fill values; a point is usable only if it has SST."""
+    valid = {k: v for k, v in point.items() if np.isfinite(v) and v > -900}
+    return valid if "sst" in valid else None

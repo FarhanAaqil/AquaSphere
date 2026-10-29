@@ -148,7 +148,7 @@ Every chart carries a provenance badge (Local store, Disk cache, Live, Offline d
 
 ```bash
 make ui-data            # copy results into web/data and build dates/floats/held-out/build-info files
-make serve              # API + frontend on http://localhost:8000
+make serve              # API + frontend on http://127.0.0.1:8000
 pip install -e ".[e2e]" && python -m playwright install chromium
 pytest tests/e2e --no-cov   # browser smoke + WCAG 2.1 AA accessibility tests
 ```
@@ -178,7 +178,7 @@ python -m pytest tests/ --cov=aquasphere --cov-fail-under=80 -q
 ```bash
 python -m aquasphere.serve.app --host 0.0.0.0 --port 8000
 ```
-Open **`http://localhost:8000`** in any web browser to interact with the dashboard.
+Open **`http://127.0.0.1:8000`** in any web browser to interact with the dashboard (on Windows, `localhost` adds a ~2 s IPv6 fallback to every request from scripts).
 
 ### 4. Run via Docker
 ```bash

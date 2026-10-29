@@ -14,7 +14,6 @@ Outputs (all derived from real artefacts, nothing simulated):
 
 from __future__ import annotations
 
-import hashlib
 import json
 import subprocess
 import sys
@@ -57,11 +56,10 @@ def git(*args: str) -> str | None:
 
 
 def sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
+    """Same digest the manifest records (files, or directory trees such as Zarr stores)."""
+    from aquasphere.data.manifest import compute_file_sha256
+
+    return compute_file_sha256(path)
 
 
 def load_table(path: Path) -> pd.DataFrame:
@@ -198,6 +196,23 @@ def store_dates() -> dict:
     return {"source": "data/store/surface.zarr", "dates": sorted(attrs.get("dates", []))}
 
 
+def input_audit() -> dict:
+    """Prove which tables carry synthetic satellite columns (see aquasphere.data.audit)."""
+    from aquasphere.data.audit import synthetic_channel_audit
+
+    used_by = {
+        "tests/fixtures/argo_200.parquet": "E3/E7 ablation runs (ablation.json) and /validation lookups",
+        "data/processed/argo_profiles.parquet": "training data of the served model",
+        "data/argo_sst_training.csv": "evaluation ladder (metrics.json) and E1 leakage runs",
+    }
+    with chdir(ROOT):
+        tables = [
+            {**synthetic_channel_audit(t, "data/store/surface.zarr"), "used_by": use}
+            for t, use in used_by.items()
+        ]
+    return {"generated_at": datetime.now(UTC).isoformat(timespec="seconds"), "tables": tables}
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     for name, payload in (
@@ -205,6 +220,7 @@ def main() -> None:
         ("floats.json", floats()),
         ("heldout.json", heldout()),
         ("dates.json", store_dates()),
+        ("input_audit.json", input_audit()),
     ):
         (OUT / name).write_text(json.dumps(payload, indent=1), encoding="utf-8")
         print(f"wrote web/data/{name}")

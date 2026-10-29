@@ -2,10 +2,12 @@
  "files": [
   "ablation",
   "build_info",
+  "data_coverage",
   "dates",
   "e1_leakage",
   "floats",
   "heldout",
+  "input_audit",
   "metrics"
  ]
 }

@@ -40,6 +40,8 @@ _columns: dict[str, pa.Column] = {
         description="Profile date, ISO YYYY-MM-DD",
     ),
     "sst": pa.Column(float, pa.Check.in_range(10.0, 35.0), nullable=True),
+    # Optional (older tables predate it): R real-time, A real-time adjusted, D delayed mode
+    "data_mode": pa.Column(str, pa.Check.isin(["R", "A", "D"]), required=False),
 }
 for _d in STANDARD_DEPTHS:
     _columns[f"t_{_d}"] = pa.Column(float, pa.Check.in_range(T_MIN, T_MAX), nullable=True)
