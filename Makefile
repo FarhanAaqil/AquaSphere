@@ -1,16 +1,29 @@
-.PHONY: setup data train eval serve ui-data test lint typecheck audit reproduce clean
+.PHONY: setup data data-store data-argo data-collocate data-coverage data-demo train eval serve ui-data test lint typecheck audit reproduce clean
 
 # ── Setup ────────────────────────────────────────────────────────────────────
 setup:
 	pip install -e ".[dev]"
 	pre-commit install
 
-# ── Data pipeline (Phase 3) ──────────────────────────────────────────────────
-data:
-	python data/verify_sources.py
-	python -m aquasphere.data.argo
+# ── Data pipeline (real, open data; see docs/DATA_CARD.md) ──────────────────
+# ~4 GB of downloads on first run, cached under data/cache afterwards.
+data: data-store data-argo data-collocate data-coverage
+
+data-store:
+	python -m aquasphere.data.satellite_fetch --start 2015-01-01 --end 2025-12-31
+
+data-argo:
+	python -m aquasphere.data.argo_ingest --start 2015-01-01 --end 2025-12-31
+
+data-collocate:
+	python -m aquasphere.data.collocate_nio
+
+data-coverage:
+	python -m aquasphere.data.coverage
+
+# Synthetic demo store (13 dates) for offline UI demos only. Never train or evaluate on it.
+data-demo:
 	python -m aquasphere.data.satellite
-	python -m aquasphere.data.collocate
 
 # ── Training (Phase 4) ───────────────────────────────────────────────────────
 train:
@@ -35,7 +48,7 @@ serve:
 	uvicorn aquasphere.serve.app:app --reload --port 8000
 
 ui-data:
-	python -c "import shutil, pathlib; (pathlib.Path('web/data')).mkdir(parents=True, exist_ok=True); [shutil.copy(f'docs/results/{n}.json', f'web/data/{n}.json') for n in ('metrics', 'ablation', 'e1_leakage')]"
+	python -c "import shutil, pathlib; (pathlib.Path('web/data')).mkdir(parents=True, exist_ok=True); [shutil.copy(f'docs/results/{n}.json', f'web/data/{n}.json') for n in ('metrics', 'ablation', 'e1_leakage', 'data_coverage') if pathlib.Path(f'docs/results/{n}.json').exists()]"
 	python scripts/build_web_data.py
 
 # ── Tests ────────────────────────────────────────────────────────────────────
