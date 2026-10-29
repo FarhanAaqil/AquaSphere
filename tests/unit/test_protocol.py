@@ -90,3 +90,20 @@ def test_regions_and_seasons() -> None:
     )
     assert list(protocol.region(df["lon"])) == ["Arabian Sea", "Bay of Bengal", "Bay of Bengal"]
     assert list(protocol.season(df["date"])) == ["SW monsoon", "NE monsoon", "Inter-monsoon"]
+
+
+def test_no_package_code_reads_the_test_partition() -> None:
+    """Static guard: only a final-evaluation module may ask for the 2024-25 partition."""
+    import re
+
+    src = Path(__file__).resolve().parents[2] / "src" / "aquasphere"
+    pattern = re.compile(r"""partition\([^)]*["']test["']""")
+    allowed = {"protocol.py", "final_eval.py"}  # final_eval arrives with the Phase 6 run
+    offenders = [
+        f"{p.relative_to(src)}:{i}"
+        for p in src.rglob("*.py")
+        if p.name not in allowed
+        for i, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1)
+        if pattern.search(line)
+    ]
+    assert offenders == [], f"test-period reads outside the final evaluation: {offenders}"
