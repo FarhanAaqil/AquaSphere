@@ -37,7 +37,7 @@ def _month_file(path: Path, month: date, n_days: int, skip: set[int] = frozenset
     xr.Dataset(
         {"sst": (("time", "zlev", "latitude", "longitude"), data[:, None])},
         coords={"time": days, "zlev": [0.0], "latitude": lat, "longitude": lon},
-    ).to_netcdf(path)
+    ).to_netcdf(path, engine="scipy")  # NetCDF3, like ERDDAP serves; avoids HDF5 entirely
 
 
 @pytest.fixture(autouse=True)
@@ -86,7 +86,13 @@ def test_build_store_masks_gaps_and_records_coverage(tmp_path: Path) -> None:
 
     store_path = tmp_path / "store.zarr"
     covered = sf.build_store(
-        date(2020, 1, 1), date(2020, 3, 31), store_path, [SPEC], fetch=fake_fetch, workers=2
+        # one worker: the fake writes NetCDF itself, and file libraries aren't thread-safe
+        date(2020, 1, 1),
+        date(2020, 3, 31),
+        store_path,
+        [SPEC],
+        fetch=fake_fetch,
+        workers=1,
     )
     # Jan: product starts on the 5th and the 4th is missing anyway -> 27 days; Feb: 28; Mar: 0
     assert covered == {"fake": {"sst": 27 + 28}}

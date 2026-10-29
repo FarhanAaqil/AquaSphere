@@ -38,6 +38,9 @@ ERDDAP_URL = f"{SOURCES['oisst'].griddap}.csv"
 # together with a model trained on it.
 DEFAULT_STORE = Path(os.environ.get("AQUASPHERE_STORE", "data/store/surface.zarr"))
 DAY_CACHE = 8  # days of full fields kept in memory for batch lookups
+# AQUASPHERE_OFFLINE=1 disables live fetching (offline demos, deterministic tests)
+NETWORK_DEFAULT = os.environ.get("AQUASPHERE_OFFLINE", "") not in ("1", "true", "yes")
+LIVE_CONCURRENCY = 8  # live requests in flight at once for a batch of store misses
 
 
 class CircuitBreaker:
@@ -78,7 +81,7 @@ class SurfaceResolver:
         self,
         store_path: Path | str = DEFAULT_STORE,
         cache_dir: Path | str = CACHE_DIR,
-        enable_network: bool = True,
+        enable_network: bool = NETWORK_DEFAULT,
     ) -> None:
         self.store_path = Path(store_path)
         self.cache_dir = Path(cache_dir)
@@ -294,13 +297,19 @@ class SurfaceResolver:
                 out[k] = (obs, self.store_source)
                 self._update_mem_cache(self._hash_key(*points[k][:3]), obs, self.store_source)
 
-        # Store misses go through the normal chain (disk cache, live, 503)
-        for k in pending:
+        # Store misses go through the normal chain (disk cache, live, 503), a few at a time so a
+        # grid of live lookups doesn't run strictly one after another
+        gate = asyncio.Semaphore(LIVE_CONCURRENCY)
+
+        async def one(k: int) -> None:
             lat, lon, date, overrides = points[k]
-            try:
-                out[k] = await self.resolve(lat, lon, date, overrides)
-            except HTTPException:
-                out[k] = None
+            async with gate:
+                try:
+                    out[k] = await self.resolve(lat, lon, date, overrides)
+                except HTTPException:
+                    out[k] = None
+
+        await asyncio.gather(*(one(k) for k in pending))
         return out
 
     def _update_mem_cache(self, key: str, features: dict[str, float], source: str) -> None:

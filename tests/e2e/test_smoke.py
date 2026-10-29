@@ -72,7 +72,8 @@ def base_url() -> Iterator[str]:
             "warning",
         ],
         cwd=ROOT,
-        env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
+        # Offline: tests must not depend on NOAA being reachable from the CI runner
+        env={**os.environ, "PYTHONPATH": str(ROOT / "src"), "AQUASPHERE_OFFLINE": "1"},
     )
     url = f"http://127.0.0.1:{port}"
     try:
@@ -87,7 +88,11 @@ def base_url() -> Iterator[str]:
         yield url
     finally:
         proc.terminate()
-        proc.wait(timeout=10)
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:  # still busy with a request: don't hang the suite
+            proc.kill()
+            proc.wait(timeout=10)
 
 
 # Module scope: the sync Playwright API runs an event loop for as long as it is open, which
