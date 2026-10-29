@@ -186,6 +186,36 @@ def test_loads_with_api_unreachable(page: Page, base_url: str) -> None:
     assert not _errors(page)
 
 
+AXE = Path(__file__).parent / "vendor" / "axe.min.js"  # axe-core 4.10.2, vendored for offline CI
+AXE_RUN = """async () => {
+  const r = await axe.run(document, {
+    runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] },
+  });
+  return r.violations
+    .filter((v) => v.impact === 'serious' || v.impact === 'critical')
+    .map((v) => `${v.id} (${v.impact}) x${v.nodes.length}: ${v.nodes[0].target.join(' ')}`);
+}"""
+
+
+def _axe_violations(page: Page) -> list[str]:
+    page.add_script_tag(path=str(AXE))
+    return list(page.evaluate(AXE_RUN))
+
+
+@pytest.mark.parametrize("tab", TABS)
+def test_no_serious_accessibility_violations(page: Page, base_url: str, tab: str) -> None:
+    _open(page, base_url, tab)
+    page.wait_for_timeout(2500)  # let async cards and charts render
+    assert _axe_violations(page) == []
+
+
+def test_offline_state_is_accessible(page: Page, base_url: str) -> None:
+    page.route(API_PATH, lambda r: r.abort())
+    _open(page, base_url, "predict")
+    page.wait_for_selector('.state--error[data-error-kind="offline"]', timeout=20000)
+    assert _axe_violations(page) == []
+
+
 def test_shareable_link_restores_the_view(page: Page, base_url: str) -> None:
     page.goto(f"{base_url}/#/predict?lat=18.50&lon=88.25&mode=nowcast")
     page.wait_for_selector('.page[data-tab="predict"]', timeout=15000)

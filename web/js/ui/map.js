@@ -106,6 +106,8 @@ export async function createMap(container, { onPick, label = 'Map of the North I
     },
     /** points: [{id, lat, lon, color, r, label, muted}] */
     setPoints(points, { onClick, selected } = {}) {
+      // An image can't contain buttons; with clickable points the map is a labelled group.
+      svg.setAttribute('role', onClick && points.length ? 'group' : 'img');
       layer.replaceChildren();
       for (const p of points) {
         // Container aspect ratio matches the viewBox, so degree units scale uniformly

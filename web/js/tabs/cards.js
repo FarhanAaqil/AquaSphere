@@ -115,7 +115,7 @@ export default {
 
     // Sources
     const src = card({ title: 'Data sources & independence audit', sub: 'Whether each input could leak information about the labels' });
-    src.body.innerHTML = '<div class="table-wrap"><table class="table"><thead><tr><th>Source</th><th>Role</th><th>Resolution</th><th>Contains Argo / in-situ?</th><th>Audit</th><th>Handling</th></tr></thead><tbody></tbody></table></div>';
+    src.body.innerHTML = '<div class="table-wrap" tabindex="0" role="region" aria-label="Data sources and independence audit"><table class="table"><thead><tr><th>Source</th><th>Role</th><th>Resolution</th><th>Contains Argo / in-situ?</th><th>Audit</th><th>Handling</th></tr></thead><tbody></tbody></table></div>';
     for (const s of SOURCES) {
       const tr = h('<tr><td></td><td></td><td class="mono"></td><td></td><td></td><td></td></tr>');
       tr.cells[0].textContent = s.name;
@@ -135,7 +135,7 @@ export default {
     const arts = card({ title: 'Data artefacts', sub: 'SHA-256 from data/manifest.json, re-verified when the web data was built' });
     if (info?.artifacts?.length) {
       arts.meta.append(badge('results'));
-      arts.body.innerHTML = '<div class="table-wrap"><table class="table"><thead><tr><th>Artefact</th><th>Rows / dates</th><th>SHA-256</th><th>Check</th></tr></thead><tbody></tbody></table></div>';
+      arts.body.innerHTML = '<div class="table-wrap" tabindex="0" role="region" aria-label="Data artefacts and hashes"><table class="table"><thead><tr><th>Artefact</th><th>Rows / dates</th><th>SHA-256</th><th>Check</th></tr></thead><tbody></tbody></table></div>';
       for (const a of info.artifacts) {
         const tr = h('<tr><td></td><td class="mono"></td><td class="mono" style="word-break:break-all;font-size:11px"></td><td></td></tr>');
         tr.cells[0].textContent = a.path;

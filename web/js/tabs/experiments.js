@@ -22,7 +22,7 @@ async function e1(host, ctx) {
   const d = await optional('e1_leakage');
   if (!d) { c.meta.append(badge('pending')); return pending(c.body, { needs: 'web/data/e1_leakage.json (make leakage)' }); }
   c.meta.append(badge('results'));
-  c.body.innerHTML = '<div class="chart"></div><div class="table-wrap"><table class="table"><thead><tr><th>Model</th><th class="num">Random</th><th class="num">Float-blocked</th><th class="num">Time-blocked</th><th class="num">Float gap</th><th class="num">Time gap</th></tr></thead><tbody></tbody></table></div>';
+  c.body.innerHTML = '<div class="chart"></div><div class="table-wrap" tabindex="0" role="region" aria-label="E1 leakage gap by model"><table class="table"><thead><tr><th>Model</th><th class="num">Random</th><th class="num">Float-blocked</th><th class="num">Time-blocked</th><th class="num">Float gap</th><th class="num">Time gap</th></tr></thead><tbody></tbody></table></div>';
   const models = Object.keys(d.leakage_gaps);
   const g = d.leakage_gaps;
   const proto = [['Random (naive)', 'rand_thermo_rmse', C.coral], ['Float-blocked', 'flt_thermo_rmse', C.teal], ['Time-blocked', 'time_thermo_rmse', C.indigo]];
@@ -48,7 +48,7 @@ async function e2(host, ctx) {
   const m = await optional('metrics');
   if (!m) { c.meta.append(badge('pending')); return pending(c.body, { needs: 'web/data/metrics.json (make eval && make ui-data)' }); }
   c.meta.append(badge('results'));
-  c.body.innerHTML = '<div class="grid grid--2"><div class="chart"></div><div class="chart"></div></div><div class="table-wrap"><table class="table"><thead><tr><th>Rung</th><th>Model</th><th class="num">Thermo RMSE</th><th class="num">95% CI</th><th class="num">Overall RMSE</th><th class="num">Skill</th></tr></thead><tbody></tbody></table></div>';
+  c.body.innerHTML = '<div class="grid grid--2"><div class="chart"></div><div class="chart"></div></div><div class="table-wrap" tabindex="0" role="region" aria-label="E2 baseline ladder"><table class="table"><thead><tr><th>Rung</th><th>Model</th><th class="num">Thermo RMSE</th><th class="num">95% CI</th><th class="num">Overall RMSE</th><th class="num">Skill</th></tr></thead><tbody></tbody></table></div>';
   const rows = LADDER.map(([id, key]) => [id, key, m.baselines[key]]).filter((r) => r[2]);
   const [left, right] = c.body.querySelectorAll('.chart');
   await plot(left, [{

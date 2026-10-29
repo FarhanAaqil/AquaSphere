@@ -67,7 +67,7 @@ export default {
     // Run table
     const tbl = card({ title: 'All runs', sub: 'Which inputs each run used' });
     tbl.meta.append(badge('results'));
-    tbl.body.innerHTML = `<div class="table-wrap"><table class="table"><thead><tr><th>Run</th>${SENSORS.map((s) => `<th>${SENSOR_LABEL[s]}</th>`).join('')}<th class="num">Thermo RMSE</th><th class="num">Skill</th><th class="num">Coverage</th></tr></thead><tbody></tbody></table></div>`;
+    tbl.body.innerHTML = `<div class="table-wrap" tabindex="0" role="region" aria-label="All ablation runs"><table class="table"><thead><tr><th>Run</th>${SENSORS.map((s) => `<th>${SENSOR_LABEL[s]}</th>`).join('')}<th class="num">Thermo RMSE</th><th class="num">Skill</th><th class="num">Coverage</th></tr></thead><tbody></tbody></table></div>`;
     const best = Math.min(...runs.map((r) => r.thermo_rmse_mean));
     for (const r of runs) {
       const tr = h(`<tr><td></td>${SENSORS.map((s) => `<td>${r[s] === 'Yes' ? '●' : '<span style="color:var(--text-faint)">–</span>'}</td>`).join('')}<td class="num"></td><td class="num"></td><td class="num"></td></tr>`);
