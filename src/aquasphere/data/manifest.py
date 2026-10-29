@@ -32,6 +32,15 @@ def compute_file_sha256(path: Path | str, normalize_newlines: bool = False) -> s
     if not p.exists():
         raise FileNotFoundError(f"File not found: {p}")
 
+    if p.is_dir():
+        # Directory artefacts (Zarr stores): hash of every file's relative path and content hash,
+        # in sorted order, so any added, removed, renamed or changed chunk changes the digest.
+        tree = hashlib.sha256()
+        for f in sorted(x for x in p.rglob("*") if x.is_file()):
+            tree.update(f.relative_to(p).as_posix().encode())
+            tree.update(compute_file_sha256(f).encode())
+        return tree.hexdigest()
+
     if normalize_newlines:
         raw = p.read_bytes()
         return hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest()
@@ -90,7 +99,11 @@ class DataManifest:
         sha256 = compute_file_sha256(p)
         entry: dict[str, Any] = {
             "path": str(p).replace("\\", "/"),
-            "size_bytes": p.stat().st_size,
+            "size_bytes": (
+                sum(f.stat().st_size for f in p.rglob("*") if f.is_file())
+                if p.is_dir()
+                else p.stat().st_size
+            ),
             "sha256": sha256,
             "description": description,
             "registered_at": datetime.now(UTC).isoformat(),
