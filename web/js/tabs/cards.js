@@ -68,10 +68,16 @@ export default {
     model.body.innerHTML = '<dl class="kv"></dl>';
     const paintModel = () => {
       model.meta.replaceChildren(state.ready ? tag('Live /ready', 'live') : tag('API offline', 'unavailable'), ...(info ? [badge('results')] : []));
+      const d = state.ready?.details || {};
       kv(model.body.firstChild, [
-        ['Serving model', state.ready?.details?.model_version || state.meta?.model_version],
-        ['Serving data version', state.ready?.details?.data_version || state.meta?.data_version],
-        ['Checkpoint', state.ready?.details?.checkpoint_path],
+        ['Serving model', d.model_version || state.meta?.model_version],
+        ['Serving data version', d.data_version || state.meta?.data_version],
+        ['Checkpoint', d.checkpoint_path],
+        ['Weights', d.weights],
+        ['Provenance', d.provenance_status ? `${d.provenance_status.replace('_', ' ')}: ${d.provenance_detail}` : null],
+        ['Trained at commit', d.git_sha ? d.git_sha.slice(0, 12) : 'not recorded in checkpoint'],
+        ['Training data SHA-256', d.data_sha256 ? d.data_sha256.slice(0, 16) + '…' : 'not recorded in checkpoint'],
+        ['Training split', d.training_membership],
         ['Evaluated model', metrics ? `${metrics.model_version} (metrics.json)` : null],
         ['Evaluated data', metrics?.data_version],
         ['Web data built at commit', info?.git_sha ? `${info.git_sha.slice(0, 12)}${info.git_dirty ? ' (uncommitted changes)' : ''}` : 'not recorded'],

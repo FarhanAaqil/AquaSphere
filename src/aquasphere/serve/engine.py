@@ -20,6 +20,7 @@ import pandas as pd
 import torch
 
 from aquasphere.constants import DEPTH_COLS, STANDARD_DEPTHS
+from aquasphere.data.provenance import MISMATCH, NOT_RECORDED, verify_provenance
 from aquasphere.eval.metrics import compute_d20, compute_mld, compute_ohc300
 from aquasphere.models.decoder import TierAModel
 from aquasphere.serve.membership import TrainingMembership
@@ -55,7 +56,11 @@ class InferenceEngine:
         self.model_version = "tier_a_v1.0"
         self.data_version = "2026.1"
         self.is_ready = False
+        self.weights = "untrained"
         self._checkpoint: dict[str, Any] | None = None
+        self.provenance: dict[str, Any] = {}
+        self.provenance_status = NOT_RECORDED
+        self.provenance_detail = "No checkpoint loaded."
 
         self.val_df: pd.DataFrame | None = None
         self._load_validation_profiles()
@@ -91,19 +96,29 @@ class InferenceEngine:
                 self.scaler_std[self.scaler_std < 1e-4] = 1.0
                 self.climatology = np.array(ckpt["climatology"], dtype=np.float32)
                 self.calibrator = ConformalCalibrator.from_dict(ckpt["conformal_calibration"])
-                self.is_ready = True
+                self.weights = "trained"
+                self.provenance = dict(ckpt.get("provenance") or {})
+                self.provenance_status, self.provenance_detail = verify_provenance(self.provenance)
+                # A checkpoint whose training data has since changed is not trustworthy.
+                self.is_ready = self.provenance_status != MISMATCH
+                if not self.is_ready:
+                    logger.error("Refusing to report ready: %s", self.provenance_detail)
                 logger.info(
-                    "Successfully loaded AquaSphere Tier A model from %s", self.checkpoint_path
+                    "Loaded AquaSphere Tier A model from %s (provenance: %s)",
+                    self.checkpoint_path,
+                    self.provenance_status,
                 )
                 self.model.eval()
                 return
             except Exception as e:
                 logger.error("Failed loading checkpoint from %s: %s", self.checkpoint_path, e)
 
-        # Fallback for headless / fresh clone test runs: initialize dummy parameters
-        logger.info("Running with freshly initialized weights (testing/mock mode).")
+        # Fresh clone / CI: no checkpoint, so the network has random weights. Predictions still
+        # work for contract tests, but /ready says so and every response carries the tag.
+        logger.warning("No trained checkpoint: serving UNTRAINED weights (not ready).")
+        self.model_version = f"{self.model_version}+untrained"
         self.model.eval()
-        self.is_ready = True
+        self.is_ready = False
 
     def build_feature_vector(
         self,

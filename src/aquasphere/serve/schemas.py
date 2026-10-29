@@ -199,6 +199,10 @@ class MetaResponse(BaseModel):
         default_factory=list,
         description="Dates present in the local surface store (other dates may 503)",
     )
+    model_provenance: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Served checkpoint: weights trained/untrained, verification status, git SHA, data hash",
+    )
 
 
 class HealthResponse(BaseModel):

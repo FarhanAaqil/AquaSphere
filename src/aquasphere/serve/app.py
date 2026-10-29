@@ -105,7 +105,13 @@ def readiness_check() -> ReadyResponse:
             "data_version": engine.data_version,
             "zarr_store_path": str(resolver.store_path),
             "checkpoint_path": str(engine.checkpoint_path),
+            "weights": engine.weights,
             "training_membership": engine.membership.source,
+            "provenance_status": engine.provenance_status,
+            "provenance_detail": engine.provenance_detail,
+            "git_sha": engine.provenance.get("git_sha"),
+            "data_sha256": engine.provenance.get("data_sha256"),
+            "trained_at": engine.provenance.get("trained_at"),
         },
     )
 
@@ -130,6 +136,13 @@ def get_metadata() -> MetaResponse:
         available_dates=(
             sorted(resolver.zarr_store.get_available_dates()) if resolver.zarr_store else []
         ),
+        model_provenance={
+            "weights": engine.weights,
+            "status": engine.provenance_status,
+            "git_sha": engine.provenance.get("git_sha"),
+            "data_sha256": engine.provenance.get("data_sha256"),
+            "trained_at": engine.provenance.get("trained_at"),
+        },
     )
 
 

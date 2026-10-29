@@ -129,7 +129,10 @@ def test_app_loads(page: Page, base_url: str) -> None:
     _open(page, base_url, "overview")
     assert page.title() == "AquaSphere"
     assert page.locator("#nav a").count() == len(TABS)
-    page.wait_for_selector('#status-pill[data-state="ok"]', timeout=15000)
+    # "degraded" = API up but no trained checkpoint (CI): honest, and still a working app
+    page.wait_for_selector(
+        '#status-pill[data-state="ok"], #status-pill[data-state="degraded"]', timeout=15000
+    )
     page.wait_for_selector("#date-picker:not([disabled])", timeout=15000)
     assert not _errors(page)
 

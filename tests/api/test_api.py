@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from aquasphere.constants import STANDARD_DEPTHS
-from aquasphere.serve.app import app, resolver
+from aquasphere.serve.app import app, engine, resolver
 
 client = TestClient(app)
 
@@ -24,9 +24,13 @@ def test_ready_endpoint() -> None:
     resp = client.get("/ready")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["ready"] is True
+    # Ready only with trained weights whose provenance is not contradicted (CI has no checkpoint)
+    trained = engine.weights == "trained"
+    assert data["ready"] is (trained and engine.provenance_status != "mismatch")
+    assert data["details"]["weights"] == engine.weights
     assert data["model_loaded"] is True
     assert "model_version" in data["details"]
+    assert "provenance_status" in data["details"]
 
 
 def test_meta_endpoint() -> None:
