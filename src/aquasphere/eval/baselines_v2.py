@@ -15,7 +15,7 @@ statistics are fitted on it too.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Protocol
 
 import numpy as np
 import pandas as pd
@@ -30,6 +30,14 @@ T_COLS = [f"t_{d}" for d in STANDARD_DEPTHS]
 M_COLS = [f"m_{d}" for d in STANDARD_DEPTHS]
 CHANNELS = ["sst", "sss", "sla", "ug", "vg", "u10", "v10"]
 MIN_CELL = 5  # observations needed before a climatology cell is trusted
+
+
+class Baseline(Protocol):
+    name: str
+
+    def fit(self, train: pd.DataFrame, seed: int = 0) -> Baseline: ...
+
+    def predict(self, df: pd.DataFrame) -> np.ndarray: ...
 
 
 def targets(df: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
@@ -304,4 +312,10 @@ class B4DeepEnsemble(_AnomalyModel):
         return self.predict_dist(df)[0]
 
 
-LADDER = {"B0": B0Climatology, "B1": B1Ridge, "B2": B2LightGBM, "B3": B3V1Net, "B4": B4DeepEnsemble}
+LADDER: dict[str, type[Baseline]] = {
+    "B0": B0Climatology,
+    "B1": B1Ridge,
+    "B2": B2LightGBM,
+    "B3": B3V1Net,
+    "B4": B4DeepEnsemble,
+}
