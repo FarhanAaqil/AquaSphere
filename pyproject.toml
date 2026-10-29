@@ -53,6 +53,10 @@ dev = [
     # Audit
     "pip-audit>=2.7.0",
 ]
+e2e = [
+    # Browser smoke tests for web/ (also needs: python -m playwright install chromium)
+    "playwright>=1.45.0",
+]
 
 [project.scripts]
 aquasphere-serve  = "aquasphere.serve.app:main"

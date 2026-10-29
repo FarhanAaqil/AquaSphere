@@ -18,7 +18,7 @@ import hashlib
 import json
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -67,7 +67,9 @@ def load_table(path: Path) -> pd.DataFrame:
 
 def build_info() -> dict:
     manifest_path = ROOT / "data" / "manifest.json"
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {}
+    manifest = (
+        json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {}
+    )
     metrics_path = ROOT / "docs" / "results" / "metrics.json"
     metrics = json.loads(metrics_path.read_text(encoding="utf-8")) if metrics_path.exists() else {}
 
@@ -99,7 +101,7 @@ def build_info() -> dict:
         )
 
     return {
-        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "git_sha": git("rev-parse", "HEAD"),
         "git_branch": git("rev-parse", "--abbrev-ref", "HEAD"),
         "git_dirty": bool(git("status", "--porcelain")),
@@ -131,7 +133,7 @@ def floats() -> dict:
     ]
     return {
         "source": str(src.relative_to(ROOT)).replace("\\", "/"),
-        "n_profiles": int(len(df)),
+        "n_profiles": len(df),
         "floats": rows,
     }
 
