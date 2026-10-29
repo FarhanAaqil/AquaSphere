@@ -82,9 +82,12 @@ class PredictResponse(BaseModel):
     )
     model_version: str = Field(description="Trained model version identifier")
     data_version: str = Field(description="Data release version")
-    in_training_set: bool = Field(
-        default=False,
-        description="Whether this location/time was present in the training partition",
+    in_training_set: bool | None = Field(
+        default=None,
+        description=(
+            "Whether a training profile lies in the same 0.25° cell on the same date. "
+            "null when the training split cannot be determined."
+        ),
     )
 
 
@@ -114,8 +117,11 @@ class GridPoint(BaseModel):
     sst: float
     mld: float | None
     d20: float | None
-    pca1: float = Field(description="First principal component of embedding")
-    pca2: float = Field(description="Second principal component of embedding")
+    pca1: float = Field(description="Embedding projected on the grid's first principal component")
+    pca2: float = Field(description="Embedding projected on the grid's second principal component")
+    data_source: str = Field(
+        default="unknown", description="Provenance of this cell's surface observations"
+    )
 
 
 class GridResponse(BaseModel):
@@ -124,6 +130,14 @@ class GridResponse(BaseModel):
     date: str
     count: int
     points: list[GridPoint]
+    projection: str = Field(
+        default="pca",
+        description="How pca1/pca2 were computed: PCA of this grid's embeddings",
+    )
+    explained_variance: list[float] = Field(
+        default_factory=list,
+        description="Fraction of embedding variance captured by pca1 and pca2",
+    )
 
 
 class ValidationProfileResponse(BaseModel):
@@ -137,10 +151,17 @@ class ValidationProfileResponse(BaseModel):
     lon: float
     distance_km: float
     depths: list[int]
-    true_temperatures: list[float]
+    true_temperatures: list[float | None] = Field(
+        description="Observed temperature (°C); null where the float has no observation"
+    )
     pred_temperatures: list[float]
     uncertainties: list[float]
-    rmse: float
+    rmse: float | None = Field(description="RMSE over observed depths only (°C)")
+    n_observed: int = Field(default=0, description="Number of depths with an observation")
+    in_training_set: bool | None = Field(
+        default=None,
+        description="Whether this float was in the served model's training split",
+    )
     data_source: str = Field(
         default="local_store",
         description="Data provenance: 'local_store' | 'disk_cache' | 'live' | 'offline_synthetic'",
@@ -153,8 +174,14 @@ class ExplainResponse(BaseModel):
     lat: float
     lon: float
     date: str
-    method: str = Field(default="permutation_importance")
+    method: str = Field(default="gradient_x_input")
+    target: str = Field(
+        default="temperature_100m", description="Model output the attribution explains"
+    )
     feature_attributions: dict[str, float]
+    data_source: str | None = Field(
+        default=None, description="Provenance of the surface observations explained"
+    )
 
 
 class MetaResponse(BaseModel):
@@ -168,6 +195,10 @@ class MetaResponse(BaseModel):
     domain: dict[str, float]
     standard_depths: list[int]
     available_sources: list[str]
+    available_dates: list[str] = Field(
+        default_factory=list,
+        description="Dates present in the local surface store (other dates may 503)",
+    )
 
 
 class HealthResponse(BaseModel):

@@ -173,7 +173,7 @@ def test_explain_endpoint() -> None:
     assert resp.status_code == 200
     data = resp.json()
 
-    assert data["method"] == "integrated_gradients"
+    assert data["method"] == "gradient_x_input"
     assert "sst" in data["feature_attributions"]
     assert "lat" in data["feature_attributions"]
     assert pytest.approx(sum(data["feature_attributions"].values()), abs=1e-3) == 1.0
