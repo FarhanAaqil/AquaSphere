@@ -73,6 +73,9 @@ def test_report_writes_everything_without_reading_the_test_period(
     assert "p_holm" in metrics["e2"]["B2"]["vs_B0_thermocline"]
     assert "reliability" in metrics["e2"]["B4"]["probabilistic"]
     assert {s["status"] for s in metrics["strata"]} <= {"confirmatory", "descriptive only", "empty"}
+    filled = [s for s in metrics["strata"] if s["status"] != "empty"]
+    assert all(0.0 <= s["b4_coverage_90"] <= 1.0 for s in filled)
+    assert all("B4__sigma" not in s["thermocline_rmse"] for s in filled)
 
     e1 = json.loads((out / "e1_leakage_v2.json").read_text(encoding="utf-8"))
     assert set(e1["models"]) == {"B0", "B1", "B2", "B3"}
