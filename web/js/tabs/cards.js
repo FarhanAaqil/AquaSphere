@@ -29,11 +29,11 @@ const LIMITATIONS = [
   'The served model and the E3/E7 ablation runs were trained on tables whose SSS, SLA, current and wind columns came from the synthetic demo store (proven by the audit above). Only their SST input is real. They are replaced by models trained on the real 2015–2025 store in roadmap Phase 4.',
   'Decision-support prototype. Not validated for navigation, safety-critical offshore work or search and rescue without independent INCOIS verification.',
   'The API\'s local surface store reports offline_synthetic, so live-looking predictions on this site are driven by fixture inputs unless the source badge says Disk cache or Live.',
-  'The Argo archive covers 2025-03-25 → 2025-09-15 only. The documented temporal split (train 2015–22 / val 2023 / test 2024–25) cannot be run on it, so evaluation uses a float-grouped split instead.',
+  'Validation 2023 is small once floats seen in training are excluded: 761 profiles from 37 floats. Every Bay of Bengal stratum is too small for claims and is reported descriptively.',
   'The /validation/profile lookup store (tests/fixtures/argo_200.parquet) is mostly training floats for the served model: only 39 of its 200 profiles are held out. The API now returns held-out profiles by default and flags the rest.',
-  'The served model (80/20 float split) and metrics.json (70/15/15 float split) use different partitions; they are unified in the evaluation framework v2.',
-  'OISST contains Argo near-surface values, so errors at 0–10 m are not an independent test. The blueprint reports headline skill at 20 m and below; the current metrics files still group 0–30 m together.',
-  'On the current split a gradient-boosted tree baseline (HistGBDT) beats OceanEmbedNet v1 on thermocline RMSE.',
+  'The served model predates protocol v2 (it was trained on a 2025 snapshot with an 80/20 float split). It is replaced by a model trained on the protocol v2 training partition in roadmap Phase 4.',
+  'OISST contains Argo near-surface values, so errors at 0–10 m are not an independent test. Protocol v2 reports 0–10 m as its own band and headline skill at 20 m and below; the older v1 metrics files still group 0–30 m together.',
+  'Under protocol v2 the retrained v1 network (B3) is not distinguishable from climatology; LightGBM (B2) and the deep ensemble (B4) set the bar AquaSphere has to beat, and the B4 90% intervals under-cover (83.8%).',
   'Interval coverage is identical across all ablation runs (std ≈ 0) on 38 validation profiles; calibration evidence is thin.',
   'No dissimilarity index or reliability diagram exists yet; those views are pending.',
 ];
@@ -90,9 +90,24 @@ export default {
     paintModel();
     onState(ctx, ['ready', 'meta'], paintModel);
 
-    // Splits
+    // Splits: protocol v2 once its results exist, else the old snapshot split
     const split = card({ title: 'Training & evaluation split', sub: 'What was documented vs what the data allows' });
-    if (metrics) {
+    const v2 = await api.results('metrics_v2').catch(() => null);
+    if (v2) {
+      split.card.querySelector('.card__sub').textContent = 'Protocol v2: time-blocked and float-grouped, as the blueprint specifies';
+      split.meta.append(badge('results'), tag('Test locked', 'heldout', 'Read once, in the final evaluation (roadmap Phase 6).'));
+      const p = v2.split.profiles;
+      const total = p.train + p.val + p.test;
+      const w = (k) => `${((p[k] / total) * 100).toFixed(1)}%`;
+      split.body.innerHTML = `
+        <div class="split-bar" role="img" aria-label="Train ${p.train} profiles, validation ${p.val}, test ${p.test}">
+          <div style="width:${w('train')};background:${C.teal}">Train 2015–22 · ${p.train.toLocaleString()}</div>
+          <div style="width:${w('val')};min-width:3.5em;background:${C.amber}" title="Validation 2023">${p.val}</div>
+          <div style="width:${w('test')};min-width:4.5em;background:${C.coral}" title="Test 2024–25 (locked)">${p.test.toLocaleString()}</div></div>
+        <p class="card__foot"></p><p class="note"></p>`;
+      split.body.querySelector('.card__foot').textContent = `Profiles in each partition: train ${p.train.toLocaleString()} (${v2.split.floats.train} floats), validation 2023 ${p.val} (${v2.split.floats.val} floats), test 2024–25 ${p.test.toLocaleString()} (${v2.split.floats.test} floats).`;
+      split.body.querySelector('.note').textContent = `Every float belongs to the first period it appears in, so ${v2.split.dropped_profiles.val.toLocaleString()} validation-year and ${v2.split.dropped_profiles.test.toLocaleString()} test-year profiles from floats already seen earlier are excluded. Hypotheses were frozen before the test period was read (docs/hypotheses.yaml).`;
+    } else if (metrics) {
       split.meta.append(badge('results'));
       const n = metrics.n_train_profiles + metrics.n_eval_profiles;
       const tr = (metrics.n_train_profiles / n) * 100;
