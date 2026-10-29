@@ -104,3 +104,14 @@ def test_weekly_windows_tile_the_range_without_gaps() -> None:
     for (_, a_end), (b_start, _) in pairwise(wins):
         assert b_start == a_end + timedelta(days=1)
     assert all((b - a).days <= 6 for a, b in wins)
+
+
+def test_flagged_good_but_impossible_temperatures_are_dropped() -> None:
+    rec = _record()
+    rec["data"][0][0] = 0.0  # stuck sensor at 5 dbar, still flagged QC 1
+    rec["data"][0][1] = -1.9
+    row = parse_record(rec)
+    assert row is not None
+    assert row["n_range_rejected"] == 2
+    assert all(row[f"t_{d}"] >= 1.0 for d in (20, 30, 50) if row[f"m_{d}"])
+    assert row["m_0"] == 0  # shallowest good level is now 20 dbar: no extrapolation to 0 m

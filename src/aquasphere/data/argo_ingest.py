@@ -36,7 +36,7 @@ import pandas as pd
 
 from aquasphere.constants import LAT_MAX, LAT_MIN, LON_MAX, LON_MIN, STANDARD_DEPTHS
 from aquasphere.data.argo import interpolate_profile_pchip
-from aquasphere.data.contracts import validate_argo_profiles
+from aquasphere.data.contracts import T_MAX, T_MIN, validate_argo_profiles
 
 logger = logging.getLogger(__name__)
 
@@ -147,12 +147,17 @@ def parse_record(record: dict[str, Any]) -> dict[str, Any] | None:
     except (ValueError, IndexError, TypeError):
         return None
 
-    good = (
+    flagged_good = (
         (cols["temperature_argoqc"] == GOOD)
         & (cols["pressure_argoqc"] == GOOD)
         & np.isfinite(cols["temperature"])
         & np.isfinite(cols["pressure"])
     )
+    # Gross range test: some levels flagged good are stuck sensors or fill values (0 °C, -1.9 °C
+    # at the surface of a tropical ocean). The contract's physical bounds reject them per level.
+    in_range = (cols["temperature"] >= T_MIN) & (cols["temperature"] <= T_MAX)
+    good = flagged_good & in_range
+    n_range_rejected = int((flagged_good & ~in_range).sum())
     if good.sum() < MIN_GOOD_LEVELS:
         return None
 
@@ -172,6 +177,7 @@ def parse_record(record: dict[str, Any]) -> dict[str, Any] | None:
         "timestamp": str(record["timestamp"]),
         "data_mode": data_mode(record),
         "n_good_levels": int(good.sum()),
+        "n_range_rejected": n_range_rejected,
         "max_depth_m": float(depth.max()),
         "sst": np.nan,  # filled by collocation with the surface store
     }
@@ -203,12 +209,17 @@ def ingest(start: date, end: date, output: Path = OUTPUT) -> pd.DataFrame:
     output.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(output, index=False)
     logger.info(
-        "Wrote %s: %d profiles from %d floats (%d rejected by QC). Data modes: %s",
+        "Wrote %s: %d profiles from %d floats (%d rejected by QC). Data modes: %s. "
+        "%d profiles had flagged-good levels outside %.0f-%.0f °C removed (%d levels).",
         output,
         len(df),
         df["float_id"].nunique(),
         rejected,
         df["data_mode"].value_counts().to_dict(),
+        int((df["n_range_rejected"] > 0).sum()),
+        T_MIN,
+        T_MAX,
+        int(df["n_range_rejected"].sum()),
     )
     return df
 
