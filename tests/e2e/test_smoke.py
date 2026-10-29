@@ -186,6 +186,25 @@ def test_loads_with_api_unreachable(page: Page, base_url: str) -> None:
     assert not _errors(page)
 
 
+def test_shareable_link_restores_the_view(page: Page, base_url: str) -> None:
+    page.goto(f"{base_url}/#/predict?lat=18.50&lon=88.25&mode=nowcast")
+    page.wait_for_selector('.page[data-tab="predict"]', timeout=15000)
+    page.wait_for_function(
+        "document.querySelector('[data-ref=sub]').textContent.includes('18.50')", timeout=15000
+    )
+    assert page.get_attribute('#mode-switch [aria-checked="true"]', "data-mode") == "nowcast"
+    assert "lat=18.50" in page.url and "mode=nowcast" in page.url
+
+
+def test_invalid_link_parameters_are_ignored(page: Page, base_url: str) -> None:
+    page.goto(f"{base_url}/#/predict?lat=99&lon=88&date=2031-01-01")
+    page.wait_for_selector('.page[data-tab="predict"]', timeout=15000)
+    page.wait_for_timeout(1500)
+    assert "lat=99" not in page.url
+    assert "2031-01-01" not in page.url
+    assert not _errors(page)
+
+
 def test_offline_demo_is_labelled(page: Page, base_url: str) -> None:
     page.route(API_PATH, lambda r: r.abort())
     page.add_init_script("localStorage.setItem('aquasphere.prefs', JSON.stringify({demo: true}))")

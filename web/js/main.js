@@ -6,6 +6,7 @@ import { initTopbar, populateDates } from './ui/topbar.js';
 import { toast } from './ui/toasts.js';
 import { DOMAIN } from './geo.js';
 import { registerDepthSink, setDepth } from './depth.js';
+import { initUrlState, writeUrlState } from './urlstate.js';
 
 const body = document.body;
 const STATUS_POLL_MS = 30000;
@@ -92,6 +93,7 @@ function exportView() {
 function init() {
   paintFlags();
   const sidebar = initSidebar();
+  initUrlState(); // before /meta so a linked date is honoured when it is available
   initTopbar({ onExport: exportView });
 
   startRouter((route) => {
@@ -99,6 +101,7 @@ function init() {
     document.getElementById('view-title').textContent = route.label;
     document.title = route.id === 'overview' ? 'AquaSphere' : `${route.label} · AquaSphere`;
     setDepth(0);
+    writeUrlState();
   });
 
   subscribe((s, changed) => {

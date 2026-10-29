@@ -110,6 +110,15 @@ export function initTopbar({ onExport }) {
   perf.addEventListener('change', () => set({ perf: perf.checked }));
   demo.addEventListener('change', () => set({ demo: demo.checked }));
   document.getElementById('export-btn').addEventListener('click', () => { setOpen(false); onExport(); });
+  document.getElementById('copy-link-btn').addEventListener('click', async () => {
+    setOpen(false);
+    try {
+      await navigator.clipboard.writeText(location.href);
+      toast('Link copied: it reopens this tab with the same point, date and mode.');
+    } catch {
+      toast(`Copy this link: ${location.href}`, { kind: 'warn', timeout: 12000 });
+    }
+  });
 
   const paintDemo = () => {
     document.getElementById('demo-badge').hidden = !state.demo;
