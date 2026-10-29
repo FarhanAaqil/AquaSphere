@@ -8,7 +8,7 @@ const LADDER = [
   ['B0', 'Climatology'],
   ['B1', 'Climatology + Ridge'],
   ['B2', 'Gradient Boosted Trees (HistGBDT)'],
-  ['Net', 'v1 OceanEmbedNet (Re-evaluated)'],
+  ['B3', 'v1 OceanEmbedNet (Re-evaluated)'],
 ];
 const SERIES = [C.faint, C.indigo, C.teal, C.cyan];
 
@@ -66,11 +66,18 @@ async function e2(host, ctx) {
     [id, key, fmt(v.thermocline_rmse, 3), `${fmt(v.thermocline_ci_95[0])}–${fmt(v.thermocline_ci_95[1])}`, fmt(v.overall_rmse, 3), fmt(v.skill_score_overall, 3)].forEach((x, i) => { tr.cells[i].textContent = x; });
     tb.append(tr);
   }
-  const tr = h('<tr><td class="mono">B3–B5</td><td colspan="5"><span class="badge badge--pending">Pending</span> Not in metrics.json yet</td></tr>');
-  tb.append(tr);
+  for (const [id, what] of [
+    ['B4', 'Deep ensemble of Tier A models (uncertainty baseline for conformal)'],
+    ['B5', 'ARMOR3D upper reference (mooring comparison only; it assimilates Argo)'],
+  ]) {
+    const tr = h('<tr><td class="mono"></td><td colspan="5"><span class="badge badge--pending">Pending</span> <span></span></td></tr>');
+    tr.cells[0].textContent = id;
+    tr.cells[1].lastChild.textContent = what;
+    tb.append(tr);
+  }
   const n = document.createElement('p');
   n.className = 'note';
-  n.textContent = `${m.n_eval_profiles} held-out profiles from ${m.n_eval_floats} floats (${m.split}), ${m.n_train_profiles} training profiles. Generated ${m._generated_at?.slice(0, 10) || '—'}.`;
+  n.textContent = `${m.n_eval_profiles} held-out profiles from ${m.n_eval_floats} floats (${m.split}), ${m.n_train_profiles} training profiles. Generated ${m._generated_at?.slice(0, 10) || '—'}. The blueprint specifies LightGBM for B2; this run used scikit-learn's HistGradientBoosting, an equivalent histogram GBDT.`;
   c.body.append(n);
 }
 

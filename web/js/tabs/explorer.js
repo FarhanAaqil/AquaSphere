@@ -177,9 +177,13 @@ export default {
       const rmseObs = valid.length ? Math.sqrt(valid.reduce((a, e) => a + e * e, 0) / valid.length) : null;
       const thermo = r.depths.map((d, i) => (d >= 50 && d <= 150 ? resid[i] : null)).filter((e) => e != null);
       const rmseThermo = thermo.length ? Math.sqrt(thermo.reduce((a, e) => a + e * e, 0) / thermo.length) : null;
+      // Blueprint §10.1: OISST contains Argo near-surface values, so 0–10 m is not a clean test.
+      const deep = r.depths.map((d, i) => (d >= 20 ? resid[i] : null)).filter((e) => e != null);
+      const rmseDeep = deep.length ? Math.sqrt(deep.reduce((a, e) => a + e * e, 0) / deep.length) : null;
       const cover = inside.filter((v) => v != null);
       $(root, '[data-ref="scores"]').replaceChildren(
         score('RMSE · observed depths', rmseObs == null ? '—' : `${rmseObs.toFixed(2)} °C`, `${nObs} of ${r.depths.length} depths observed`),
+        score('RMSE · 20 m and below', rmseDeep == null ? '—' : `${rmseDeep.toFixed(2)} °C`, 'Headline depths: 0–10 m excluded, input SST contains Argo near-surface data'),
         score('Thermocline RMSE', rmseThermo == null ? '—' : `${rmseThermo.toFixed(2)} °C`, '50–150 m, observed depths'),
         score('Inside ±1.645σ', cover.length ? `${cover.filter(Boolean).length}/${cover.length}` : '—', 'Depths where the observation falls in the band'),
         score('RMSE · API', `${fmt(r.rmse)} °C`, 'As returned; includes zero-filled missing depths'),

@@ -17,6 +17,24 @@
 | **NASA SMAP L3** | NASA PO.DAAC / RSS | $0.25^\circ \times 0.25^\circ$, 8-Day | Sea Surface Salinity (SSS) | NASA Open Data |
 | **ERA5 / CCMP v3** | ECMWF / RSS | $0.25^\circ \times 0.25^\circ$, Daily | 10m Wind Stress ($u_{10}, v_{10}$) | CC-BY 4.0 |
 
+### 1a. Input independence audit (Blueprint §10.1)
+
+A model can look skilful simply because an input already contains Argo information, so every
+input product is audited before results are reported.
+
+| Product | Contains Argo or other in-situ T/S? | Status | Handling |
+|---|---|---|---|
+| OISST v2.1 (SST) | Yes: blends satellite data with ships, buoys and Argo near-surface values (above ~5 m) | Verified | Headline skill reported for 20 m and below; 0–10 m reported separately and flagged |
+| ARMOR3D | Yes: merges satellite fields with in-situ profiles | Documented | Never an input or target; mooring comparison only (B5, E8) |
+| Reanalyses (e.g. GLORYS12) | Yes: assimilate in-situ profiles | Documented | Not used as training targets; Argo is the label source |
+| Salinity (SMAP, SMOS, CCI, multi-observation) | Possibly: some products are bias-adjusted with in-situ salinity | To verify | E3 reported with and without SSS |
+| DUACS altimetry (SLA, currents) | Not expected | To verify | Confirm in product documentation |
+| ERA5 / CCMP winds | Not expected | To verify | Confirm in product documentation; masked in nowcast mode |
+
+The current `metrics.json` predates this rule and still groups 0–30 m together. Splitting
+0–10 m from 20 m-and-below arrives with the evaluation framework v2 (roadmap Phase 3); the web
+Profile Explorer already shows an RMSE for 20 m and below next to the all-depth figure.
+
 ---
 
 ## 2. Quality Control & Preprocessing Pipeline
