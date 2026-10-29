@@ -1,4 +1,4 @@
-.PHONY: setup data data-store data-argo data-collocate data-coverage data-demo train eval serve ui-data test lint typecheck audit reproduce clean
+.PHONY: setup data data-store data-argo data-collocate data-coverage data-patches data-demo train eval serve ui-data test lint typecheck audit reproduce clean
 
 # ── Setup ────────────────────────────────────────────────────────────────────
 setup:
@@ -7,7 +7,7 @@ setup:
 
 # ── Data pipeline (real, open data; see docs/DATA_CARD.md) ──────────────────
 # ~4 GB of downloads on first run, cached under data/cache afterwards.
-data: data-store data-argo data-collocate data-coverage
+data: data-store data-argo data-collocate data-coverage data-patches
 
 data-store:
 	python -m aquasphere.data.satellite_fetch --start 2015-01-01 --end 2025-12-31
@@ -20,6 +20,10 @@ data-collocate:
 
 data-coverage:
 	python -m aquasphere.data.coverage
+
+# 9x9 patch stacks at lags t, t-7, t-14, t-28 for Tier B/C, plus unlabelled training-year patches
+data-patches:
+	python -m aquasphere.data.patches --ssl
 
 # Synthetic demo store (13 dates) for offline UI demos only. Never train or evaluate on it.
 data-demo:
