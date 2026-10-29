@@ -10,10 +10,14 @@ const STATUS_TEXT = {
 };
 
 /**
- * Dates offered = dates present in the surface store (web/data/dates.json), clipped to the
- * /meta range. If that list is missing we fall back to a native date input bounded by /meta.
+ * Dates offered = dates present in the surface store, clipped to the /meta range. /meta reports
+ * them directly; older APIs don't, so web/data/dates.json is the fallback, and with neither we
+ * fall back to a native date input bounded by /meta.
  */
 async function availableDates(meta) {
+  if (meta.available_dates?.length) {
+    return meta.available_dates.filter((d) => d >= meta.min_date && d <= meta.max_date);
+  }
   try {
     const { dates } = await results('dates');
     return dates.filter((d) => d >= meta.min_date && d <= meta.max_date);

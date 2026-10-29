@@ -1,7 +1,7 @@
 import { state, set } from '../state.js';
 import * as api from '../api.js';
 import { DOMAIN, inDomain, fmtLat, fmtLon } from '../geo.js';
-import { badge, tag } from '../ui/badges.js';
+import { badge, tag, sourceSummary } from '../ui/badges.js';
 import { loading, errorState, empty } from '../ui/loaders.js';
 import { toast } from '../ui/toasts.js';
 import { plot, C, THERMAL } from '../charts/theme.js';
@@ -36,7 +36,7 @@ export default {
 
     const feat = card({ title: 'Feature attribution', sub: 'Share of total attribution per input feature' });
     const fam = card({ title: 'Which sensors drove it', sub: 'Attribution summed by sensor family' });
-    const emb = card({ title: 'Embedding space', sub: '2-D coordinates from /grid for every ocean cell, coloured by SST' });
+    const emb = card({ title: 'Embedding space', sub: 'First two principal components of every ocean cell\'s embedding, coloured by SST' });
     const about = card({ title: 'How to read this' });
     feat.body.innerHTML = '<div class="chart chart--tall"></div>';
     fam.body.innerHTML = '<div class="sensor-bars"></div>';
@@ -44,8 +44,8 @@ export default {
     about.body.innerHTML = `<ul class="plain-list">
       <li>Attribution is local: it explains this one prediction at 100 m, not the model in general.</li>
       <li>"_avail" features are masks telling the model whether a sensor was present; their share shows how much the model leans on knowing a sensor is missing.</li>
-      <li>Gradient × input is a first-order method. It is quick and honest about what it is, but it is not integrated gradients over a baseline path even though the API labels it that way.</li>
-      <li>The embedding map uses the two numbers <span class="mono">/grid</span> calls pca1 and pca2. In the current backend they are the means of the first and second halves of the 16-d embedding, not true principal components.</li></ul>`;
+      <li>Gradient × input is a first-order method: quick, but it ignores interactions that a path method such as integrated gradients would capture.</li>
+      <li>The embedding map is a real PCA of the 16-d embeddings across the whole <span class="mono">/grid</span> for this date; the axis titles say how much variance each component keeps.</li></ul>`;
     $(root, '[data-ref="row1"]').append(feat.card, fam.card);
     $(root, '[data-ref="row2"]').append(emb.card, about.card);
     emb.body.querySelector('.note').textContent = 'Points close together have similar embeddings. The highlighted cell is the grid point nearest the explained location.';
@@ -57,6 +57,7 @@ export default {
     const famBars = fam.body.firstChild;
     const embChart = emb.body.firstChild;
     let gridPts = null;
+    let explained = [];
 
     async function explainPoint() {
       const { lat, lon } = state.point;
@@ -113,7 +114,11 @@ export default {
           hovertemplate: '%{customdata[0]:.1f}°N %{customdata[1]:.1f}°E · SST %{customdata[2]:.2f} °C<extra></extra>', name: 'Grid cells',
         },
         { type: 'scatter', mode: 'markers', x: [near.pca1], y: [near.pca2], marker: { size: 16, color: 'rgba(0,0,0,0)', line: { color: '#fff', width: 2 } }, name: 'Explained point', hoverinfo: 'skip' },
-      ], { xaxis: { title: { text: 'pca1' }, zeroline: false }, yaxis: { title: { text: 'pca2' }, zeroline: false }, showlegend: false }, ctx, 'aquasphere-embedding');
+      ], {
+        xaxis: { title: { text: explained[0] != null ? `PC1 · ${(explained[0] * 100).toFixed(0)}% of variance` : 'PC1' }, zeroline: false },
+        yaxis: { title: { text: explained[1] != null ? `PC2 · ${(explained[1] * 100).toFixed(0)}%` : 'PC2' }, zeroline: false },
+        showlegend: false,
+      }, ctx, 'aquasphere-embedding');
     }
 
     form.addEventListener('submit', (e) => {
@@ -134,11 +139,10 @@ export default {
         const { nioLand, onLand } = await import('../geo.js');
         await nioLand();
         gridPts = g.points.filter((p) => !onLand(p.lat, p.lon));
-        // /grid responses carry no data_source field, so say that rather than guess one.
-        emb.meta.replaceChildren(
-          badge(state.demo ? 'demo_synthetic' : 'unreported'),
-          tag(`${gridPts.length} ocean cells`, 'muted'),
-        );
+        explained = g.explained_variance || [];
+        // Older APIs sent no per-cell source; say so rather than guess one.
+        const sources = gridPts.map((p) => p.data_source || 'unreported');
+        emb.meta.replaceChildren(...sourceSummary(sources), tag(`${gridPts.length} ocean cells`, 'muted'));
         embChart.replaceChildren();
         drawEmbedding();
       } catch (err) {

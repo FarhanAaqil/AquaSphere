@@ -18,14 +18,20 @@ import hashlib
 import json
 import subprocess
 import sys
+from contextlib import chdir
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pandas as pd
+
+if TYPE_CHECKING:
+    from aquasphere.serve.membership import TrainingMembership
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 OUT = ROOT / "web" / "data"
+CHECKPOINT = ROOT / "checkpoints" / "tier_a" / "model_a.pt"
 
 ARCHIVE_CANDIDATES = [
     ROOT / "data" / "processed" / "argo_profiles.parquet",
@@ -138,27 +144,32 @@ def floats() -> dict:
     }
 
 
-def split_membership() -> dict[str, str]:
-    """Float -> partition, reproducing the split used by aquasphere.eval.report."""
-    from aquasphere.data.splits import make_float_grouped_split
+def served_membership() -> TrainingMembership:
+    """Training membership of the served model, exactly as the API computes it."""
+    from aquasphere.serve.membership import TrainingMembership
 
-    csv = ROOT / "data" / "argo_sst_training.csv"
-    if not csv.exists():
-        return {}
-    train, val, test = make_float_grouped_split(
-        load_table(csv), train_ratio=0.70, val_ratio=0.15, test_ratio=0.15, seed=42
-    )
-    out: dict[str, str] = {}
-    for name, part in (("train", train), ("val", val), ("test", test)):
-        out.update({str(f): name for f in part["float_id"].unique()})
-    return out
+    checkpoint = None
+    if CHECKPOINT.exists():
+        try:
+            import torch
+
+            checkpoint = torch.load(CHECKPOINT, map_location="cpu", weights_only=False)
+        except Exception as e:  # unreadable checkpoint: fall back to reconstructing the split
+            print(f"warning: could not read {CHECKPOINT}: {e}")
+    with chdir(ROOT):
+        return TrainingMembership.resolve(checkpoint)
 
 
 def heldout() -> dict:
     if not HELDOUT_STORE.exists():
         return {"source": None, "profiles": []}
     df = load_table(HELDOUT_STORE)
-    membership = split_membership()
+    membership = served_membership()
+
+    def split_of(float_id: str) -> str:
+        inside = membership.float_in_training(float_id)
+        return "unknown" if inside is None else "train" if inside else "held_out"
+
     rows = [
         {
             "profile_id": str(r.profile_id),
@@ -167,13 +178,13 @@ def heldout() -> dict:
             "lon": round(float(r.lon), 3),
             "date": str(r.date)[:10],
             "region": region(float(r.lat), float(r.lon)),
-            "split": membership.get(str(r.float_id), "unknown"),
+            "split": split_of(str(r.float_id)),
         }
         for r in df.itertuples()
     ]
     return {
         "source": str(HELDOUT_STORE.relative_to(ROOT)).replace("\\", "/"),
-        "split_rule": "float-grouped 70/15/15, seed 42 (same as aquasphere.eval.report)",
+        "split_rule": f"served model's training split ({membership.source})",
         "profiles": rows,
     }
 

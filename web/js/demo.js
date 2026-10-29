@@ -78,7 +78,7 @@ export function grid({ date, step = 2.5 }) {
   for (let lat = 5; lat <= 30 + 1e-6; lat += step) {
     for (let lon = 45; lon <= 105 + 1e-6; lon += step) {
       const p = predictSync({ lat, lon, date });
-      points.push({ lat, lon, sst: p.temperatures[0], mld: p.mld, d20: p.d20, pca1: p.embedding[0], pca2: p.embedding[1] });
+      points.push({ lat, lon, sst: p.temperatures[0], mld: p.mld, d20: p.d20, pca1: p.embedding[0], pca2: p.embedding[1], data_source: SOURCE });
     }
   }
   return delay({ date, count: points.length, points });
@@ -91,7 +91,7 @@ export function validationProfile({ lat, lon, date }) {
   return delay({
     profile_id: 'demo', float_id: 'demo', cycle: 0, date: p.date, lat, lon, distance_km: 0,
     depths: DEPTHS, true_temperatures: truth, pred_temperatures: p.temperatures,
-    uncertainties: p.uncertainties, rmse, data_source: SOURCE,
+    uncertainties: p.uncertainties, rmse, n_observed: truth.length, in_training_set: false, data_source: SOURCE,
   });
 }
 

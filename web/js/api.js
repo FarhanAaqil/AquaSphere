@@ -103,9 +103,10 @@ export function grid(params, opts) {
   return request(`/grid?${qs(params)}`, { timeout: 60000, retries: 0, ...opts });
 }
 
-export function validationProfile({ lat, lon, date }, opts) {
+export function validationProfile({ lat, lon, date, includeTraining = false }, opts) {
   if (state.demo) return demo.validationProfile({ lat, lon, date });
-  return request(`/validation/profile?${qs({ lat, lon, date })}`, opts);
+  const include_training = includeTraining ? 'true' : null;
+  return request(`/validation/profile?${qs({ lat, lon, date, include_training })}`, opts);
 }
 
 export function explain({ lat, lon, date }, opts) {
