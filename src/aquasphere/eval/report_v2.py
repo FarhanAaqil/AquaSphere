@@ -36,9 +36,11 @@ OUT = Path("docs/results")
 SEEDS = (0, 1, 2)
 DETERMINISTIC = {"B0", "B1"}  # no randomness: one fit is the same as three
 MIN_FLOATS_FOR_CLAIMS = 5  # strata with fewer floats are reported as descriptive only
+# A stratum supports claims only if it could detect the H1a effect: a 15% cut in thermocline RMSE.
+CLAIM_EFFECT = 0.15
 
 
-def _round(x: float, n: int = 4) -> float | None:
+def _round(x: float | None, n: int = 4) -> float | None:
     return None if x is None or not np.isfinite(x) else round(float(x), n)
 
 
@@ -185,8 +187,15 @@ def strata(
                 # |error| <= 1.645 sigma  <=>  inside the Gaussian 90% interval
                 inside = np.abs(errors["B4"][sel]) <= 1.645 * sigmas["B4"][sel]
                 row["b4_coverage_90"] = _round(float(np.mean(inside[mask[sel]])), 3)
+            mde = row.get("mde_thermocline_c")
+            b0 = row["thermocline_rmse"].get("B0")
+            target = CLAIM_EFFECT * b0 if b0 is not None else None
+            row["claim_effect_c"] = _round(target, 3)
+            powered = mde is not None and target is not None and mde <= target
             row["status"] = (
-                "confirmatory" if n_floats >= MIN_FLOATS_FOR_CLAIMS else "descriptive only"
+                "confirmatory"
+                if n_floats >= MIN_FLOATS_FOR_CLAIMS and powered
+                else "descriptive only"
             )
             rows.append(row)
     return rows
@@ -235,14 +244,19 @@ def ladder_markdown(report: dict[str, Any]) -> str:
         "(0-10 m depends on OISST, which ingests Argo). 95% CIs from a bootstrap over floats.",
         "",
         "| Rung | Model | Thermocline RMSE (°C) | 95% CI | Skill vs B0 | ≥20 m RMSE | D20 RMSE (m) | vs B0 p (Holm) |",
-        "|---|---|---|---|---|---|---|---|---|",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for k, r in report["e2"].items():
         cmp = r.get("vs_B0_thermocline", {})
+        spread = (
+            f" ± {r['thermocline_rmse_seed_std']:.3f}" if r["seeds"] > 1 else " (deterministic)"
+        )
+        p = cmp.get("p_holm")
+        p_text = "—" if p is None else "< 0.001" if p < 0.001 else f"{p:.3f}"
         rows.append(
-            f"| {k} | {r['name']} | {r['thermocline_rmse']:.3f} ± {r['thermocline_rmse_seed_std']:.3f} | "
+            f"| {k} | {r['name']} | {r['thermocline_rmse']:.3f}{spread} | "
             f"{r['thermocline_ci_95'][0]:.3f} to {r['thermocline_ci_95'][1]:.3f} | {r['skill_thermocline']:+.3f} | "
-            f"{r['headline_rmse_20m_plus']:.3f} | {r['d20_rmse_m']} | {cmp.get('p_holm', '—')} |"
+            f"{r['headline_rmse_20m_plus']:.3f} | {r['d20_rmse_m']} | {p_text} |"
         )
     b4 = report["e2"].get("B4", {}).get("probabilistic")
     if b4:
@@ -255,7 +269,7 @@ def ladder_markdown(report: dict[str, Any]) -> str:
         "## Strata (region by monsoon season)",
         "",
         "| Region | Season | Profiles | Floats | B0 | B2 | B4 90% coverage | MDE (°C) | Status |",
-        "|---|---|---|---|---|---|---|---|",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
     for s in report["strata"]:
         t = s.get("thermocline_rmse", {})
