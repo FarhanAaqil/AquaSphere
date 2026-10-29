@@ -38,7 +38,7 @@
    > *"Opening Explore: the date picker is dynamically bounded by our `/meta` API endpoint. We can toggle between SST, salinity, sea level anomalies, and subsurface temperatures at a click with zero UI lag."*
 3. **Location Profile & Conformal Uncertainty (0:25):**
    > *"Opening Location Profile at 15°N, 88°E: You are looking at the reconstructed 0–1000m profile with shaded **conformal uncertainty intervals**. Notice the data provenance badge at the top: it explicitly marks whether this profile came from our local Zarr store, disk cache, or live ERDDAP. No silent simulations.*
-   > *Below, our Integrated Gradients attribution highlights which satellite feature drove the subsurface prediction."*
+   > *Below, our gradient × input attribution highlights which satellite feature drove the subsurface prediction."*
 4. **Compare & Embedding (0:15):**
    > *"On our Compare and Embedding views, we can contrast the fresher riverine stratification of the Bay of Bengal against the high-salinity upwelling of the Arabian Sea, projected onto our 16-dimensional learned latent space."*
 5. **Validation View (Held-Out Float Verification) (0:10):**
@@ -52,7 +52,7 @@
 > 1. **Zero Silent Simulation:** If data is missing and network is cut, the server fails fast with HTTP 503 rather than fabricating fake ocean physics.
 > 2. **Multi-Stage Resolver:** Zarr Store $\to$ Disk Cache $\to$ Remote ERDDAP.
 > 3. **Native ES Frontend:** Built in modular vanilla ES6 with in-flight promise deduplication to prevent UI race conditions—no node_modules build step required.
-> 4. **Containerized:** Packaged in a CPU-optimized Docker container with `/health` and `/ready` probes, with CI passing 100% across all 6 validation gates on GitHub Actions."*
+> 4. **Containerized:** Packaged in a CPU-optimized Docker container with `/health` and `/ready` probes, with all 7 CI jobs on GitHub Actions (lint, types, tests with an 80% coverage gate, browser and accessibility tests, smoke training, Docker `/ready`, dependency audit)."*
 
 ---
 
