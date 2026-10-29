@@ -93,6 +93,31 @@ class Climatology:
             for a, b, m in zip(lat, lon, month, strict=True)
         ]
 
+    def to_dict(self) -> dict[str, Any]:
+        """Plain lists only, so a checkpoint loads with torch.load(weights_only=True)."""
+        return {
+            "width": int(self.width),
+            "overall": [float(v) for v in self.overall],
+            "tables": [
+                [
+                    [list(k), [None if np.isnan(v) else float(v) for v in row]]
+                    for k, row in t.items()
+                ]
+                for t in self.tables
+            ],
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> Climatology:
+        c = cls()
+        c.width = int(d["width"])
+        c.overall = np.asarray(d["overall"], dtype=np.float64)
+        c.tables = [
+            {tuple(k): np.array([np.nan if v is None else v for v in row]) for k, row in t}
+            for t in d["tables"]
+        ]
+        return c
+
     def predict(self, df: pd.DataFrame) -> np.ndarray:
         month = pd.to_datetime(df["date"]).dt.month.to_numpy()
         out = np.full((len(df), self.width), np.nan)

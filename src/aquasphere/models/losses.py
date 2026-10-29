@@ -49,6 +49,7 @@ class MaskedHeteroscedasticLoss(nn.Module):
         target: torch.Tensor,
         mask: torch.Tensor | None = None,
         use_nll: bool = True,
+        offset: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Compute loss over batch.
 
@@ -58,6 +59,8 @@ class MaskedHeteroscedasticLoss(nn.Module):
             target: [B, 15] true temperatures
             mask: [B, 15] binary mask (1=observed, 0=unobserved). If None, inferred from ~isnan(target).
             use_nll: If False, uses weighted masked MSE (warm-up mode).
+            offset: [B, 15] climatology added to anomaly predictions, so the anti-inversion term
+                acts on absolute temperature. None when predictions are already absolute.
         """
         if mask is None:
             mask = (~torch.isnan(target)).float()
@@ -102,7 +105,8 @@ class MaskedHeteroscedasticLoss(nn.Module):
         # Physical inversion penalty: ReLU(T_{k+1} - T_k - eps_inv)
         phys_loss = torch.tensor(0.0, device=pred_mean.device)
         if self.lambda_phys > 0:
-            inversion = pred_mean[:, 1:] - pred_mean[:, :-1] - self.eps_inv
+            absolute = pred_mean if offset is None else pred_mean + offset
+            inversion = absolute[:, 1:] - absolute[:, :-1] - self.eps_inv
             inversion_penalty = F.relu(inversion)
             adjacent_mask = mask[:, 1:] * mask[:, :-1]
             phys_loss = (inversion_penalty * adjacent_mask).sum() / (adjacent_mask.sum() + 1e-8)
