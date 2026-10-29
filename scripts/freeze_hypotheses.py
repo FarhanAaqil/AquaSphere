@@ -78,7 +78,8 @@ HYPOTHESES: dict[str, dict[str, Any]] = {
 
 
 def sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    """Hash of the newline-normalised file, so Windows and Linux checkouts agree."""
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
 def pilot() -> dict[str, Any]:
