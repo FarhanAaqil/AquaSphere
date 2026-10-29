@@ -181,10 +181,17 @@ class SurfaceResolver:
                         if len(lines) >= 3:
                             parts = lines[2].split(",")
                             if len(parts) >= 5:
+                                self.circuit_breaker.record_success()
+                                # ERDDAP snaps to the nearest time it has: a day missing from
+                                # the product comes back as a neighbouring day. That is not an
+                                # observation for the requested date, so don't use it.
+                                if not parts[0].startswith(date):
+                                    logger.info("Live OISST has no %s (nearest %s)", date, parts[0])
+                                    return None
                                 sst_val = float(parts[4])
                                 if np.isfinite(sst_val):
-                                    self.circuit_breaker.record_success()
                                     return {"sst": sst_val}
+                                return None
             except Exception as e:
                 logger.info("Live ERDDAP attempt %d failed: %s", attempt, e)
                 await asyncio.sleep(0.2 * attempt)  # don't block the event loop
