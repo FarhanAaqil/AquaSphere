@@ -26,6 +26,7 @@ const SOURCES = [
 ];
 
 const LIMITATIONS = [
+  'The served model and the E3/E7 ablation runs were trained on tables whose SSS, SLA, current and wind columns came from the synthetic demo store (proven by the audit above). Only their SST input is real. They are replaced by models trained on the real 2015–2025 store in roadmap Phase 4.',
   'Decision-support prototype. Not validated for navigation, safety-critical offshore work or search and rescue without independent INCOIS verification.',
   'The API\'s local surface store reports offline_synthetic, so live-looking predictions on this site are driven by fixture inputs unless the source badge says Disk cache or Live.',
   'The Argo archive covers 2025-03-25 → 2025-09-15 only. The documented temporal split (train 2015–22 / val 2023 / test 2024–25) cannot be run on it, so evaluation uses a float-grouped split instead.',
@@ -130,6 +131,35 @@ export default {
       src.body.querySelector('tbody').append(tr);
     }
     $(root, '[data-ref="row2"]').append(src.card);
+
+    // Synthetic-input audit: proven by re-collocating each table against the demo store
+    const audit = await api.results('input_audit').catch(() => null);
+    const aud = card({ title: 'Synthetic-input audit', sub: 'Which tables carry satellite columns copied from the synthetic demo store' });
+    if (audit) {
+      aud.meta.append(badge('results'));
+      aud.body.innerHTML = '<div class="table-wrap" tabindex="0" role="region" aria-label="Synthetic-input audit"><table class="table"><thead><tr><th>Table</th><th>Used by</th><th>Result</th><th>Synthetic columns</th></tr></thead><tbody></tbody></table></div><p class="card__foot"></p>';
+      const label = {
+        synthetic_found: ['Synthetic inputs', 'warn'],
+        clean: ['Clean', 'ok'],
+        no_satellite_columns: ['SST only', 'ok'],
+        not_checked: ['Not checked', 'muted'],
+        store_not_synthetic: ['Not applicable', 'muted'],
+      };
+      for (const t of audit.tables) {
+        const tr = h('<tr><td class="mono"></td><td></td><td></td><td class="mono"></td></tr>');
+        tr.cells[0].textContent = t.table;
+        tr.cells[1].textContent = t.used_by;
+        const [text, cls] = label[t.status] || [t.status, 'muted'];
+        tr.cells[2].append(tag(text, cls));
+        tr.cells[3].textContent = t.synthetic_channels.join(', ') || '—';
+        aud.body.querySelector('tbody').append(tr);
+      }
+      aud.body.querySelector('.card__foot').textContent = `Method: ${audit.tables[0]?.method || '—'}. Generated ${audit.generated_at}.`;
+    } else {
+      aud.meta.append(badge('pending'));
+      pending(aud.body, { needs: 'web/data/input_audit.json (python scripts/build_web_data.py)' });
+    }
+    $(root, '[data-ref="row2"]').append(aud.card);
 
     // Artifacts + limitations
     const arts = card({ title: 'Data artefacts', sub: 'SHA-256 from data/manifest.json, re-verified when the web data was built' });

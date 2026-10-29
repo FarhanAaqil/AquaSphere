@@ -1,7 +1,8 @@
 import { state } from '../state.js';
 import * as api from '../api.js';
 import { loadGrid } from '../gridData.js';
-import { badge, sourceSummary } from '../ui/badges.js';
+import { badge, tag, sourceSummary } from '../ui/badges.js';
+import { ablationSyntheticChannels, describeChannels } from '../audit.js';
 import { loading, errorState, pending } from '../ui/loaders.js';
 import { plot, C } from '../charts/theme.js';
 import { renderHeatmap } from '../charts/heatmap.js';
@@ -19,7 +20,13 @@ async function coverageCard(host, ctx) {
   body.innerHTML = '<div class="chart chart--short"></div><p class="note" hidden></p>';
   const ab = await optional('ablation');
   if (!ab) return pending(body, { title: 'Ablation results missing', needs: 'web/data/ablation.json' });
-  meta.append(badge('results'));
+  const synthetic = await ablationSyntheticChannels();
+  meta.append(badge('results'), ...(synthetic.length ? [tag('Synthetic inputs', 'warn')] : []));
+  if (synthetic.length) {
+    const n = h('<p class="note note--warn"></p>');
+    n.textContent = `These runs were trained on a table whose ${describeChannels(synthetic)} values are synthetic; only A1 (SST only) uses real inputs throughout. Treat every bar except A1 as not evidence.`;
+    body.append(n);
+  }
   await plot(body.firstChild, [{
     type: 'bar', x: ab.results.map((r) => r.run), y: ab.results.map((r) => r.coverage_mean * 100),
     error_y: { type: 'data', array: ab.results.map((r) => r.coverage_std * 100), color: C.glow },

@@ -4,6 +4,7 @@ import { badge, tag } from '../ui/badges.js';
 import { pending } from '../ui/loaders.js';
 import { plot, C } from '../charts/theme.js';
 import { card, h, $, onState, fmt, reveal } from './_util.js';
+import { ablationSyntheticChannels, describeChannels } from '../audit.js';
 
 // E7 definition: Nowcast = sensors available within hours (SST + SLA);
 // Delayed = all sensors incl. 8-day SMAP SSS and reanalysis winds/currents.
@@ -30,17 +31,28 @@ export default {
       return;
     }
     const runs = ab.results;
+    // A run is compromised if it used any channel the audit proved synthetic (all but SST).
+    const synthetic = await ablationSyntheticChannels();
+    const fake = (r) => synthetic.length > 0 && ['sla', 'sss', 'wind'].some((s) => r[s] === 'Yes');
+    if (synthetic.length) {
+      const warn = h('<p class="note note--warn"></p>');
+      warn.textContent = `Audit finding: the table these runs were trained on (tests/fixtures/argo_200.parquet) carries ${describeChannels(synthetic)} values copied from the synthetic demo store, not satellite observations. Only SST is real. Every run except A1 therefore measures the effect of generated fields: these numbers are not evidence about real sensors. They will be re-run on the real 2015–2025 store.`;
+      root.querySelector('.page__intro').append(warn);
+    }
     const ladder = card({ title: 'E3 · sensor ladder', sub: `Thermocline RMSE (50–150 m), mean ± std over ${ab.seeds.length} seeds · n_train ${ab.n_train}, n_val ${ab.n_val}` });
-    ladder.meta.append(badge('results'));
+    ladder.meta.append(badge('results'), ...(synthetic.length ? [tag('Synthetic inputs', 'warn', 'Hatched runs used generated SSS/SLA/wind fields.')] : []));
     ladder.body.innerHTML = '<div class="chart"></div>';
     const modes = card({ title: 'E7 · nowcast vs delayed', sub: 'Skill retained when slow sensors are unavailable' });
-    modes.meta.append(badge('results'));
+    modes.meta.append(synthetic.length ? badge('pending') : badge('results'));
     $(root, '[data-ref="top"]').append(ladder.card, modes.card);
 
     const drawLadder = () => plot(ladder.body.firstChild, [{
       type: 'bar', orientation: 'h', y: runs.map((r) => r.run), x: runs.map((r) => r.thermo_rmse_mean),
       error_x: { type: 'data', array: runs.map((r) => r.thermo_rmse_std), color: C.glow, thickness: 1.2 },
-      marker: { color: runs.map((r) => (r.run === (state.mode === 'nowcast' ? NOWCAST_RUN : DELAYED_RUN) ? C.cyan : 'rgba(20,184,166,0.55)')) },
+      marker: {
+        color: runs.map((r) => (fake(r) ? 'rgba(249,115,22,0.45)' : r.run === (state.mode === 'nowcast' ? NOWCAST_RUN : DELAYED_RUN) ? C.cyan : 'rgba(20,184,166,0.55)')),
+        pattern: { shape: runs.map((r) => (fake(r) ? '/' : '')), fgcolor: C.warn, size: 6 },
+      },
       customdata: runs.map((r) => [r.skill_score_mean, r.coverage_mean * 100]),
       hovertemplate: '%{y}<br>RMSE %{x:.3f} °C · skill %{customdata[0]:.3f} · coverage %{customdata[1]:.1f}%<extra></extra>',
     }], { xaxis: { title: { text: 'Thermocline RMSE (°C) — lower is better' } }, yaxis: { autorange: 'reversed' }, margin: { l: 130, r: 16, t: 8, b: 48 }, showlegend: false }, ctx, 'aquasphere-e3-ladder');
@@ -49,6 +61,13 @@ export default {
     const del = runs.find((r) => r.run === DELAYED_RUN);
     const drawModes = () => {
       if (!now || !del) return pending(modes.body, { title: 'Pending', needs: `Runs "${NOWCAST_RUN}" and "${DELAYED_RUN}" in ablation.json` });
+      if (fake(now) || fake(del)) {
+        return pending(modes.body, {
+          title: 'Pending real data',
+          detail: `E7 compares SST + SLA against all sensors, and in these runs every channel except SST was synthetic (${describeChannels(synthetic)}). A skill-retained figure from them would be meaningless, so none is shown.`,
+          needs: 'Re-run on argo_nio_collocated.parquet (real 2015–2025 store), roadmap Phase 4',
+        });
+      }
       const box = (r, label, key) => `<div class="mode-box ${state.mode === key ? 'is-active' : ''}">
         <div class="stat__label">${label}</div>
         <div class="stat"><span class="stat__value">${fmt(r.thermo_rmse_mean)}<small>°C</small></span>
@@ -72,6 +91,7 @@ export default {
     for (const r of runs) {
       const tr = h(`<tr><td></td>${SENSORS.map((s) => `<td>${r[s] === 'Yes' ? '●' : '<span style="color:var(--text-faint)">–</span>'}</td>`).join('')}<td class="num"></td><td class="num"></td><td class="num"></td></tr>`);
       tr.cells[0].textContent = r.run;
+      if (fake(r)) tr.cells[0].append(' ', tag('synthetic inputs', 'warn'));
       tr.cells[SENSORS.length + 1].textContent = `${fmt(r.thermo_rmse_mean, 3)} ± ${fmt(r.thermo_rmse_std, 3)}`;
       tr.cells[SENSORS.length + 2].textContent = fmt(r.skill_score_mean, 3);
       tr.cells[SENSORS.length + 3].textContent = `${(r.coverage_mean * 100).toFixed(1)}%`;

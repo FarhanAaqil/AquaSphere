@@ -1,0 +1,48 @@
+{
+ "generated_at": "2026-10-29T08:30:28+00:00",
+ "tables": [
+  {
+   "table": "tests/fixtures/argo_200.parquet",
+   "store": "data/store/surface.zarr",
+   "synthetic_channels": [
+    "sat_sst",
+    "sss",
+    "sla",
+    "ug",
+    "vg",
+    "u10",
+    "v10"
+   ],
+   "other_channels": [],
+   "method": "re-collocated against the store; a column is synthetic if reproduced to 1e-6",
+   "status": "synthetic_found",
+   "used_by": "E3/E7 ablation runs (ablation.json) and /validation lookups"
+  },
+  {
+   "table": "data/processed/argo_profiles.parquet",
+   "store": "data/store/surface.zarr",
+   "synthetic_channels": [
+    "sat_sst",
+    "sss",
+    "sla",
+    "ug",
+    "vg",
+    "u10",
+    "v10"
+   ],
+   "other_channels": [],
+   "method": "re-collocated against the store; a column is synthetic if reproduced to 1e-6",
+   "status": "synthetic_found",
+   "used_by": "training data of the served model"
+  },
+  {
+   "table": "data/argo_sst_training.csv",
+   "store": "data/store/surface.zarr",
+   "synthetic_channels": [],
+   "other_channels": [],
+   "method": "re-collocated against the store; a column is synthetic if reproduced to 1e-6",
+   "status": "no_satellite_columns",
+   "used_by": "evaluation ladder (metrics.json) and E1 leakage runs"
+  }
+ ]
+}

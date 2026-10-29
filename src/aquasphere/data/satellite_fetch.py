@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import calendar
+import http.client
 import logging
 import time
 import urllib.error
@@ -77,7 +78,8 @@ def http_fetch(url: str, dest: Path, retries: int = 4, timeout: float = 300.0) -
                 return False
             if e.code < 500 or attempt == retries:
                 raise
-        except (urllib.error.URLError, TimeoutError, ConnectionError):
+        except (urllib.error.URLError, http.client.HTTPException, OSError):
+            # includes dropped connections (IncompleteRead, RemoteDisconnected)
             if attempt == retries:
                 raise
         time.sleep(min(60.0, 5.0 * 2**attempt))

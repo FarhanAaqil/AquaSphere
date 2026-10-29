@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import http.client
 import json
 import logging
 import time
@@ -100,7 +101,9 @@ def fetch_window(first: date, last: date, retries: int = 4, delay: float = 0.5) 
                 break
             if (e.code < 500 and e.code != 429) or attempt == retries:
                 raise
-        except (urllib.error.URLError, TimeoutError, ConnectionError):
+        # Dropped connections surface as IncompleteRead / RemoteDisconnected, truncated bodies
+        # as JSON errors: all transient, all retried.
+        except (urllib.error.URLError, http.client.HTTPException, OSError, json.JSONDecodeError):
             if attempt == retries:
                 raise
         time.sleep(min(60.0, 5.0 * 2**attempt))
