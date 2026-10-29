@@ -20,7 +20,7 @@ import logging
 import time
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -164,6 +164,7 @@ async def predict_single(req: PredictRequest) -> PredictResponse:
         date=req.date,
         features=obs_features,
         source=source,
+        mode=req.mode,
     )
     return PredictResponse(**pred)
 
@@ -173,6 +174,7 @@ async def predict_single_get(
     lat: float = Query(..., ge=LAT_MIN, le=LAT_MAX),
     lon: float = Query(..., ge=LON_MIN, le=LON_MAX),
     date: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$"),
+    mode: Literal["delayed", "nowcast"] = Query(default="delayed"),
 ) -> PredictResponse:
     """Reconstruct subsurface temperature profile for a single point via GET query."""
     obs_features, source = await resolver.resolve(lat=lat, lon=lon, date=date)
@@ -182,6 +184,7 @@ async def predict_single_get(
         date=date,
         features=obs_features,
         source=source,
+        mode=mode,
     )
     return PredictResponse(**pred)
 
@@ -208,7 +211,18 @@ async def predict_batch(req: PredictBatchRequest) -> PredictBatchResponse:
     features_list = [r[0] for r in resolved if r is not None]
     sources_list = [r[1] for r in resolved if r is not None]
 
-    preds = engine.predict_batch(points, features_list, sources_list)
+    # One forward pass per mode; results go back in request order
+    preds: list[dict[str, Any]] = [{} for _ in points]
+    for mode in sorted({item.mode for item in req.items}):
+        idx = [i for i, item in enumerate(req.items) if item.mode == mode]
+        out = engine.predict_batch(
+            [points[i] for i in idx],
+            [features_list[i] for i in idx],
+            [sources_list[i] for i in idx],
+            mode=mode,
+        )
+        for i, p in zip(idx, out, strict=True):
+            preds[i] = p
     return PredictBatchResponse(
         count=len(preds),
         predictions=[PredictResponse(**p) for p in preds],
@@ -223,6 +237,7 @@ async def get_grid_predictions(
     lat_max: float = Query(default=LAT_MAX, ge=LAT_MIN, le=LAT_MAX),
     lon_min: float = Query(default=LON_MIN, ge=LON_MIN, le=LON_MAX),
     lon_max: float = Query(default=LON_MAX, ge=LON_MIN, le=LON_MAX),
+    mode: Literal["delayed", "nowcast"] = Query(default="delayed"),
 ) -> GridResponse:
     """Generate spatial field and PCA coordinates across a regular grid."""
     lats = np.arange(lat_min, lat_max + 1e-4, step)
@@ -236,6 +251,7 @@ async def get_grid_predictions(
         [{"lat": lt, "lon": ln, "date": date} for (lt, ln), _ in kept],
         [r[0] for _, r in kept],
         [r[1] for _, r in kept],
+        mode=mode,
     )
     cells: list[tuple[float, float, dict[str, float], str, dict[str, Any]]] = [
         (lt, ln, obs, src, pred) for ((lt, ln), (obs, src)), pred in zip(kept, preds, strict=True)
@@ -262,6 +278,8 @@ async def get_grid_predictions(
             pca1=float(proj[i, 0]),
             pca2=float(proj[i, 1]),
             data_source=src,
+            di=pred.get("di"),
+            in_domain=pred.get("in_domain"),
         )
         for i, (lt, ln, obs, src, pred) in enumerate(cells)
     ]

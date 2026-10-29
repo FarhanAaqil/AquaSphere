@@ -7,7 +7,7 @@ and standardized response payloads carrying data provenance badges.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -37,6 +37,13 @@ class PredictRequest(BaseModel):
     features: dict[str, float] | None = Field(
         default=None,
         description="Optional manual satellite feature overrides (e.g. sst, sss, sla)",
+    )
+    mode: Literal["delayed", "nowcast"] = Field(
+        default="delayed",
+        description=(
+            "delayed: every available sensor. nowcast: SST and SLA only, the inputs that arrive "
+            "in real time (salinity, winds and currents are withheld)."
+        ),
     )
 
 
@@ -89,6 +96,22 @@ class PredictResponse(BaseModel):
             "null when the training split cannot be determined."
         ),
     )
+    mode: str = Field(default="delayed", description="Input mode used: 'delayed' or 'nowcast'")
+    interval_method: str | None = Field(
+        default=None,
+        description=(
+            "How interval_lower/upper were calibrated: 'mondrian_conformal_region_season' "
+            "(protocol v2) or 'conformal_per_depth' (v1)"
+        ),
+    )
+    di: float | None = Field(
+        default=None,
+        description="Dissimilarity index of the embedding from the training data (null for v1)",
+    )
+    in_domain: bool | None = Field(
+        default=None,
+        description="False when di exceeds the training-fold threshold (outside applicability)",
+    )
 
 
 class PredictBatchResponse(BaseModel):
@@ -122,6 +145,8 @@ class GridPoint(BaseModel):
     data_source: str = Field(
         default="unknown", description="Provenance of this cell's surface observations"
     )
+    di: float | None = Field(default=None, description="Dissimilarity index (null for v1)")
+    in_domain: bool | None = Field(default=None, description="Inside the applicability domain")
 
 
 class GridResponse(BaseModel):

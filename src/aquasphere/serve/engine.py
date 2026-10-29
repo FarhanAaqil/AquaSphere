@@ -12,6 +12,7 @@ Features:
 from __future__ import annotations
 
 import logging
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -24,9 +25,16 @@ from aquasphere.constants import DEPTH_COLS, STANDARD_DEPTHS
 from aquasphere.data.provenance import MISMATCH, NOT_RECORDED, verify_provenance
 from aquasphere.eval.metrics import compute_d20, compute_mld, compute_ohc300
 from aquasphere.models.decoder import TierAModel
-from aquasphere.serve.membership import TrainingMembership
+from aquasphere.serve.membership import ARGO_TABLES, TrainingMembership
 from aquasphere.train.calibrate import ConformalCalibrator
 from aquasphere.train.train import compute_doy_features
+
+# Protocol v2 model (roadmap Phase 4). Served when present; otherwise the v1 checkpoint below.
+V2_CHECKPOINT = Path(os.environ.get("AQUASPHERE_CHECKPOINT_V2", "checkpoints/tier_a_v2/model.pt"))
+V2_TABLE = Path("data/processed/argo_nio_collocated.parquet")
+CHANNELS = ("sst", "sss", "sla", "ug", "vg", "u10", "v10")
+NOWCAST = ("sst", "sla")
+MODES = ("delayed", "nowcast")
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +54,7 @@ class InferenceEngine:
         checkpoint_path: Path | str = "checkpoints/tier_a/model_a.pt",
         validation_parquet_path: Path | str = "tests/fixtures/argo_200.parquet",
         device: str = "cpu",
+        v2_checkpoint_path: Path | str | None = V2_CHECKPOINT,
     ) -> None:
         self.checkpoint_path = Path(checkpoint_path)
         self.validation_parquet_path = Path(validation_parquet_path)
@@ -70,10 +79,61 @@ class InferenceEngine:
         self.provenance_status = NOT_RECORDED
         self.provenance_detail = "No checkpoint loaded."
 
+        # Protocol v2 serving state (None while the v1 checkpoint is served)
+        self.v2: Any = None
+        self.conformal: dict[str, Any] = {}
+        self.dissimilarity: Any = None
+
         self.val_df: pd.DataFrame | None = None
         self._load_validation_profiles()
         self._load_checkpoint()
-        self.membership = TrainingMembership.resolve(self._checkpoint)
+        tables = ARGO_TABLES
+        if v2_checkpoint_path is not None and Path(v2_checkpoint_path).exists():
+            self._load_v2(Path(v2_checkpoint_path))
+            if self.v2 is not None:
+                tables = (V2_TABLE, *ARGO_TABLES)
+        self.membership = TrainingMembership.resolve(self._checkpoint, tables=tables)
+
+    @property
+    def interval_method(self) -> str:
+        if self.v2 is not None:
+            return "mondrian_conformal_region_season"
+        return "conformal_per_depth"
+
+    def _load_v2(self, path: Path) -> None:
+        """Tier A v2: anomaly model, Mondrian conformal per mode, dissimilarity index."""
+        from aquasphere.eval.applicability import DissimilarityIndex
+        from aquasphere.eval.protocol import partition
+        from aquasphere.train.conformal_v2 import MondrianConformal
+        from aquasphere.train.v2 import ProfileModel
+
+        try:
+            ckpt = torch.load(path, map_location="cpu", weights_only=True)
+            if ckpt.get("format") != "aquasphere-v2":
+                raise ValueError(f"unexpected checkpoint format {ckpt.get('format')!r}")
+            self.v2 = ProfileModel.from_state(ckpt)
+            self.conformal = {
+                k: MondrianConformal.from_dict(v) for k, v in ckpt["conformal"].items()
+            }
+            self.dissimilarity = DissimilarityIndex.from_dict(ckpt["dissimilarity"])
+        except Exception as e:
+            logger.error("Failed loading v2 checkpoint %s: %s; serving v1", path, e)
+            self.v2 = None
+            return
+        self.checkpoint_path = path
+        self._checkpoint = ckpt
+        self.model_version = str(ckpt.get("model_version", "tier_a_v2"))
+        self.weights = "trained"
+        self.provenance = dict(ckpt.get("provenance") or {})
+        self.provenance_status, self.provenance_detail = verify_provenance(self.provenance)
+        self.is_ready = self.provenance_status != MISMATCH
+        # Held-out lookups come from the protocol v2 validation year: never training floats
+        if V2_TABLE.exists():
+            try:
+                self.val_df = partition(pd.read_parquet(V2_TABLE), "val")
+            except Exception as e:
+                logger.warning("Could not read %s for validation lookups: %s", V2_TABLE, e)
+        logger.info("Serving protocol v2 model %s from %s", self.model_version, path)
 
     def _load_validation_profiles(self) -> None:
         """Load validation profiles for held-out validation queries."""
@@ -179,6 +239,73 @@ class InferenceEngine:
         )
         return x
 
+    def _infer(
+        self,
+        points: list[dict[str, Any]],
+        features_list: list[dict[str, float]],
+        mode: str,
+    ) -> dict[str, Any]:
+        """Arrays for a batch: mean, sigma, embedding, interval, climatology, DI."""
+        if mode not in MODES:
+            raise ValueError(f"mode must be one of {MODES}")
+        if self.v2 is not None:
+            from aquasphere.train.conformal_v2 import strata
+
+            df = pd.DataFrame(
+                {
+                    "lat": [p["lat"] for p in points],
+                    "lon": [p["lon"] for p in points],
+                    "date": [p["date"] for p in points],
+                    **{c: [f.get(c, np.nan) for f in features_list] for c in CHANNELS},
+                }
+            )
+            mean, sigma, emb = self.v2.predict(df, mode=mode)
+            reg, sea = strata(df)
+            lower, upper = self.conformal[mode].interval(mean, sigma, reg, sea)
+            di, inside = self.dissimilarity.in_domain(emb)
+            return {
+                "mean": mean,
+                "sigma": sigma,
+                "emb": emb,
+                "lower": lower,
+                "upper": upper,
+                "clim": self.v2.clim.predict(df),
+                "di": di,
+                "in_domain": inside,
+            }
+
+        if self.model is None:
+            raise RuntimeError("Model is not initialized.")
+        # v1 has availability flags too: nowcast simply withholds the delayed sensors
+        keep = CHANNELS if mode == "delayed" else NOWCAST
+        x_raw = np.array(
+            [
+                self.build_feature_vector(
+                    p["lat"], p["lon"], p["date"], {k: v for k, v in f.items() if k in keep}
+                )
+                for p, f in zip(points, features_list, strict=True)
+            ],
+            dtype=np.float32,
+        )
+        x_norm = (x_raw - self.scaler_mean) / self.scaler_std
+        tx = torch.tensor(x_norm, dtype=torch.float32, device=self.device)
+        with torch.no_grad():
+            anom, log_s2, emb = self.model(tx)
+        clim = np.array([self.climatology[_season(p["date"])[2]] for p in points])
+        mean = anom.cpu().numpy() + clim
+        sigma = torch.exp(0.5 * log_s2).cpu().numpy()
+        lower, upper = self.calibrator.predict_interval(mean, sigma)
+        return {
+            "mean": mean,
+            "sigma": sigma,
+            "emb": emb.cpu().numpy(),
+            "lower": lower,
+            "upper": upper,
+            "clim": clim,
+            "di": None,
+            "in_domain": None,
+        }
+
     def predict_point(
         self,
         lat: float,
@@ -186,119 +313,55 @@ class InferenceEngine:
         date: str,
         features: dict[str, float],
         source: str = "offline_synthetic",
+        mode: str = "delayed",
     ) -> dict[str, Any]:
         """Perform single point inference."""
-        if self.model is None:
-            raise RuntimeError("Model is not initialized.")
-
-        x_raw = self.build_feature_vector(lat, lon, date, features)
-        x_norm = (x_raw - self.scaler_mean) / self.scaler_std
-        tx = torch.tensor(x_norm, dtype=torch.float32, device=self.device).unsqueeze(0)
-
-        with torch.no_grad():
-            pred_mean_anom, pred_log_sigma2, emb = self.model(tx)
-            sigma = torch.exp(0.5 * pred_log_sigma2).cpu().numpy()[0]
-            emb_vec = emb.cpu().numpy()[0]
-
-        # Climatology addition
-        month = _season(date)[2]
-        clim_profile = self.climatology[month]
-        pred_abs = pred_mean_anom.cpu().numpy()[0] + clim_profile
-
-        # Conformal prediction interval
-        lower, upper = self.calibrator.predict_interval(
-            pred_abs.reshape(1, -1),
-            sigma.reshape(1, -1),
-        )
-
-        # Oceanographic indices
-        mld = compute_mld(pred_abs)
-        d20 = compute_d20(pred_abs)
-        ohc = compute_ohc300(pred_abs)
-
-        return {
-            "lat": lat,
-            "lon": lon,
-            "date": date,
-            "depths": list(STANDARD_DEPTHS),
-            "temperatures": [float(t) for t in pred_abs],
-            "uncertainties": [float(s) for s in sigma],
-            "interval_lower": [float(low) for low in lower[0]],
-            "interval_upper": [float(up) for up in upper[0]],
-            "embedding": [float(e) for e in emb_vec],
-            "mld": float(mld) if not np.isnan(mld) else None,
-            "d20": float(d20) if not np.isnan(d20) else None,
-            "ohc300": float(ohc) if not np.isnan(ohc) else None,
-            "climatology": [float(c) for c in clim_profile],
-            "data_source": source,
-            "model_version": self.model_version,
-            "data_version": self.data_version,
-            "in_training_set": self.membership.point_in_training(lat, lon, date),
-        }
+        return self.predict_batch(
+            [{"lat": lat, "lon": lon, "date": date}], [features], [source], mode=mode
+        )[0]
 
     def predict_batch(
         self,
         points: list[dict[str, Any]],
         features_list: list[dict[str, float]],
         sources_list: list[str],
+        mode: str = "delayed",
     ) -> list[dict[str, Any]]:
         """Vectorized batch prediction."""
         if not points:
             return []
-        if self.model is None:
-            raise RuntimeError("Model is not initialized.")
-
-        n = len(points)
-        x_raw_list = [
-            self.build_feature_vector(p["lat"], p["lon"], p["date"], features_list[i])
-            for i, p in enumerate(points)
-        ]
-        x_raw = np.array(x_raw_list, dtype=np.float32)
-        x_norm = (x_raw - self.scaler_mean) / self.scaler_std
-        tx = torch.tensor(x_norm, dtype=torch.float32, device=self.device)
-
-        with torch.no_grad():
-            pred_mean_anom, pred_log_sigma2, emb = self.model(tx)
-            sigmas = torch.exp(0.5 * pred_log_sigma2).cpu().numpy()
-            embs = emb.cpu().numpy()
-            anoms = pred_mean_anom.cpu().numpy()
-
+        r = self._infer(points, features_list, mode)
         results: list[dict[str, Any]] = []
-        for i in range(n):
-            date = points[i]["date"]
-            month = _season(date)[2]
-            clim = self.climatology[month]
-            pred_abs = anoms[i] + clim
-
-            lower, upper = self.calibrator.predict_interval(
-                pred_abs.reshape(1, -1),
-                sigmas[i].reshape(1, -1),
-            )
-            mld = compute_mld(pred_abs)
-            d20 = compute_d20(pred_abs)
-
+        for i, p in enumerate(points):
+            prof = r["mean"][i]
+            mld, d20, ohc = compute_mld(prof), compute_d20(prof), compute_ohc300(prof)
             results.append(
                 {
-                    "lat": points[i]["lat"],
-                    "lon": points[i]["lon"],
-                    "date": date,
+                    "lat": p["lat"],
+                    "lon": p["lon"],
+                    "date": p["date"],
                     "depths": list(STANDARD_DEPTHS),
-                    "temperatures": [float(t) for t in pred_abs],
-                    "uncertainties": [float(s) for s in sigmas[i]],
-                    "interval_lower": [float(low) for low in lower[0]],
-                    "interval_upper": [float(up) for up in upper[0]],
-                    "embedding": [float(e) for e in embs[i]],
+                    "temperatures": [float(t) for t in prof],
+                    "uncertainties": [float(s) for s in r["sigma"][i]],
+                    "interval_lower": [float(v) for v in r["lower"][i]],
+                    "interval_upper": [float(v) for v in r["upper"][i]],
+                    "embedding": [float(e) for e in r["emb"][i]],
                     "mld": float(mld) if not np.isnan(mld) else None,
                     "d20": float(d20) if not np.isnan(d20) else None,
+                    "ohc300": float(ohc) if not np.isnan(ohc) else None,
+                    "climatology": [float(c) for c in r["clim"][i]],
                     "data_source": sources_list[i],
                     "model_version": self.model_version,
                     "data_version": self.data_version,
                     "in_training_set": self.membership.point_in_training(
-                        points[i]["lat"], points[i]["lon"], date
+                        p["lat"], p["lon"], p["date"]
                     ),
+                    "mode": mode,
+                    "interval_method": self.interval_method,
+                    "di": None if r["di"] is None else float(r["di"][i]),
+                    "in_domain": None if r["in_domain"] is None else bool(r["in_domain"][i]),
                 }
             )
-
         return results
 
     def find_nearest_held_out_profile(
@@ -348,11 +411,14 @@ class InferenceEngine:
         prof_date = str(row["date"])[:10] if "date" in row else (date or "2023-06-15")
         float_id = str(row.get("float_id", str(row.get("profile_id", "")).split("_")[0]))
 
+        # The profile's own collocated surface observations (whatever the table carries)
+        feats = {c: float(row[c]) for c in CHANNELS if c in row and np.isfinite(row[c])}
+        feats.setdefault("sst", float(row.get("sst", 28.0)))
         pred = self.predict_point(
             lat=float(row["lat"]),
             lon=float(row["lon"]),
             date=prof_date,
-            features={"sst": float(row.get("sst", 28.0))},
+            features=feats,
             source="local_store",
         )
 
@@ -391,6 +457,8 @@ class InferenceEngine:
         features: dict[str, float],
     ) -> dict[str, float]:
         """Compute input feature attribution using integrated gradients."""
+        if self.v2 is not None:
+            return self._explain_v2(lat, lon, date, features)
         if self.model is None:
             return {}
 
@@ -432,3 +500,21 @@ class InferenceEngine:
         total = sum(attributions.values()) + 1e-6
         normalized = {k: v / total for k, v in attributions.items()}
         return normalized
+
+    def _explain_v2(
+        self, lat: float, lon: float, date: str, features: dict[str, float]
+    ) -> dict[str, float]:
+        """Gradient x input on the v2 scalars, for the 100 m anomaly (delayed mode)."""
+        from aquasphere.train.v2 import FEATURES, scalar_features
+
+        cols: dict[str, list[Any]] = {"lat": [lat], "lon": [lon], "date": [date]}
+        cols.update({c: [features.get(c, np.nan)] for c in CHANNELS})
+        base, avail = scalar_features(pd.DataFrame(cols))
+        s = self.v2._scalars(base, self.v2._keep(avail, CHANNELS))
+        s.requires_grad_(True)
+        mean, _, _ = self.v2.model(s, None)
+        mean[0, STANDARD_DEPTHS.index(100)].backward()
+        grad = s.grad.numpy()[0] if s.grad is not None else np.zeros(len(FEATURES))
+        attr = np.abs(grad * s.detach().numpy()[0])
+        total = float(attr.sum()) + 1e-6
+        return {name: float(a / total) for name, a in zip(FEATURES, attr, strict=True)}
