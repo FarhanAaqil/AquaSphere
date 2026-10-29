@@ -29,6 +29,18 @@ altimetry before 2017-02-13 and the many SMAP gaps are therefore **masked, never
 Spot check: store SST matches the original point-by-point OISST collection at 437 Argo
 positions with RMS 0.08 °C.
 
+**Known upstream gaps (masked, verified against the servers):**
+- `nesdisSSH1day` publishes SLA from 2017-02-13 but its geostrophic currents (`ugos`, `vgos`) are
+  empty in every file until **2019-03-15**, so `ug`/`vg` are only available from then.
+- The OISST v2.1 Final aggregation on CoastWatch lacks 17 days (e.g. 2021-03-23 and
+  2023-12-23 to 2023-12-31); ERDDAP silently snaps such requests to a neighbouring day, so both
+  the store builder and the live API fallback reject any value whose date differs from the one
+  requested.
+
+**Result (2015-01-01 to 2025-12-31):** 56,114 QC'd Argo profiles from 418 floats (83% delayed
+mode); at those profiles SST is available 99%, wind 99%, SLA 68%, SSS 48% and currents 44% of the
+time. Full tables: `docs/results/data_coverage.md`.
+
 **Argo QC.** Profiles need position and time QC = 1, levels need temperature *and* pressure QC
 = 1, pressure is converted to depth (UNESCO 1983) before PCHIP interpolation to the 15 standard
 depths, and every profile keeps its data mode (R real-time, A adjusted, D delayed) so headline

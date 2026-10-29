@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-10-29T08:30:23+00:00",
- "git_sha": "7222d8a499c2c655a014613aed158b0732b849a8",
+ "generated_at": "2026-10-29T17:35:39+00:00",
+ "git_sha": "5df8d99e1e2f69ff3274ea105df7bdc9e52f966d",
  "git_branch": "ui-redesign",
  "git_dirty": true,
  "metrics_model_version": "v0.2-baseline",
@@ -18,6 +18,45 @@
    ],
    "row_count": 2253,
    "sha256": "30e1ef3ecf9bc9d3e89b5b0339ae15455b7ff83a10e551ce1273c807338aeffa",
+   "verified": true
+  },
+  {
+   "key": "surface_store_nio",
+   "path": "data/store/surface_nio.zarr",
+   "description": "Real 0.25\u00b0 daily surface store (OISST v2.1, CoastWatch altimetry, SMAP SSS, NCEI blended winds)",
+   "source_url": "https://coastwatch.pfeg.noaa.gov/erddap ; https://coastwatch.noaa.gov/erddap",
+   "date_range": [
+    "2015-01-01",
+    "2025-12-31"
+   ],
+   "row_count": null,
+   "sha256": "5c9188d85205224a0a408341012bbc5968ce86319f805a913351189f02231ad7",
+   "verified": true
+  },
+  {
+   "key": "argo_nio_2015_2025",
+   "path": "data/processed/argo_nio_2015_2025.parquet",
+   "description": "Argo profiles 2015-2025, QC 1, PCHIP to 15 depths, with data mode",
+   "source_url": "https://argovis-api.colorado.edu",
+   "date_range": [
+    "2015-01-01",
+    "2025-12-31"
+   ],
+   "row_count": 56114,
+   "sha256": "17475ceeaa1f9dfe7d7327a8ca87d4c49f5f8521c553ca9d959f46a55e3a7776",
+   "verified": true
+  },
+  {
+   "key": "argo_nio_collocated",
+   "path": "data/processed/argo_nio_collocated.parquet",
+   "description": "Argo profiles collocated with the real surface store",
+   "source_url": "https://argovis-api.colorado.edu",
+   "date_range": [
+    "2015-01-01",
+    "2025-12-31"
+   ],
+   "row_count": 56114,
+   "sha256": "6db592a1d1f6537b0361c48ca350dbfd79e83b30f6b2ca3e1507dfb6a1880c16",
    "verified": true
   },
   {

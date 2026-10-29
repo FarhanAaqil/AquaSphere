@@ -140,7 +140,7 @@ def to_markdown(report: dict[str, Any]) -> str:
         "",
         "| Region / season | Profiles |",
         "|---|---|",
-        *[f"| {k} | {n} |" for k, n in sorted(a["by_region_season"].items())],
+        *[f"| {k.replace(' | ', ' · ')} | {n} |" for k, n in sorted(a["by_region_season"].items())],
         "",
     ]
     if "by_data_mode" in a:

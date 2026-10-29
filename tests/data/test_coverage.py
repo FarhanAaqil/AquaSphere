@@ -66,4 +66,4 @@ def test_store_and_argo_coverage(tmp_path: Path) -> None:
 
     md = to_markdown({"generated_at": "now", "store": cov, "argo": a})
     assert "| sla | nesdisSSH1day | 2 | 2017-01-01 |" in md
-    assert "Bay of Bengal | NE monsoon (Dec-Feb)" in md
+    assert "| Bay of Bengal · NE monsoon (Dec-Feb) |" in md

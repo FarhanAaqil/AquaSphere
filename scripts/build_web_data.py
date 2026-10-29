@@ -14,7 +14,6 @@ Outputs (all derived from real artefacts, nothing simulated):
 
 from __future__ import annotations
 
-import hashlib
 import json
 import subprocess
 import sys
@@ -57,11 +56,10 @@ def git(*args: str) -> str | None:
 
 
 def sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
+    """Same digest the manifest records (files, or directory trees such as Zarr stores)."""
+    from aquasphere.data.manifest import compute_file_sha256
+
+    return compute_file_sha256(path)
 
 
 def load_table(path: Path) -> pd.DataFrame:
