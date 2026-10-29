@@ -55,7 +55,7 @@ export default {
     root.innerHTML = template();
     const stage = $(root, '[data-ref="stage"]');
     const mapEl = $(root, '[data-ref="map"]');
-    let depth = 100;
+    let depth = SLICE_DEPTHS.includes(state.depth) ? state.depth : 100;
     let layer = 'temp';
     let grid = null;
     let cube = null;
@@ -70,6 +70,7 @@ export default {
       const b = e.target.closest('button');
       if (!b) return;
       depth = +b.dataset.depth;
+      set({ depth });
       paintDepths();
       cube?.setActive(depth);
       drawMap();

@@ -31,6 +31,8 @@ dependencies = [
     "pyyaml>=6.0",
     # Zarr store (Phase 3)
     "zarr>=2.17.0",
+    # Data contracts
+    "pandera>=0.24.0",
 ]
 
 [project.optional-dependencies]
@@ -39,6 +41,7 @@ dev = [
     "pytest>=8.0.0",
     "pytest-cov>=5.0.0",
     "pytest-asyncio>=0.23.0",
+    "hypothesis>=6.100.0",    # property-based tests
     "httpx>=0.27.0",          # TestClient dependency
     # Linting & formatting
     "ruff>=0.4.0",
@@ -52,6 +55,10 @@ dev = [
     "argopy>=0.1.15",
     # Audit
     "pip-audit>=2.7.0",
+]
+e2e = [
+    # Browser smoke tests for web/ (also needs: python -m playwright install chromium)
+    "playwright>=1.45.0",
 ]
 
 [project.scripts]

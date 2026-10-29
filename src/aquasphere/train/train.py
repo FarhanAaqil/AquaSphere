@@ -24,6 +24,7 @@ import yaml
 from torch.utils.data import DataLoader, TensorDataset
 
 from aquasphere.constants import DEPTH_COLS, MASK_COLS, STANDARD_DEPTHS
+from aquasphere.data.provenance import build_provenance
 from aquasphere.data.splits import make_float_grouped_split
 from aquasphere.models.decoder import TierAModel
 from aquasphere.models.losses import MaskedHeteroscedasticLoss
@@ -216,17 +217,21 @@ def train_tier_a(
 
     # 1. Load Data
     if fixture_path is not None:
-        p = Path(fixture_path)
-        logger.info("Loading dataset from fixture: %s", p)
-        df = pd.read_parquet(p) if p.suffix == ".parquet" else pd.read_csv(p)
+        data_path = Path(fixture_path)
+        logger.info("Loading dataset from fixture: %s", data_path)
+        df = (
+            pd.read_parquet(data_path) if data_path.suffix == ".parquet" else pd.read_csv(data_path)
+        )
     else:
         parquet_p = Path("data/processed/argo_profiles.parquet")
         csv_p = Path("data/argo_sst_training.csv")
         if parquet_p.exists():
             logger.info("Loading dataset from %s", parquet_p)
+            data_path = parquet_p
             df = pd.read_parquet(parquet_p)
         elif csv_p.exists():
             logger.info("Loading dataset from legacy %s", csv_p)
+            data_path = csv_p
             df = pd.read_csv(csv_p)
         else:
             raise FileNotFoundError(
@@ -448,6 +453,9 @@ def train_tier_a(
             "config": cfg,
             "val_rmse": best_val_rmse,
             "val_thermo_rmse": best_thermo_rmse,
+            # Provenance (blueprint §8.1): what data, which commit, which floats were trained on
+            "provenance": build_provenance(data_path, seed),
+            "train_float_ids": sorted(str(f) for f in df_train["float_id"].dropna().unique()),
         }
         torch.save(payload, ckpt_path)
         logger.info(

@@ -5,23 +5,33 @@ import { pending } from '../ui/loaders.js';
 import { C } from '../charts/theme.js';
 import { card, h, $, onState, reveal } from './_util.js';
 
-// Sensor inventory. Independence status records what has actually been checked in this repo.
+// Input independence audit (blueprint §10.1): does a product already contain Argo or other
+// in-situ T/S, and how is that handled?
+const AUDIT_TAG = {
+  label: ['Label source', 'ok'],
+  verified: ['Verified', 'warn'],
+  documented: ['Documented', 'muted'],
+  'to-verify': ['To verify', 'pending'],
+  fixture: ['Fixture', 'warn'],
+};
 const SOURCES = [
-  { name: 'Argo floats', provider: 'Argo GDAC via Argovis', use: 'Labels: temperature at 15 depths', res: 'Profiles', audit: ['ok', 'Float-grouped split, no float in two partitions (assert_no_leakage); leakage gap measured in E1'] },
-  { name: 'NOAA OISST v2.1', provider: 'NOAA NCEI / ERDDAP', use: 'Input: SST (live fallback in the API)', res: '0.25°, daily', audit: ['warn', 'OISST assimilates in-situ data incl. Argo near-surface; overlap with labels not audited'] },
-  { name: 'CMEMS DUACS L4', provider: 'Copernicus Marine', use: 'Input: SLA, geostrophic u/v', res: '0.25°, daily', audit: ['muted', 'Not audited'] },
-  { name: 'NASA SMAP L3', provider: 'NASA PO.DAAC / RSS', use: 'Input: SSS', res: '0.25°, 8-day', audit: ['muted', 'Not audited'] },
-  { name: 'ERA5 / CCMP v3', provider: 'ECMWF / RSS', use: 'Input: 10 m wind', res: '0.25°, daily', audit: ['muted', 'Not audited'] },
-  { name: 'Local surface store', provider: 'data/store/surface.zarr', use: 'What the API serves first', res: '0.25°, 13 dates', audit: ['warn', 'API reports it as offline_synthetic: a fixture, not real satellite fields'] },
+  { name: 'Argo floats', provider: 'Argo GDAC via Argovis', use: 'Labels: temperature at 15 depths', res: 'Profiles', status: 'label', contains: '—', handling: 'Every float in exactly one split (assert_no_leakage); leakage gap measured in E1.' },
+  { name: 'NOAA OISST v2.1', provider: 'NOAA NCEI / ERDDAP', use: 'Input: SST', res: '0.25°, daily', status: 'verified', contains: 'Yes: blends ships, buoys and Argo near-surface values (above ~5 m)', handling: 'Headline skill at 20 m and below; 0–10 m reported separately and flagged.' },
+  { name: 'ARMOR3D', provider: 'Copernicus Marine', use: 'Not used (reference only)', res: '0.25°, weekly', status: 'documented', contains: 'Yes: merges satellite fields with in-situ profiles', handling: 'Never an input or target; mooring comparison only (B5, E8).' },
+  { name: 'Reanalyses (e.g. GLORYS12)', provider: 'Copernicus Marine', use: 'Not used', res: '1/12°', status: 'documented', contains: 'Yes: assimilate in-situ profiles', handling: 'Not used as training targets; Argo is the label source.' },
+  { name: 'NASA SMAP L3 SSS', provider: 'NASA PO.DAAC / RSS', use: 'Input: SSS', res: '0.25°, 8-day', status: 'to-verify', contains: 'Possibly: some products are bias-adjusted with in-situ salinity', handling: 'E3 reported with and without SSS.' },
+  { name: 'CMEMS DUACS L4', provider: 'Copernicus Marine', use: 'Input: SLA, geostrophic u/v', res: '0.25°, daily', status: 'to-verify', contains: 'Not expected', handling: 'Confirm in product documentation.' },
+  { name: 'ERA5 / CCMP v3', provider: 'ECMWF / RSS', use: 'Input: 10 m wind (delayed mode)', res: '0.25°, daily', status: 'to-verify', contains: 'Not expected', handling: 'Confirm in product documentation; masked in nowcast mode.' },
+  { name: 'Local surface store', provider: 'data/store/surface.zarr', use: 'What the API serves first', res: '0.25°, 13 dates', status: 'fixture', contains: 'n/a', handling: 'The API reports it as offline_synthetic: a fixture, not real satellite fields.' },
 ];
 
 const LIMITATIONS = [
   'Decision-support prototype. Not validated for navigation, safety-critical offshore work or search and rescue without independent INCOIS verification.',
   'The API\'s local surface store reports offline_synthetic, so live-looking predictions on this site are driven by fixture inputs unless the source badge says Disk cache or Live.',
   'The Argo archive covers 2025-03-25 → 2025-09-15 only. The documented temporal split (train 2015–22 / val 2023 / test 2024–25) cannot be run on it, so evaluation uses a float-grouped split instead.',
-  'The /validation/profile lookup store (tests/fixtures/argo_200.parquet) mostly contains training floats: 141 of its 200 profiles. The Profile Explorer hides and labels them.',
-  'The API sets in_training_set = false unconditionally, so per-prediction training membership cannot be trusted from the API alone.',
-  'The validation endpoint fills missing depths with 0.0 °C and includes them in its RMSE. The explorer recomputes RMSE on observed depths only.',
+  'The /validation/profile lookup store (tests/fixtures/argo_200.parquet) is mostly training floats for the served model: only 39 of its 200 profiles are held out. The API now returns held-out profiles by default and flags the rest.',
+  'The served model (80/20 float split) and metrics.json (70/15/15 float split) use different partitions; they are unified in the evaluation framework v2.',
+  'OISST contains Argo near-surface values, so errors at 0–10 m are not an independent test. The blueprint reports headline skill at 20 m and below; the current metrics files still group 0–30 m together.',
   'On the current split a gradient-boosted tree baseline (HistGBDT) beats OceanEmbedNet v1 on thermocline RMSE.',
   'Interval coverage is identical across all ablation runs (std ≈ 0) on 38 validation profiles; calibration evidence is thin.',
   'No dissimilarity index or reliability diagram exists yet; those views are pending.',
@@ -58,10 +68,16 @@ export default {
     model.body.innerHTML = '<dl class="kv"></dl>';
     const paintModel = () => {
       model.meta.replaceChildren(state.ready ? tag('Live /ready', 'live') : tag('API offline', 'unavailable'), ...(info ? [badge('results')] : []));
+      const d = state.ready?.details || {};
       kv(model.body.firstChild, [
-        ['Serving model', state.ready?.details?.model_version || state.meta?.model_version],
-        ['Serving data version', state.ready?.details?.data_version || state.meta?.data_version],
-        ['Checkpoint', state.ready?.details?.checkpoint_path],
+        ['Serving model', d.model_version || state.meta?.model_version],
+        ['Serving data version', d.data_version || state.meta?.data_version],
+        ['Checkpoint', d.checkpoint_path],
+        ['Weights', d.weights],
+        ['Provenance', d.provenance_status ? `${d.provenance_status.replace('_', ' ')}: ${d.provenance_detail}` : null],
+        ['Trained at commit', d.git_sha ? d.git_sha.slice(0, 12) : 'not recorded in checkpoint'],
+        ['Training data SHA-256', d.data_sha256 ? d.data_sha256.slice(0, 16) + '…' : 'not recorded in checkpoint'],
+        ['Training split', d.training_membership],
         ['Evaluated model', metrics ? `${metrics.model_version} (metrics.json)` : null],
         ['Evaluated data', metrics?.data_version],
         ['Web data built at commit', info?.git_sha ? `${info.git_sha.slice(0, 12)}${info.git_dirty ? ' (uncommitted changes)' : ''}` : 'not recorded'],
@@ -99,15 +115,18 @@ export default {
 
     // Sources
     const src = card({ title: 'Data sources & independence audit', sub: 'Whether each input could leak information about the labels' });
-    src.body.innerHTML = '<div class="table-wrap"><table class="table"><thead><tr><th>Source</th><th>Provider</th><th>Role</th><th>Resolution</th><th>Independence audit</th></tr></thead><tbody></tbody></table></div>';
+    src.body.innerHTML = '<div class="table-wrap" tabindex="0" role="region" aria-label="Data sources and independence audit"><table class="table"><thead><tr><th>Source</th><th>Role</th><th>Resolution</th><th>Contains Argo / in-situ?</th><th>Audit</th><th>Handling</th></tr></thead><tbody></tbody></table></div>';
     for (const s of SOURCES) {
-      const tr = h('<tr><td></td><td></td><td></td><td class="mono"></td><td></td></tr>');
-      [s.name, s.provider, s.use, s.res].forEach((v, i) => { tr.cells[i].textContent = v; });
-      tr.cells[4].append(tag(s.audit[0] === 'ok' ? 'Checked' : s.audit[0] === 'warn' ? 'Concern' : 'Not audited', s.audit[0] === 'ok' ? 'ok' : s.audit[0] === 'warn' ? 'warn' : 'muted'));
-      const note = document.createElement('div');
-      note.className = 'card__foot';
-      note.textContent = s.audit[1];
-      tr.cells[4].append(note);
+      const tr = h('<tr><td></td><td></td><td class="mono"></td><td></td><td></td><td></td></tr>');
+      tr.cells[0].textContent = s.name;
+      const prov = document.createElement('div');
+      prov.className = 'card__foot';
+      prov.textContent = s.provider;
+      tr.cells[0].append(prov);
+      [s.use, s.res, s.contains].forEach((v, i) => { tr.cells[i + 1].textContent = v; });
+      const [label, cls] = AUDIT_TAG[s.status];
+      tr.cells[4].append(tag(label, cls));
+      tr.cells[5].textContent = s.handling;
       src.body.querySelector('tbody').append(tr);
     }
     $(root, '[data-ref="row2"]').append(src.card);
@@ -116,7 +135,7 @@ export default {
     const arts = card({ title: 'Data artefacts', sub: 'SHA-256 from data/manifest.json, re-verified when the web data was built' });
     if (info?.artifacts?.length) {
       arts.meta.append(badge('results'));
-      arts.body.innerHTML = '<div class="table-wrap"><table class="table"><thead><tr><th>Artefact</th><th>Rows / dates</th><th>SHA-256</th><th>Check</th></tr></thead><tbody></tbody></table></div>';
+      arts.body.innerHTML = '<div class="table-wrap" tabindex="0" role="region" aria-label="Data artefacts and hashes"><table class="table"><thead><tr><th>Artefact</th><th>Rows / dates</th><th>SHA-256</th><th>Check</th></tr></thead><tbody></tbody></table></div>';
       for (const a of info.artifacts) {
         const tr = h('<tr><td></td><td class="mono"></td><td class="mono" style="word-break:break-all;font-size:11px"></td><td></td></tr>');
         tr.cells[0].textContent = a.path;

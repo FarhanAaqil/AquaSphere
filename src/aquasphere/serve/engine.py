@@ -20,8 +20,10 @@ import pandas as pd
 import torch
 
 from aquasphere.constants import DEPTH_COLS, STANDARD_DEPTHS
+from aquasphere.data.provenance import MISMATCH, NOT_RECORDED, verify_provenance
 from aquasphere.eval.metrics import compute_d20, compute_mld, compute_ohc300
 from aquasphere.models.decoder import TierAModel
+from aquasphere.serve.membership import TrainingMembership
 from aquasphere.train.calibrate import ConformalCalibrator
 from aquasphere.train.train import compute_doy_features
 
@@ -54,10 +56,16 @@ class InferenceEngine:
         self.model_version = "tier_a_v1.0"
         self.data_version = "2026.1"
         self.is_ready = False
+        self.weights = "untrained"
+        self._checkpoint: dict[str, Any] | None = None
+        self.provenance: dict[str, Any] = {}
+        self.provenance_status = NOT_RECORDED
+        self.provenance_detail = "No checkpoint loaded."
 
         self.val_df: pd.DataFrame | None = None
         self._load_validation_profiles()
         self._load_checkpoint()
+        self.membership = TrainingMembership.resolve(self._checkpoint)
 
     def _load_validation_profiles(self) -> None:
         """Load validation profiles for held-out validation queries."""
@@ -82,24 +90,35 @@ class InferenceEngine:
             try:
                 ckpt = torch.load(self.checkpoint_path, map_location=self.device)
                 self.model.load_state_dict(ckpt["model_state"])
+                self._checkpoint = ckpt
                 self.scaler_mean = np.array(ckpt["scaler"]["mean"], dtype=np.float32)
                 self.scaler_std = np.array(ckpt["scaler"]["std"], dtype=np.float32)
                 self.scaler_std[self.scaler_std < 1e-4] = 1.0
                 self.climatology = np.array(ckpt["climatology"], dtype=np.float32)
                 self.calibrator = ConformalCalibrator.from_dict(ckpt["conformal_calibration"])
-                self.is_ready = True
+                self.weights = "trained"
+                self.provenance = dict(ckpt.get("provenance") or {})
+                self.provenance_status, self.provenance_detail = verify_provenance(self.provenance)
+                # A checkpoint whose training data has since changed is not trustworthy.
+                self.is_ready = self.provenance_status != MISMATCH
+                if not self.is_ready:
+                    logger.error("Refusing to report ready: %s", self.provenance_detail)
                 logger.info(
-                    "Successfully loaded AquaSphere Tier A model from %s", self.checkpoint_path
+                    "Loaded AquaSphere Tier A model from %s (provenance: %s)",
+                    self.checkpoint_path,
+                    self.provenance_status,
                 )
                 self.model.eval()
                 return
             except Exception as e:
                 logger.error("Failed loading checkpoint from %s: %s", self.checkpoint_path, e)
 
-        # Fallback for headless / fresh clone test runs: initialize dummy parameters
-        logger.info("Running with freshly initialized weights (testing/mock mode).")
+        # Fresh clone / CI: no checkpoint, so the network has random weights. Predictions still
+        # work for contract tests, but /ready says so and every response carries the tag.
+        logger.warning("No trained checkpoint: serving UNTRAINED weights (not ready).")
+        self.model_version = f"{self.model_version}+untrained"
         self.model.eval()
-        self.is_ready = True
+        self.is_ready = False
 
     def build_feature_vector(
         self,
@@ -206,7 +225,7 @@ class InferenceEngine:
             "data_source": source,
             "model_version": self.model_version,
             "data_version": self.data_version,
-            "in_training_set": False,
+            "in_training_set": self.membership.point_in_training(lat, lon, date),
         }
 
     def predict_batch(
@@ -264,7 +283,9 @@ class InferenceEngine:
                     "data_source": sources_list[i],
                     "model_version": self.model_version,
                     "data_version": self.data_version,
-                    "in_training_set": False,
+                    "in_training_set": self.membership.point_in_training(
+                        points[i]["lat"], points[i]["lon"], date
+                    ),
                 }
             )
 
@@ -275,16 +296,32 @@ class InferenceEngine:
         lat: float,
         lon: float,
         date: str | None = None,
+        include_training: bool = False,
     ) -> dict[str, Any] | None:
-        """Find the nearest held-out validation Argo profile by great-circle distance."""
+        """Find the nearest validation-store Argo profile by great-circle distance.
+
+        By default only floats outside the served model's training split are candidates
+        (blueprint §10.2). Depths without an observation are returned as None and excluded
+        from the RMSE.
+        """
         if self.val_df is None or len(self.val_df) == 0:
             return None
+
+        candidates = self.val_df
+        if not include_training and self.membership.known:
+            float_ids = candidates.get("float_id")
+            if float_ids is None:
+                float_ids = candidates["profile_id"].astype(str).str.split("_").str[0]
+            held_out = ~float_ids.astype(str).isin(self.membership.train_float_ids or set())
+            candidates = candidates[held_out.to_numpy()]
+            if len(candidates) == 0:
+                return None
 
         # Haversine distance in km
         lat1 = np.radians(lat)
         lon1 = np.radians(lon)
-        lat2 = np.radians(self.val_df["lat"].to_numpy())
-        lon2 = np.radians(self.val_df["lon"].to_numpy())
+        lat2 = np.radians(candidates["lat"].to_numpy())
+        lon2 = np.radians(candidates["lon"].to_numpy())
 
         dlat = lat2 - lat1
         dlon = lon2 - lon1
@@ -293,27 +330,32 @@ class InferenceEngine:
         dist_km = 6371.0 * c
 
         nearest_idx = int(np.argmin(dist_km))
-        row = self.val_df.iloc[nearest_idx]
+        row = candidates.iloc[nearest_idx]
 
-        true_temps = [
-            float(row[c]) if c in row and np.isfinite(row[c]) else 0.0 for c in DEPTH_COLS
+        true_temps: list[float | None] = [
+            float(row[c]) if c in row and np.isfinite(row[c]) else None for c in DEPTH_COLS
         ]
-        prof_date = str(row["date"]) if "date" in row else (date or "2023-06-15")
+        prof_date = str(row["date"])[:10] if "date" in row else (date or "2023-06-15")
+        float_id = str(row.get("float_id", str(row.get("profile_id", "")).split("_")[0]))
 
         pred = self.predict_point(
             lat=float(row["lat"]),
             lon=float(row["lon"]),
             date=prof_date,
             features={"sst": float(row.get("sst", 28.0))},
-            source="held_out_validation",
+            source="local_store",
         )
 
-        diff = np.array(pred["temperatures"]) - np.array(true_temps)
-        rmse = float(np.sqrt(np.mean(diff**2)))
+        observed = [i for i, t in enumerate(true_temps) if t is not None]
+        if observed:
+            diff = np.array([pred["temperatures"][i] - (true_temps[i] or 0.0) for i in observed])
+            rmse: float | None = float(np.sqrt(np.mean(diff**2)))
+        else:
+            rmse = None
 
         return {
             "profile_id": str(row.get("profile_id", f"prof_{nearest_idx}")),
-            "float_id": str(row.get("float_id", "float_unknown")),
+            "float_id": float_id,
             "cycle": int(row.get("cycle", 1)),
             "date": prof_date,
             "lat": float(row["lat"]),
@@ -324,7 +366,11 @@ class InferenceEngine:
             "pred_temperatures": pred["temperatures"],
             "uncertainties": pred["uncertainties"],
             "rmse": rmse,
-            "data_source": "offline_synthetic",
+            "n_observed": len(observed),
+            "in_training_set": self.membership.float_in_training(float_id),
+            # Real Argo observations from the local validation table; the prediction is driven by
+            # the profile's own collocated SST from the same table.
+            "data_source": "local_store",
         }
 
     def explain_point(

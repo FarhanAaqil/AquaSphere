@@ -8,7 +8,7 @@ const LADDER = [
   ['B0', 'Climatology'],
   ['B1', 'Climatology + Ridge'],
   ['B2', 'Gradient Boosted Trees (HistGBDT)'],
-  ['Net', 'v1 OceanEmbedNet (Re-evaluated)'],
+  ['B3', 'v1 OceanEmbedNet (Re-evaluated)'],
 ];
 const SERIES = [C.faint, C.indigo, C.teal, C.cyan];
 
@@ -22,7 +22,7 @@ async function e1(host, ctx) {
   const d = await optional('e1_leakage');
   if (!d) { c.meta.append(badge('pending')); return pending(c.body, { needs: 'web/data/e1_leakage.json (make leakage)' }); }
   c.meta.append(badge('results'));
-  c.body.innerHTML = '<div class="chart"></div><div class="table-wrap"><table class="table"><thead><tr><th>Model</th><th class="num">Random</th><th class="num">Float-blocked</th><th class="num">Time-blocked</th><th class="num">Float gap</th><th class="num">Time gap</th></tr></thead><tbody></tbody></table></div>';
+  c.body.innerHTML = '<div class="chart"></div><div class="table-wrap" tabindex="0" role="region" aria-label="E1 leakage gap by model"><table class="table"><thead><tr><th>Model</th><th class="num">Random</th><th class="num">Float-blocked</th><th class="num">Time-blocked</th><th class="num">Float gap</th><th class="num">Time gap</th></tr></thead><tbody></tbody></table></div>';
   const models = Object.keys(d.leakage_gaps);
   const g = d.leakage_gaps;
   const proto = [['Random (naive)', 'rand_thermo_rmse', C.coral], ['Float-blocked', 'flt_thermo_rmse', C.teal], ['Time-blocked', 'time_thermo_rmse', C.indigo]];
@@ -48,7 +48,7 @@ async function e2(host, ctx) {
   const m = await optional('metrics');
   if (!m) { c.meta.append(badge('pending')); return pending(c.body, { needs: 'web/data/metrics.json (make eval && make ui-data)' }); }
   c.meta.append(badge('results'));
-  c.body.innerHTML = '<div class="grid grid--2"><div class="chart"></div><div class="chart"></div></div><div class="table-wrap"><table class="table"><thead><tr><th>Rung</th><th>Model</th><th class="num">Thermo RMSE</th><th class="num">95% CI</th><th class="num">Overall RMSE</th><th class="num">Skill</th></tr></thead><tbody></tbody></table></div>';
+  c.body.innerHTML = '<div class="grid grid--2"><div class="chart"></div><div class="chart"></div></div><div class="table-wrap" tabindex="0" role="region" aria-label="E2 baseline ladder"><table class="table"><thead><tr><th>Rung</th><th>Model</th><th class="num">Thermo RMSE</th><th class="num">95% CI</th><th class="num">Overall RMSE</th><th class="num">Skill</th></tr></thead><tbody></tbody></table></div>';
   const rows = LADDER.map(([id, key]) => [id, key, m.baselines[key]]).filter((r) => r[2]);
   const [left, right] = c.body.querySelectorAll('.chart');
   await plot(left, [{
@@ -66,11 +66,18 @@ async function e2(host, ctx) {
     [id, key, fmt(v.thermocline_rmse, 3), `${fmt(v.thermocline_ci_95[0])}–${fmt(v.thermocline_ci_95[1])}`, fmt(v.overall_rmse, 3), fmt(v.skill_score_overall, 3)].forEach((x, i) => { tr.cells[i].textContent = x; });
     tb.append(tr);
   }
-  const tr = h('<tr><td class="mono">B3–B5</td><td colspan="5"><span class="badge badge--pending">Pending</span> Not in metrics.json yet</td></tr>');
-  tb.append(tr);
+  for (const [id, what] of [
+    ['B4', 'Deep ensemble of Tier A models (uncertainty baseline for conformal)'],
+    ['B5', 'ARMOR3D upper reference (mooring comparison only; it assimilates Argo)'],
+  ]) {
+    const tr = h('<tr><td class="mono"></td><td colspan="5"><span class="badge badge--pending">Pending</span> <span></span></td></tr>');
+    tr.cells[0].textContent = id;
+    tr.cells[1].lastChild.textContent = what;
+    tb.append(tr);
+  }
   const n = document.createElement('p');
   n.className = 'note';
-  n.textContent = `${m.n_eval_profiles} held-out profiles from ${m.n_eval_floats} floats (${m.split}), ${m.n_train_profiles} training profiles. Generated ${m._generated_at?.slice(0, 10) || '—'}.`;
+  n.textContent = `${m.n_eval_profiles} held-out profiles from ${m.n_eval_floats} floats (${m.split}), ${m.n_train_profiles} training profiles. Generated ${m._generated_at?.slice(0, 10) || '—'}. The blueprint specifies LightGBM for B2; this run used scikit-learn's HistGradientBoosting, an equivalent histogram GBDT.`;
   c.body.append(n);
 }
 

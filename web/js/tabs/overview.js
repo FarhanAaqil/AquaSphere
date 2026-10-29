@@ -149,7 +149,8 @@ function renderStatus(root) {
   const rows = [
     ['API', s.api === 'ok' ? 'healthy · ready' : s.api === 'degraded' ? 'up · not ready' : s.api === 'down' ? 'unreachable' : 'checking…'],
     ['Uptime', s.health ? `${Math.round(s.health.uptime_seconds / 60)} min` : '—'],
-    ['Model loaded', yes(s.ready?.model_loaded)],
+    ['Weights', s.ready?.details?.weights === 'untrained' ? 'UNTRAINED (no checkpoint)' : s.ready?.details?.weights || '—'],
+    ['Provenance', s.ready?.details?.provenance_status?.replace('_', ' ') || '—'],
     ['Scaler loaded', yes(s.ready?.scaler_loaded)],
     ['Surface store open', yes(s.ready?.store_open)],
     ['Model version', s.ready?.details?.model_version || s.meta?.model_version || '—'],

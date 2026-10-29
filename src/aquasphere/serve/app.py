@@ -105,6 +105,13 @@ def readiness_check() -> ReadyResponse:
             "data_version": engine.data_version,
             "zarr_store_path": str(resolver.store_path),
             "checkpoint_path": str(engine.checkpoint_path),
+            "weights": engine.weights,
+            "training_membership": engine.membership.source,
+            "provenance_status": engine.provenance_status,
+            "provenance_detail": engine.provenance_detail,
+            "git_sha": engine.provenance.get("git_sha"),
+            "data_sha256": engine.provenance.get("data_sha256"),
+            "trained_at": engine.provenance.get("trained_at"),
         },
     )
 
@@ -126,6 +133,16 @@ def get_metadata() -> MetaResponse:
         },
         standard_depths=list(STANDARD_DEPTHS),
         available_sources=["offline_synthetic", "disk_cache", "live"],
+        available_dates=(
+            sorted(resolver.zarr_store.get_available_dates()) if resolver.zarr_store else []
+        ),
+        model_provenance={
+            "weights": engine.weights,
+            "status": engine.provenance_status,
+            "git_sha": engine.provenance.get("git_sha"),
+            "data_sha256": engine.provenance.get("data_sha256"),
+            "trained_at": engine.provenance.get("trained_at"),
+        },
     )
 
 
@@ -204,34 +221,48 @@ async def get_grid_predictions(
     lats = np.arange(lat_min, lat_max + 1e-4, step)
     lons = np.arange(lon_min, lon_max + 1e-4, step)
 
-    points: list[GridPoint] = []
+    cells: list[tuple[float, float, dict[str, float], str, dict[str, Any]]] = []
     for lt in lats:
         for ln in lons:
             try:
                 obs, src = await resolver.resolve(float(lt), float(ln), date)
             except HTTPException:
-                # If unavailable, continue or use fallback
+                # No observation for this cell: leave it out rather than invent one
                 continue
-
             pred = engine.predict_point(float(lt), float(ln), date, obs, src)
-            emb = np.array(pred["embedding"])
-            # Project onto 2 arbitrary orthogonal basis vectors for 2D embedding coords
-            pca1 = float(np.mean(emb[:8]))
-            pca2 = float(np.mean(emb[8:]))
+            cells.append((float(lt), float(ln), obs, src, pred))
 
-            points.append(
-                GridPoint(
-                    lat=float(lt),
-                    lon=float(ln),
-                    sst=float(obs.get("sst", pred["temperatures"][0])),
-                    mld=pred["mld"],
-                    d20=pred["d20"],
-                    pca1=pca1,
-                    pca2=pca2,
-                )
-            )
+    # Real PCA of this grid's embeddings (centred, first two right-singular vectors)
+    proj = np.zeros((len(cells), 2))
+    explained: list[float] = []
+    if len(cells) >= 3:
+        emb = np.array([c[4]["embedding"] for c in cells], dtype=np.float64)
+        centred = emb - emb.mean(axis=0)
+        _, s, vt = np.linalg.svd(centred, full_matrices=False)
+        proj = centred @ vt[:2].T
+        total = float((s**2).sum())
+        explained = [float(v) for v in (s[:2] ** 2) / total] if total > 0 else []
 
-    return GridResponse(date=date, count=len(points), points=points)
+    points = [
+        GridPoint(
+            lat=lt,
+            lon=ln,
+            sst=float(obs.get("sst", pred["temperatures"][0])),
+            mld=pred["mld"],
+            d20=pred["d20"],
+            pca1=float(proj[i, 0]),
+            pca2=float(proj[i, 1]),
+            data_source=src,
+        )
+        for i, (lt, ln, obs, src, pred) in enumerate(cells)
+    ]
+    return GridResponse(
+        date=date,
+        count=len(points),
+        points=points,
+        projection="pca",
+        explained_variance=explained,
+    )
 
 
 @app.get("/validation/profile", response_model=ValidationProfileResponse)
@@ -239,9 +270,13 @@ def get_validation_profile(
     lat: float = Query(..., ge=LAT_MIN, le=LAT_MAX),
     lon: float = Query(..., ge=LON_MIN, le=LON_MAX),
     date: str | None = Query(default=None),
+    include_training: bool = Query(
+        default=False,
+        description="Also consider profiles from floats the served model was trained on",
+    ),
 ) -> ValidationProfileResponse:
-    """Retrieve nearest held-out validation profile and evaluate model accuracy."""
-    res = engine.find_nearest_held_out_profile(lat, lon, date)
+    """Retrieve the nearest held-out validation profile and evaluate model accuracy."""
+    res = engine.find_nearest_held_out_profile(lat, lon, date, include_training=include_training)
     if res is None:
         raise HTTPException(
             status_code=404,
@@ -252,20 +287,14 @@ def get_validation_profile(
 
 @app.get("/validation")
 def get_validation_metrics() -> Any:
-    """Return offline evaluation metrics JSON."""
+    """Return offline evaluation metrics JSON (404 until the evaluation has produced it)."""
     metrics_path = Path("docs/results/metrics.json")
     if metrics_path.exists():
         return json.loads(metrics_path.read_text(encoding="utf-8"))
-
-    # Fallback default summary if not yet generated
-    return {
-        "status": "ready",
-        "model_version": engine.model_version,
-        "evaluation_partition": "held_out_test_2024",
-        "thermocline_rmse": 1.15,
-        "overall_rmse": 0.89,
-        "skill_score": 0.42,
-    }
+    raise HTTPException(
+        status_code=404,
+        detail="No evaluation results yet: run `make eval` to produce docs/results/metrics.json.",
+    )
 
 
 @app.get("/explain", response_model=ExplainResponse)
@@ -275,14 +304,16 @@ async def explain_prediction(
     date: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$"),
 ) -> ExplainResponse:
     """Compute input feature attributions for model prediction."""
-    obs, _ = await resolver.resolve(lat, lon, date)
+    obs, src = await resolver.resolve(lat, lon, date)
     attributions = engine.explain_point(lat, lon, date, obs)
     return ExplainResponse(
         lat=lat,
         lon=lon,
         date=date,
-        method="integrated_gradients",
+        method="gradient_x_input",
+        target="temperature_100m",
         feature_attributions=attributions,
+        data_source=src,
     )
 
 

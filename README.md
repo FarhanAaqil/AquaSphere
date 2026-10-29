@@ -149,7 +149,8 @@ Every chart carries a provenance badge (Local store, Disk cache, Live, Offline d
 ```bash
 make ui-data            # copy results into web/data and build dates/floats/held-out/build-info files
 make serve              # API + frontend on http://localhost:8000
-pytest tests/e2e --no-cov   # Playwright smoke tests (playwright install chromium first)
+pip install -e ".[e2e]" && python -m playwright install chromium
+pytest tests/e2e --no-cov   # browser smoke + WCAG 2.1 AA accessibility tests
 ```
 
 ---

@@ -9,14 +9,14 @@ import { plot, C } from '../charts/theme.js';
 import { h, $, fmt, reveal } from './_util.js';
 
 const Z90 = 1.645;
-const SPLIT_COLOR = { test: '#22d3ee', val: '#14b8a6', train: '#7f93a8', unknown: '#a78bfa' };
+const SPLIT_COLOR = { held_out: '#22d3ee', train: '#7f93a8', unknown: '#a78bfa' };
 
 function template() {
   return `
   <div class="page__intro">
     <h2>Profile explorer</h2>
     <p>Compare the model against Argo profiles it was not trained on. Points are the profiles in the API's validation lookup
-    store, tagged with the float-grouped split used in evaluation. Profiles from training floats are hidden unless you ask for
+    store, tagged with the served model's own training split. Profiles from training floats are hidden unless you ask for
     them, and are marked when shown.</p>
   </div>
   <div class="card">
@@ -37,8 +37,7 @@ function template() {
       <div class="card__head"><div><h3 class="card__title">Held-out profiles</h3><p class="card__sub">Click a point to compare</p></div></div>
       <div data-ref="map"></div>
       <div class="legend-row">
-        <span><i style="background:${SPLIT_COLOR.test}"></i>Test float</span>
-        <span><i style="background:${SPLIT_COLOR.val}"></i>Validation float</span>
+        <span><i style="background:${SPLIT_COLOR.held_out}"></i>Held-out float</span>
         <span><i style="background:${SPLIT_COLOR.train}"></i>Training float (in training)</span>
       </div>
       <dl class="kv" data-ref="info"></dl>
@@ -84,8 +83,7 @@ export default {
       pending(chart, { title: 'Held-out index missing', detail: 'web/data/heldout.json was not found. Run "python scripts/build_web_data.py".' });
       return;
     }
-    $(root, '[data-ref="store-badge"]').replaceChildren(tag(store.split_rule ? 'Split: float-grouped, seed 42' : 'Split unknown', 'muted', store.split_rule || ''));
-    const byFloat = new Map(store.profiles.map((p) => [p.float_id, p.split]));
+    $(root, '[data-ref="store-badge"]').replaceChildren(tag(store.split_rule ? 'Split: served model' : 'Split unknown', 'muted', store.split_rule || ''));
 
     const filter = { region: 'all', train: false };
     let selected = null;
@@ -98,10 +96,10 @@ export default {
       const pts = visible();
       const counts = pts.reduce((a, p) => ({ ...a, [p.split]: (a[p.split] || 0) + 1 }), {});
       $(root, '[data-ref="count"]').textContent =
-        `${pts.length} profiles · test ${counts.test || 0} · val ${counts.val || 0}${filter.train ? ` · train ${counts.train || 0}` : ''}`;
+        `${pts.length} profiles · held out ${counts.held_out || 0}${filter.train ? ` · train ${counts.train || 0}` : ''}`;
       map.setPoints(pts.map((p) => ({
         id: p.profile_id, lat: p.lat, lon: p.lon, r: 0.45, color: SPLIT_COLOR[p.split] || SPLIT_COLOR.unknown, muted: p.split === 'train',
-        label: `${p.profile_id} · ${p.date} · ${p.region} · ${p.split === 'train' ? 'IN TRAINING' : `${p.split} float`}`,
+        label: `${p.profile_id} · ${p.date} · ${p.region} · ${p.split === 'train' ? 'IN TRAINING' : 'held out'}`,
         data: p,
       })), { onClick: (pt) => select(pt.data), selected: selected?.profile_id });
     };
@@ -116,7 +114,11 @@ export default {
       badges.replaceChildren();
       note.hidden = true;
       try {
-        const r = await api.validationProfile({ lat: p.lat, lon: p.lon, date: p.date }, { signal: ctx.signal });
+        // Training-float points are only reachable when the user asked to see them.
+        const r = await api.validationProfile(
+          { lat: p.lat, lon: p.lon, date: p.date, includeTraining: p.split === 'train' },
+          { signal: ctx.signal },
+        );
         if (selected !== p) return;
         render(r, p);
       } catch (err) {
@@ -128,23 +130,21 @@ export default {
     }
 
     async function render(r, p) {
-      // The API fills depths without an observation with 0.0. Nowhere in 0–1000 m of the
-      // North Indian Ocean is at 0 °C, so treat those as missing rather than plotting them.
-      const obs = r.true_temperatures.map((t) => (t === 0 ? null : t));
-      const nObs = obs.filter((t) => t != null).length;
-      const split = state.demo ? 'demo' : byFloat.get(String(r.float_id)) || 'unknown';
-      const inTraining = split === 'train';
+      // Depths the float did not reach come back as null and stay gaps.
+      const obs = r.true_temperatures;
+      const nObs = r.n_observed ?? obs.filter((t) => t != null).length;
+      const split = state.demo ? 'demo' : r.in_training_set == null ? 'unknown' : r.in_training_set ? 'train' : 'held_out';
 
-      badges.replaceChildren(
-        badge(r.data_source, 'Label as returned by /validation/profile.'),
-        inTraining ? tag('In training', 'warn', 'This float was in the training split; this is not a held-out comparison.') : tag(split === 'demo' ? 'Synthetic' : `${split} float · held out`, split === 'demo' ? 'demo' : 'heldout'),
-      );
+      const membershipTag = {
+        train: tag('In training', 'warn', 'This float was in the served model\'s training split; this is not a held-out comparison.'),
+        held_out: tag('Held-out float', 'heldout', 'This float was not used to train the served model.'),
+        unknown: tag('Training split unknown', 'muted', 'The API could not determine the served model\'s training split.'),
+        demo: tag('Synthetic', 'demo'),
+      }[split];
+      badges.replaceChildren(badge(r.data_source, 'Label as returned by /validation/profile.'), membershipTag);
       if (String(r.profile_id) !== p.profile_id && !state.demo) {
         note.hidden = false;
         note.textContent = `The API matched the nearest stored profile, ${r.profile_id} (${fmt(r.distance_km, 1)} km away), rather than ${p.profile_id}.`;
-      } else if (r.data_source === 'offline_synthetic') {
-        note.hidden = false;
-        note.textContent = 'The API labels this response "offline_synthetic". Observed temperatures are the stored Argo profile; the prediction is driven only by that profile\'s collocated SST.';
       }
 
       chart.replaceChildren();
@@ -173,20 +173,22 @@ export default {
         showlegend: false,
       }, ctx, `aquasphere-errors-${r.profile_id}`);
 
-      const valid = resid.filter((e) => e != null);
-      const rmseObs = valid.length ? Math.sqrt(valid.reduce((a, e) => a + e * e, 0) / valid.length) : null;
       const thermo = r.depths.map((d, i) => (d >= 50 && d <= 150 ? resid[i] : null)).filter((e) => e != null);
       const rmseThermo = thermo.length ? Math.sqrt(thermo.reduce((a, e) => a + e * e, 0) / thermo.length) : null;
+      // Blueprint §10.1: OISST contains Argo near-surface values, so 0–10 m is not a clean test.
+      const deep = r.depths.map((d, i) => (d >= 20 ? resid[i] : null)).filter((e) => e != null);
+      const rmseDeep = deep.length ? Math.sqrt(deep.reduce((a, e) => a + e * e, 0) / deep.length) : null;
       const cover = inside.filter((v) => v != null);
       $(root, '[data-ref="scores"]').replaceChildren(
-        score('RMSE · observed depths', rmseObs == null ? '—' : `${rmseObs.toFixed(2)} °C`, `${nObs} of ${r.depths.length} depths observed`),
+        score('RMSE · observed depths', r.rmse == null ? '—' : `${fmt(r.rmse)} °C`, `${nObs} of ${r.depths.length} depths observed (from the API)`),
+        score('RMSE · 20 m and below', rmseDeep == null ? '—' : `${rmseDeep.toFixed(2)} °C`, 'Headline depths: 0–10 m excluded, input SST contains Argo near-surface data'),
         score('Thermocline RMSE', rmseThermo == null ? '—' : `${rmseThermo.toFixed(2)} °C`, '50–150 m, observed depths'),
         score('Inside ±1.645σ', cover.length ? `${cover.filter(Boolean).length}/${cover.length}` : '—', 'Depths where the observation falls in the band'),
-        score('RMSE · API', `${fmt(r.rmse)} °C`, 'As returned; includes zero-filled missing depths'),
       );
       const info = $(root, '[data-ref="info"]');
       info.replaceChildren();
-      for (const [k, v] of [['Float', r.float_id], ['Cycle', r.cycle], ['Date', r.date], ['Position', `${fmtLat(r.lat)} ${fmtLon(r.lon)}`], ['Region', p.region], ['Split', split]]) {
+      const splitText = { train: 'training float', held_out: 'held out', unknown: 'unknown', demo: 'synthetic' }[split];
+      for (const [k, v] of [['Float', r.float_id], ['Cycle', r.cycle], ['Date', r.date], ['Position', `${fmtLat(r.lat)} ${fmtLon(r.lon)}`], ['Region', p.region], ['Split', splitText]]) {
         const dt = document.createElement('dt'); dt.textContent = k;
         const dd = document.createElement('dd'); dd.textContent = v;
         info.append(dt, dd);
@@ -203,7 +205,7 @@ export default {
     $(root, '[data-ref="show-train"]').addEventListener('change', (e) => { filter.train = e.target.checked; paint(); });
 
     paint();
-    const first = visible().find((p) => p.split === 'test') || visible()[0];
+    const first = visible().find((p) => p.split === 'held_out') || visible()[0];
     if (first) select(first);
     reveal(root, ctx, '.grid > .card');
   },

@@ -71,7 +71,9 @@ function renderChecks(root, p, window_) {
     window_
       ? { ok: p.date >= window_.from && p.date <= window_.to, text: `Date inside the Argo training window ${window_.from} → ${window_.to}`, fail: `Date ${p.date} is outside the Argo training window ${window_.from} → ${window_.to}: temporal extrapolation` }
       : { ok: null, text: 'Training date window unknown (build_info.json missing)' },
-    { ok: !p.in_training_set, text: 'Not a training sample (API in_training_set = false)', fail: 'This exact point/date was in the training partition' },
+    p.in_training_set == null
+      ? { ok: null, text: 'Training membership unknown: the API could not determine the training split' }
+      : { ok: !p.in_training_set, text: 'No training profile in this 0.25° cell on this date', fail: 'A training profile sits in this 0.25° cell on this date: this is not an out-of-sample prediction' },
     { ok: null, text: 'Embedding dissimilarity index: not exposed by the API yet — see Uncertainty tab' },
   ];
   const ul = $(root, '[data-ref="checks"]');

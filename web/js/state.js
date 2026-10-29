@@ -39,6 +39,7 @@ export const state = {
   lite: smallScreen.matches,   // phones / touch: 2D fallback
   point: { lat: 15.0, lon: 65.0 },
   lastPrediction: null,
+  depth: null,           // depth slice (m) chosen in the cube; part of shareable links
 };
 
 export function set(patch) {
