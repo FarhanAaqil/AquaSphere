@@ -36,9 +36,9 @@ def compute_file_sha256(path: Path | str, normalize_newlines: bool = False) -> s
         # Directory artefacts (Zarr stores): hash of every file's relative path and content hash,
         # in sorted order, so any added, removed, renamed or changed chunk changes the digest.
         tree = hashlib.sha256()
-        for f in sorted(x for x in p.rglob("*") if x.is_file()):
-            tree.update(f.relative_to(p).as_posix().encode())
-            tree.update(compute_file_sha256(f).encode())
+        for member in sorted(x for x in p.rglob("*") if x.is_file()):
+            tree.update(member.relative_to(p).as_posix().encode())
+            tree.update(compute_file_sha256(member).encode())
         return tree.hexdigest()
 
     if normalize_newlines:
