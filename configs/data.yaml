@@ -2,33 +2,26 @@
 # All paths are relative to the repo root unless otherwise noted.
 
 argo:
-  source: "argopy"          # "argopy" | "erddap" | "argovis"
-  fallback: "argovis"
+  source: "argovis"         # bulk weekly polygon queries, cached in data/cache/argovis
+  ingest: "python -m aquasphere.data.argo_ingest --start 2015-01-01 --end 2025-12-31"
   qc_flags: [1]             # 1 = good; add 2 for probably-good
   mode: "delayed"           # "delayed" | "real_time"
   year_start: 2015
   year_end: 2025
-  output_parquet: "data/processed/argo_profiles.parquet"
+  output_parquet: "data/processed/argo_nio_2015_2025.parquet"
 
 satellite:
+  # Open NOAA ERDDAP products, no account needed. The authoritative registry (variables, masks,
+  # start dates, audit status) is aquasphere.data.sources; this block mirrors it for reference.
   grid_resolution: 0.25     # degrees
-  output_zarr: "data/store/surface.zarr"
+  output_zarr: "data/store/surface_nio.zarr"
+  build: "python -m aquasphere.data.satellite_fetch --start 2015-01-01 --end 2025-12-31"
   variables:
-    sst:
-      primary: "ncdc_oisst_v2_avhrr_by_time_zlev_lat_lon"
-      source: "erddap"
-    sss:
-      primary: "jplSMAP_L3_SSS_8day"
-      source: "erddap"
-      fallback: "cmems_obs-mob_glo_phy-sss_my_multi_P1D"
-    sla:
-      primary: "cmems_obs-sl_glo_phy-ssh_my_allsat-l4-duacs-0.125deg_P1D"
-      source: "cmems"
-      fallback: "erdTAssh1day"
-    winds:
-      primary: "era5_reanalysis-era5-single-levels"
-      source: "cds"
-      fallback: "noaa_ccmp_winds"
+    sst: {dataset: "ncdcOisst21Agg", server: "coastwatch.pfeg.noaa.gov", from: "1981-09-01"}
+    sla: {dataset: "nesdisSSH1day", server: "coastwatch.pfeg.noaa.gov", from: "2017-02-13", also: [ugos, vgos]}
+    sss: {dataset: "noaacwSMAPsssDaily", server: "coastwatch.noaa.gov", from: "2015-04-01"}
+    winds: {dataset: "noaacwBlendedWindsDaily", server: "coastwatch.noaa.gov", from: "1987-07-09"}
+  preliminary_sst: {dataset: "ncdcOisst21NrtAgg", purpose: "E7 nowcast on the preliminary release"}
 
 collocation:
   patch_size: 9             # grid cells (9×9 ≈ 2.25° at 0.25° resolution)
