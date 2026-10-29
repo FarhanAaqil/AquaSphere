@@ -118,7 +118,7 @@ def labelled(table: Path = TABLE, out: Path = LABELLED, store: Path = STORE) -> 
     out.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(
         out,
-        profile_id=df["profile_id"].astype(str).to_numpy(),
+        profile_id=np.asarray(df["profile_id"].astype(str), dtype=str),
         patches=patches,
         land=land,
         lags=np.asarray(LAGS),
@@ -142,7 +142,7 @@ def unlabelled(n: int = 60000, seed: int = 0, out: Path = UNLABELLED, store: Pat
         out,
         patches=patches,
         land=land,
-        day=src.dates[day].strftime("%Y-%m-%d").to_numpy(),
+        day=np.asarray(src.dates[day].strftime("%Y-%m-%d"), dtype=str),
         lat=src.lat[ocean_r[pick]],
         lon=src.lon[ocean_c[pick]],
     )
