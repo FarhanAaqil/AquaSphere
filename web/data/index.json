@@ -5,9 +5,11 @@
   "data_coverage",
   "dates",
   "e1_leakage",
+  "e1_leakage_v2",
   "floats",
   "heldout",
   "input_audit",
-  "metrics"
+  "metrics",
+  "metrics_v2"
  ]
 }

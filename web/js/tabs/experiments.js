@@ -1,5 +1,5 @@
 import * as api from '../api.js';
-import { badge } from '../ui/badges.js';
+import { badge, tag } from '../ui/badges.js';
 import { pending } from '../ui/loaders.js';
 import { plot, C } from '../charts/theme.js';
 import { card, h, $, fmt, reveal } from './_util.js';
@@ -40,6 +40,79 @@ async function e1(host, ctx) {
   n.className = 'note';
   n.textContent = 'A positive gap means the random split flatters the model: profiles from the same float leak between train and test. All headline numbers on this site use the float-grouped split.';
   c.body.append(n);
+}
+
+const V2_SERIES = { B0: C.faint, B1: C.indigo, B2: C.teal, B3: C.violet, B4: C.cyan };
+
+/** E2 under protocol v2: time-blocked + float-grouped, 2023 validation, test locked. */
+async function e2v2(host, ctx, m) {
+  const c = card({ title: 'E2 · baseline ladder (protocol v2)', sub: `Validation 2023 · ${m.split.profiles.val} profiles from ${m.split.floats.val} floats never seen in training · 95% CI from a bootstrap over floats` });
+  host.append(c.card);
+  c.meta.append(badge('results'), tag('Test 2024–25 locked', 'heldout', 'Read once, in the final evaluation.'));
+  c.body.innerHTML = `<div class="grid grid--2"><div class="chart"></div><div class="chart"></div></div>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="E2 baseline ladder"><table class="table"><thead><tr><th>Rung</th><th>Model</th><th class="num">Thermocline RMSE</th><th class="num">95% CI</th><th class="num">Skill vs B0</th><th class="num">≥ 20 m RMSE</th><th class="num">D20 RMSE (m)</th><th class="num">vs B0, p (Holm)</th></tr></thead><tbody></tbody></table></div>
+    <p class="note"></p>`;
+  const keys = Object.keys(m.e2);
+  const [left, right] = c.body.querySelectorAll('.chart');
+  await plot(left, [{
+    type: 'bar', x: keys, y: keys.map((k) => m.e2[k].thermocline_rmse),
+    error_y: { type: 'data', symmetric: false, array: keys.map((k) => m.e2[k].thermocline_ci_95[1] - m.e2[k].thermocline_rmse), arrayminus: keys.map((k) => m.e2[k].thermocline_rmse - m.e2[k].thermocline_ci_95[0]), color: C.glow },
+    marker: { color: keys.map((k) => V2_SERIES[k] || C.cyan) }, customdata: keys.map((k) => m.e2[k].name), hovertemplate: '%{customdata}: %{y:.3f} °C<extra></extra>',
+  }], { yaxis: { title: { text: 'Thermocline RMSE (°C)' } }, showlegend: false }, ctx, 'aquasphere-e2-ladder');
+  const bands = m.e2.B0.bands.map((b) => b.band);
+  await plot(right, keys.map((k) => ({
+    x: m.e2[k].bands.map((b) => b.rmse), y: bands, name: k, mode: 'lines+markers', line: { color: V2_SERIES[k] || C.cyan, width: 2.5 },
+    hovertemplate: `${k} %{y}: %{x:.2f} °C<extra></extra>`,
+  })), { xaxis: { title: { text: 'RMSE (°C)' } }, yaxis: { autorange: 'reversed', type: 'category' }, margin: { l: 150, r: 12, t: 8, b: 60 } }, ctx, 'aquasphere-e2-depth');
+  const tb = c.body.querySelector('tbody');
+  for (const k of keys) {
+    const r = m.e2[k];
+    const tr = h('<tr><td class="mono"></td><td></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td></tr>');
+    const cmp = r.vs_B0_thermocline;
+    [k, r.name, `${fmt(r.thermocline_rmse, 3)} ± ${fmt(r.thermocline_rmse_seed_std, 3)}`, `${fmt(r.thermocline_ci_95[0])}–${fmt(r.thermocline_ci_95[1])}`,
+      r.skill_thermocline == null ? '—' : `${r.skill_thermocline >= 0 ? '+' : ''}${fmt(r.skill_thermocline, 3)}`, fmt(r.headline_rmse_20m_plus, 3), fmt(r.d20_rmse_m, 1),
+      cmp ? `${cmp.diff >= 0 ? '+' : ''}${fmt(cmp.diff, 3)} °C, ${cmp.p_holm < 0.001 ? '<0.001' : fmt(cmp.p_holm, 3)}` : '—']
+      .forEach((x, i) => { tr.cells[i].textContent = x; });
+    tb.append(tr);
+  }
+  const b5 = h('<tr><td class="mono">B5</td><td colspan="7"><span class="badge badge--pending">Pending</span> <span>ARMOR3D upper reference (mooring comparison only; it assimilates Argo)</span></td></tr>');
+  tb.append(b5);
+  c.body.querySelector('.note').textContent = `Every rung is fitted on ${m.split.profiles.train.toLocaleString()} training profiles (2015–2022) with fixed, untuned settings. ± is the spread over ${m.seeds.length} seeds; deterministic rungs run once. Headline depths are 20 m and below because satellite SST already contains Argo near-surface data. ${m.split.dropped_profiles.val.toLocaleString()} 2023 profiles from floats already seen in training are excluded. Generated ${m.generated_at.slice(0, 10)}.`;
+
+  // Strata with power analysis
+  const s = card({ title: 'Basin × monsoon season', sub: 'Thermocline RMSE per stratum with sample counts. MDE = the smallest B2-vs-B0 difference this stratum could detect (80% power, α = 0.05).' });
+  host.append(s.card);
+  s.meta.append(badge('results'));
+  s.body.innerHTML = '<div class="table-wrap" tabindex="0" role="region" aria-label="Results by basin and monsoon season"><table class="table"><thead><tr><th>Basin</th><th>Season</th><th class="num">Profiles</th><th class="num">Floats</th><th class="num">B0</th><th class="num">B2</th><th class="num">B4 90% coverage</th><th class="num">MDE (°C)</th><th>Status</th></tr></thead><tbody></tbody></table></div>';
+  for (const r of m.strata) {
+    const t = r.thermocline_rmse || {};
+    const tr = h('<tr><td></td><td></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td><td></td></tr>');
+    [r.region, r.season, r.profiles, r.floats, fmt(t.B0, 3), fmt(t.B2, 3), r.b4_coverage_90 == null ? '—' : `${(r.b4_coverage_90 * 100).toFixed(1)}%`, fmt(r.mde_thermocline_c, 2)]
+      .forEach((x, i) => { tr.cells[i].textContent = x; });
+    tr.cells[8].append(tag(r.status, r.status === 'confirmatory' ? 'ok' : r.status === 'empty' ? 'muted' : 'warn'));
+    s.body.querySelector('tbody').append(tr);
+  }
+}
+
+/** E1 under protocol v2: same models, three splits of 2015–2023. */
+async function e1v2(host, ctx, d) {
+  const c = card({ title: 'E1 · leakage gap (protocol v2)', sub: 'Thermocline RMSE of the same models under three ways of splitting 2015–2023 (test period untouched)' });
+  host.append(c.card);
+  c.meta.append(badge('results'));
+  c.body.innerHTML = '<div class="chart"></div><div class="table-wrap" tabindex="0" role="region" aria-label="E1 leakage gap by model"><table class="table"><thead><tr><th>Model</th><th class="num">Random</th><th class="num">Float-grouped</th><th class="num">Time-blocked + float-grouped</th><th class="num">Random looks better by</th></tr></thead><tbody></tbody></table></div><p class="note"></p>';
+  const models = Object.keys(d.models);
+  const proto = [['Random (naive)', 'random', C.coral], ['Float-grouped', 'float_grouped', C.teal], ['Time-blocked + float-grouped', 'time_blocked_float_grouped', C.indigo]];
+  await plot(c.body.firstChild, proto.map(([name, key, color]) => ({
+    type: 'bar', name, x: models, y: models.map((m) => d.models[m][key]), marker: { color }, hovertemplate: `${name}: %{y:.3f} °C<extra></extra>`,
+  })), { barmode: 'group', yaxis: { title: { text: 'Thermocline RMSE (°C)' } }, margin: { l: 56, r: 12, t: 8, b: 40 } }, ctx, 'aquasphere-e1');
+  for (const k of models) {
+    const r = d.models[k];
+    const tr = h('<tr><td class="mono"></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td></tr>');
+    [k, fmt(r.random, 3), fmt(r.float_grouped, 3), fmt(r.time_blocked_float_grouped, 3), r.random_vs_blocked_pct == null ? '—' : `${fmt(r.random_vs_blocked_pct, 1)}%`]
+      .forEach((x, i) => { tr.cells[i].textContent = x; });
+    c.body.querySelector('tbody').append(tr);
+  }
+  c.body.querySelector('.note').textContent = `How much a random profile split flatters each model compared with the protocol split. Hypothesis H4 is tested on B3, the v1 network. Split sizes: random ${d.splits.random.eval}, float-grouped ${d.splits.float_grouped.eval}, protocol ${d.splits.time_blocked_float_grouped.eval} evaluation profiles.`;
 }
 
 async function e2(host, ctx) {
@@ -118,8 +191,12 @@ export default {
       <div class="grid" data-ref="a"></div><div class="grid grid--2" data-ref="b"></div>`;
     const a = $(root, '[data-ref="a"]');
     const b = $(root, '[data-ref="b"]');
-    await e2(a, ctx);
-    await e1(a, ctx);
+    // Protocol v2 results replace the old 6-month-snapshot results once they exist
+    const [v2, e1v2Data] = await Promise.all([optional('metrics_v2'), optional('e1_leakage_v2')]);
+    if (v2) await e2v2(a, ctx, v2);
+    else await e2(a, ctx);
+    if (e1v2Data) await e1v2(a, ctx, e1v2Data);
+    else await e1(a, ctx);
     await Promise.all([e5(b, ctx), e8(b, ctx)]);
     reveal(root, ctx, '.card');
   },

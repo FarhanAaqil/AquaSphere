@@ -50,7 +50,11 @@ async function reliabilityCard(host, ctx) {
   const { card: c, body, meta } = card({ title: 'Reliability diagram', sub: 'Nominal vs empirical coverage across interval levels, held-out profiles only' });
   host.append(c);
   body.innerHTML = '<div class="chart chart--short"></div>';
-  const rel = await optional('reliability');
+  // Protocol v2: the B4 deep ensemble is the first model with real calibration on held-out data
+  const v2 = await optional('metrics_v2');
+  const fromB4 = v2?.e2?.B4?.probabilistic?.reliability;
+  const rel = fromB4 || (await optional('reliability'));
+  if (fromB4) c.querySelector('.card__sub').textContent = `B4 deep-ensemble baseline · validation 2023 · ${fromB4.n.toLocaleString()} observed depth cells (AquaSphere's own model is retrained in Phase 4)`;
   if (!rel) {
     meta.append(badge('pending'));
     return pending(body, { title: 'Pending', detail: 'Needs coverage measured at several nominal levels on held-out profiles.', needs: 'web/data/reliability.json → { "nominal": [0.5, …, 0.95], "empirical": [...], "n": int }' });
@@ -58,7 +62,7 @@ async function reliabilityCard(host, ctx) {
   meta.append(badge('results'));
   await plot(body.firstChild, [
     { x: [0, 1], y: [0, 1], mode: 'lines', line: { color: C.faint, dash: 'dash' }, name: 'Perfect calibration', hoverinfo: 'skip' },
-    { x: rel.nominal, y: rel.empirical, mode: 'lines+markers', line: { color: C.cyan, width: 3 }, name: 'AquaSphere', hovertemplate: 'nominal %{x:.2f} → empirical %{y:.2f}<extra></extra>' },
+    { x: rel.nominal, y: rel.empirical, mode: 'lines+markers', line: { color: C.cyan, width: 3 }, name: fromB4 ? 'B4 deep ensemble' : 'AquaSphere', hovertemplate: 'nominal %{x:.2f} → empirical %{y:.2f}<extra></extra>' },
   ], { xaxis: { title: { text: 'Nominal coverage' }, range: [0, 1] }, yaxis: { title: { text: 'Empirical coverage' }, range: [0, 1] } }, ctx, 'aquasphere-reliability');
 }
 
@@ -66,7 +70,10 @@ async function regionSeasonCard(host, ctx) {
   const { card: c, body, meta } = card({ title: 'Coverage by region and monsoon season', sub: 'Arabian Sea vs Bay of Bengal · SW monsoon, NE monsoon, inter-monsoon' });
   host.append(c);
   body.innerHTML = '<div class="chart chart--short"></div>';
-  const data = await optional('coverage_regions');
+  const v2 = await optional('metrics_v2');
+  const v2rows = (v2?.strata || []).filter((r) => r.b4_coverage_90 != null).map((r) => ({ region: r.region, season: r.season, coverage: r.b4_coverage_90, n: r.profiles, status: r.status }));
+  const data = v2rows.length ? { rows: v2rows } : await optional('coverage_regions');
+  if (v2rows.length) c.querySelector('.card__sub').textContent = 'B4 deep-ensemble 90% coverage per stratum · validation 2023 · hatched = too few floats for claims';
   if (!data) {
     meta.append(badge('pending'));
     return pending(body, { title: 'Pending', detail: 'The evaluation has not been broken down by basin and season yet.', needs: 'web/data/coverage_regions.json → { "rows": [{ "region", "season", "coverage", "n" }] }' });
@@ -75,8 +82,20 @@ async function regionSeasonCard(host, ctx) {
   const regions = [...new Set(data.rows.map((r) => r.region))];
   await plot(body.firstChild, regions.map((rg, i) => {
     const rows = data.rows.filter((r) => r.region === rg);
-    return { type: 'bar', name: rg, x: rows.map((r) => r.season), y: rows.map((r) => r.coverage * 100), marker: { color: [C.coral, C.indigo, C.teal][i % 3] }, customdata: rows.map((r) => r.n), hovertemplate: `${rg} · %{x}: %{y:.1f}% (n=%{customdata})<extra></extra>` };
-  }), { barmode: 'group', yaxis: { title: { text: 'Coverage (%)' } }, shapes: [{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 90, y1: 90, line: { color: C.amber, dash: 'dash' } }] }, ctx, 'aquasphere-coverage-regions');
+    return {
+      type: 'bar', name: rg, x: rows.map((r) => r.season), y: rows.map((r) => r.coverage * 100),
+      marker: { color: [C.coral, C.indigo, C.teal][i % 3], pattern: { shape: rows.map((r) => (r.status === 'descriptive only' ? '/' : '')) } },
+      customdata: rows.map((r) => [r.n, r.status || '']),
+      hovertemplate: `${rg} · %{x}: %{y:.1f}% (n=%{customdata[0]}) %{customdata[1]}<extra></extra>`,
+    };
+  }), {
+    barmode: 'group', yaxis: { title: { text: 'Coverage (%)' } },
+    shapes: [
+      // H3 acceptance band: within ±5 points of nominal in every stratum
+      { type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: 85, y1: 95, fillcolor: 'rgba(251,191,36,0.07)', line: { width: 0 }, layer: 'below' },
+      { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 90, y1: 90, line: { color: C.amber, dash: 'dash' } },
+    ],
+  }, ctx, 'aquasphere-coverage-regions');
 }
 
 async function dissimilarityCard(host) {

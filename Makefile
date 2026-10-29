@@ -31,11 +31,12 @@ train:
 
 # ── Evaluation (Phase 4+) ────────────────────────────────────────────────────
 eval:
-	python -m aquasphere.eval.report --split val
+	python -m aquasphere.eval.report_v2
 
-# Run once on the held-out test year — only when model is frozen
+# The 2024-25 test period is locked (aquasphere.eval.protocol) until the one final evaluation in
+# roadmap Phase 6, which adds its own target. Nothing before that may read it.
 eval-test:
-	python -m aquasphere.eval.report --split test
+	@echo "Test period locked until the final evaluation (roadmap Phase 6)." && exit 1
 
 ablate:
 	python -m aquasphere.eval.ablation --fixture data/processed/argo_profiles.parquet --epochs 4
@@ -48,7 +49,7 @@ serve:
 	uvicorn aquasphere.serve.app:app --reload --port 8000
 
 ui-data:
-	python -c "import shutil, pathlib; (pathlib.Path('web/data')).mkdir(parents=True, exist_ok=True); [shutil.copy(f'docs/results/{n}.json', f'web/data/{n}.json') for n in ('metrics', 'ablation', 'e1_leakage', 'data_coverage') if pathlib.Path(f'docs/results/{n}.json').exists()]"
+	python -c "import shutil, pathlib; (pathlib.Path('web/data')).mkdir(parents=True, exist_ok=True); [shutil.copy(f'docs/results/{n}.json', f'web/data/{n}.json') for n in ('metrics', 'metrics_v2', 'ablation', 'e1_leakage', 'e1_leakage_v2', 'data_coverage') if pathlib.Path(f'docs/results/{n}.json').exists()]"
 	python scripts/build_web_data.py
 
 # ── Tests ────────────────────────────────────────────────────────────────────

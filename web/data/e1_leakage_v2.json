@@ -1,0 +1,43 @@
+{
+ "generated_at": "2026-10-29T18:37:24+00:00",
+ "splits": {
+  "random": {
+   "train": 38977,
+   "eval": 9744
+  },
+  "float_grouped": {
+   "train": 40802,
+   "eval": 7919
+  },
+  "time_blocked_float_grouped": {
+   "train": 45645,
+   "eval": 761
+  }
+ },
+ "models": {
+  "B0": {
+   "random": 1.4306,
+   "float_grouped": 1.5229,
+   "time_blocked_float_grouped": 1.5736,
+   "random_vs_blocked_pct": 9.1
+  },
+  "B1": {
+   "random": 1.324,
+   "float_grouped": 1.4098,
+   "time_blocked_float_grouped": 1.476,
+   "random_vs_blocked_pct": 10.3
+  },
+  "B2": {
+   "random": 1.2006,
+   "float_grouped": 1.3145,
+   "time_blocked_float_grouped": 1.2955,
+   "random_vs_blocked_pct": 7.3
+  },
+  "B3": {
+   "random": 1.4347,
+   "float_grouped": 1.4777,
+   "time_blocked_float_grouped": 1.5279,
+   "random_vs_blocked_pct": 6.1
+  }
+ }
+}

@@ -105,9 +105,31 @@ function metricCard({ label, value, digits, suffix, note, extra }) {
   return { el: c, run: () => countUp(c.querySelector('.stat__value'), value, { digits, suffix }) };
 }
 
+/** Headline numbers from protocol v2 (real 2015–2025 data, 2023 validation). */
+function renderMetricsV2(host, v2) {
+  const ladder = Object.entries(v2.e2);
+  const [bestKey, best] = ladder.sort((a, b) => a[1].thermocline_rmse - b[1].thermocline_rmse)[0];
+  const b4 = v2.e2.B4?.probabilistic;
+  const evalNote = `validation 2023 · ${v2.split.profiles.val} profiles, ${v2.split.floats.val} unseen floats`;
+  const cards = [
+    metricCard({ label: `Thermocline RMSE · best baseline (${bestKey})`, value: best.thermocline_rmse, digits: 2, suffix: '°C', note: `95% CI ${fmt(best.thermocline_ci_95[0])}–${fmt(best.thermocline_ci_95[1])} °C · ${evalNote}` }),
+    metricCard({ label: 'Skill vs climatology · thermocline', value: best.skill_thermocline, digits: 2, note: `${best.name}. 1 − MSE / MSE(B0 climatology); B0 = 0.` }),
+    b4 ? metricCard({ label: '90% interval coverage · B4', value: b4.coverage_90 * 100, digits: 1, suffix: '%', note: `Deep-ensemble baseline, nominal 90% · mean width ${fmt(b4.mean_width_90, 2)} °C` }) : null,
+    metricCard({ label: `D20 error · ${bestKey}`, value: best.d20_rmse_m, digits: 1, suffix: 'm', note: `20 °C isotherm depth, computed the same way on observed and predicted profiles (n = ${best.d20_n})` }),
+  ].filter(Boolean);
+  host.replaceChildren(...cards.map((c) => c.el));
+  const n = h('<p class="note span-all"></p>');
+  n.textContent = `These are the protocol-v2 baselines on real 2015–2025 data (train 2015–22, validation 2023; the 2024–25 test period stays locked). AquaSphere's own model is retrained on this data in Phase 4 and must beat ${bestKey} to earn a claim. Full ladder in Experiments.`;
+  host.append(n);
+  cards.forEach((c) => c.run());
+}
+
 async function renderMetrics(root, ctx) {
   const host = $(root, '[data-ref="metrics"]');
   host.innerHTML = '<div class="card skeleton" style="min-height:130px"></div>'.repeat(4);
+  const v2 = await api.results('metrics_v2').catch(() => null);
+  if (ctx.signal.aborted) return;
+  if (v2) return renderMetricsV2(host, v2);
   let metrics;
   let ablation;
   try {
