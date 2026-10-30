@@ -5,6 +5,7 @@ from what `make reproduce` does.
 
     python scripts/reproduce.py            # run every step, stop at the first failure
     python scripts/reproduce.py --list     # print the commands only
+    python scripts/reproduce.py --from-step 6   # resume after an interruption
 """
 
 from __future__ import annotations
@@ -56,11 +57,12 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--target", default="reproduce")
+    ap.add_argument("--from-step", type=int, default=1, help="resume at this step number")
     a = ap.parse_args()
     cmds = expand(a.target, targets(ROOT / "Makefile"))
     for i, cmd in enumerate(cmds, 1):
         print(f"[{i}/{len(cmds)}] {cmd}", flush=True)
-        if a.list:
+        if a.list or i < a.from_step:
             continue
         t0 = time.time()
         rc = subprocess.run(cmd, shell=True, cwd=ROOT).returncode
