@@ -1,4 +1,4 @@
-.PHONY: setup data data-store data-argo data-collocate data-coverage data-patches data-demo train eval eval-phase4 eval-test eval-test-dry onnx serve ui-data test lint typecheck audit reproduce clean
+.PHONY: setup data data-store data-argo data-collocate data-coverage data-patches data-demo train eval eval-phase4 eval-test eval-test-dry eval-rama onnx serve ui-data test lint typecheck audit reproduce clean
 
 # ── Setup ────────────────────────────────────────────────────────────────────
 setup:
@@ -41,6 +41,10 @@ eval:
 # docs/results/test_access.log and refuses to run again once final_eval.json exists.
 eval-test:
 	python -m aquasphere.eval.final_eval --confirm final-evaluation-once
+
+# E8: independent check against RAMA moorings (downloads ~1 MB per mooring once)
+eval-rama:
+	python -m aquasphere.eval.e8_rama
 
 # Every step of the final evaluation on 2023 instead of the test period (no unlock, nothing logged)
 eval-test-dry:
