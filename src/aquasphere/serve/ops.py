@@ -27,6 +27,8 @@ access_log = logging.getLogger("aquasphere.access")
 
 BUCKETS = (0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0)
 EXEMPT = {"/health", "/ready", "/metrics"}
+# Only API calls are rate limited: one page load fetches ~40 static modules, fonts and libraries
+API_PREFIXES = ("/predict", "/grid", "/meta", "/explain", "/validation", "/v2/")
 
 
 class Metrics:
@@ -128,7 +130,8 @@ class OpsMiddleware(BaseHTTPMiddleware):
         request_id = request.headers.get("x-request-id") or uuid.uuid4().hex[:8]
         t0 = time.perf_counter()
         client = request.client.host if request.client else "unknown"
-        if self.bucket and request.url.path not in EXEMPT:
+        path = request.url.path
+        if self.bucket and path not in EXEMPT and path.startswith(API_PREFIXES):
             ok, wait = self.bucket.allow(client)
             if not ok:
                 self.metrics.limited += 1

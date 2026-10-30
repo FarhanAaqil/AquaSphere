@@ -189,16 +189,22 @@ def test_metrics_etag_gzip_and_request_ids() -> None:
 def test_rate_limit_returns_429_with_retry_after() -> None:
     app = FastAPI()
 
-    @app.get("/x")
+    @app.get("/v2/x")
     def x() -> dict[str, int]:
+        return {"ok": 1}
+
+    @app.get("/js/app.js")
+    def static() -> dict[str, int]:
         return {"ok": 1}
 
     app.add_middleware(ops.OpsMiddleware, metrics=ops.Metrics(), per_minute=3)
     c = TestClient(app)
-    codes = [c.get("/x").status_code for _ in range(5)]
+    codes = [c.get("/v2/x").status_code for _ in range(5)]
     assert codes[:3] == [200, 200, 200] and codes[3:] == [429, 429]
-    r = c.get("/x")
+    r = c.get("/v2/x")
     assert int(r.headers["retry-after"]) >= 1
+    # Static assets are never limited, so a page always loads
+    assert all(c.get("/js/app.js").status_code == 200 for _ in range(10))
 
 
 def test_batch_v2_lists_missing_points_instead_of_failing(client: TestClient) -> None:
