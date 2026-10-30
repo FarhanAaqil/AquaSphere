@@ -33,6 +33,7 @@ class Run:
         self.errors: list[str] = []
         self.http: list[str] = []
         self.downloads: list[str] = []
+        self.server_stopped = False  # after the offline check stops the API, refusals are expected
         page.on("pageerror", lambda e: self.errors.append(f"pageerror: {e}"))
         page.on(
             "console",
@@ -52,7 +53,9 @@ class Run:
             self.http.append(f"{r.status} {r.url[len(self.base) :][:100]}")
 
     def _failed(self, url: str, why: str) -> None:
-        if "net::ERR_ABORTED" in why:  # navigating away cancels in-flight requests: expected
+        if (
+            "net::ERR_ABORTED" in why or self.server_stopped
+        ):  # navigating away cancels in-flight requests: expected
             return
         self.http.append(f"FAILED {url[len(self.base) :][:100]} {why}")
 
@@ -300,6 +303,7 @@ def walk(run: Run, offline_check: bool, server_pid: int | None) -> None:
         pg.wait_for_timeout(3000)
         pg.reload()
         pg.wait_for_timeout(8000)
+        run.server_stopped = True
         subprocess.run(["taskkill", "/PID", str(server_pid), "/F"], capture_output=True)
         time.sleep(2)
         pg.reload()
@@ -338,6 +342,11 @@ def main() -> int:
         video = page.video.path() if page.video else None
         ctx.close()
         browser.close()
+        if video and Path(video).exists():
+            final = DEMO_DIR / "aquasphere_walkthrough.webm"
+            final.unlink(missing_ok=True)
+            Path(video).rename(final)
+            video = str(final)
     failed = [r for r in run.results if not r[1]]
     print(f"\n{len(run.results) - len(failed)}/{len(run.results)} checks passed")
     print("errors:", run.errors or "none")
