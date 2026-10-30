@@ -18,17 +18,18 @@ import argparse
 import json
 import logging
 import time
-import uuid
 from pathlib import Path
 from typing import Any, Literal
 
 import numpy as np
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from aquasphere.constants import LAT_MAX, LAT_MIN, LON_MAX, LON_MIN, STANDARD_DEPTHS
+from aquasphere.serve import ops
+from aquasphere.serve.api_v2 import build_router
 from aquasphere.serve.engine import InferenceEngine
 from aquasphere.serve.resolver import SurfaceResolver
 from aquasphere.serve.schemas import (
@@ -70,15 +71,23 @@ engine = InferenceEngine()
 resolver = SurfaceResolver()
 
 
-@app.middleware("http")
-async def add_request_id_and_timing(request: Request, call_next: Any) -> Any:
-    request_id = str(uuid.uuid4())[:8]
-    start_t = time.time()
-    response = await call_next(request)
-    elapsed_ms = (time.time() - start_t) * 1000.0
-    response.headers["X-Request-ID"] = request_id
-    response.headers["X-Response-Time-Ms"] = f"{elapsed_ms:.1f}"
-    return response
+# Gzip, ETags, JSON access logs, Prometheus metrics and rate limiting (aquasphere.serve.ops)
+metrics = ops.install(app)
+app.include_router(build_router(engine, resolver))
+
+
+@app.get("/metrics", response_class=PlainTextResponse, include_in_schema=False)
+def prometheus_metrics() -> str:
+    """Prometheus text exposition."""
+    return metrics.render(
+        {
+            "aquasphere_model_ready": float(engine.is_ready),
+            "aquasphere_onnx_runtime": float(engine.onnx),
+            "aquasphere_store_dates": float(
+                len(resolver.zarr_store.dates) if resolver.zarr_store else 0
+            ),
+        }
+    )
 
 
 @app.get("/health", response_model=HealthResponse)

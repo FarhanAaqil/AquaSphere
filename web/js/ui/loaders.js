@@ -25,6 +25,7 @@ const ERROR_COPY = {
   not_found: ['Nothing found', 'The API has no record for this request.'],
   invalid: ['Request rejected', 'The API rejected these inputs.'],
   server: ['Server error', 'The API failed while handling this request.'],
+  demo: ['Needs the live API', 'Turn off Offline demo and start the API ("make serve") to compute this from real inputs.'],
 };
 
 export function errorState(el, err, { retry } = {}) {

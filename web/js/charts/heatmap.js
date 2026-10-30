@@ -18,16 +18,20 @@ async function coastline() {
 }
 
 /**
- * @param {{lats:number[], lons:number[], z:(number|null)[][], unit:string, label:string, scale?:'thermal'|'width'|'depth'}} d
+ * @param {{lats:number[], lons:number[], z:(number|null)[][], unit:string, label:string, scale?:'thermal'|'width'|'depth'|'diverging', zmin?:number, zmax?:number}} d
  */
 export async function renderHeatmap(el, d, ctx, name) {
-  const colorscale = d.scale === 'width'
+  // Diverging (anomalies, differences): blue below zero, coral above, centred on 0
+  const diverging = [[0, '#4f46e5'], [0.5, '#0d2238'], [1, '#fb7185']];
+  const colorscale = d.scale === 'diverging' ? diverging : d.scale === 'width'
     ? [[0, '#0b1f3a'], [0.5, '#0e7490'], [1, '#67e8f9']]
     : d.scale === 'depth'
       ? [[0, '#fbbf24'], [0.5, '#14b8a6'], [1, '#4f46e5']] // shallow (warm) → deep (indigo)
       : THERMAL;
   const heat = {
     type: 'heatmap', x: d.lons, y: d.lats, z: d.z, colorscale, zsmooth: 'best', hoverongaps: false,
+    ...(d.scale === 'diverging' ? { zmid: 0 } : {}),
+    ...(d.zmin != null ? { zmin: d.zmin, zmax: d.zmax } : {}),
     colorbar: { title: { text: d.unit, side: 'right', font: { color: C.muted } }, thickness: 10, outlinewidth: 0, tickfont: { family: 'JetBrains Mono', color: C.muted, size: 10 } },
     hovertemplate: `%{y:.1f}°N %{x:.1f}°E<br>${d.label}: %{z:.2f} ${d.unit}<extra></extra>`,
   };

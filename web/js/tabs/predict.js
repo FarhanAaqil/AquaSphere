@@ -6,14 +6,14 @@ import { badge, tag } from '../ui/badges.js';
 import { loading, errorState, empty } from '../ui/loaders.js';
 import { toast } from '../ui/toasts.js';
 import { renderProfile } from '../charts/profile.js';
-import { h, $, onDate, countUp, fmt, reveal } from './_util.js';
+import { h, $, onDate, onState, countUp, fmt, reveal } from './_util.js';
 
 function template() {
   return `
   <div class="page__intro">
     <h2>Predict a profile</h2>
-    <p>Pick a point in the study domain. The API resolves surface observations for the selected date, runs the model and
-    returns temperature at 15 depths with a conformal 90% interval.</p>
+    <p>Pick a point in the study domain. The API resolves surface observations for the selected date, runs the model in the
+    mode chosen in the top bar (nowcast uses SST and SLA only) and returns temperature at 15 depths with a conformal 90% interval.</p>
   </div>
   <div class="grid grid--side">
     <div class="card">
@@ -32,9 +32,10 @@ function template() {
     <div class="card">
       <div class="card__head"><div><h3 class="card__title">Temperature profile</h3><p class="card__sub" data-ref="sub">—</p></div><div class="card__meta" data-ref="badges"></div></div>
       <div class="chart chart--tall" data-ref="chart"></div>
+      <div class="btn-row" data-ref="export" hidden><a class="btn btn--ghost btn--sm" data-ref="csv" download>Export profile · CSV</a><a class="btn btn--ghost btn--sm" data-ref="nc" download>NetCDF</a></div>
     </div>
   </div>
-  <div class="grid grid--4" data-ref="stats"></div>
+  <div class="grid grid--3" data-ref="stats"></div>
   <div class="grid grid--2">
     <div class="card">
       <div class="card__head"><div><h3 class="card__title">Applicability check</h3><p class="card__sub">Is this point inside what the model was trained on?</p></div><div class="card__meta" data-ref="ad-badge"></div></div>
@@ -52,6 +53,8 @@ const STAT_DEFS = [
   ['D20 · 20 °C isotherm', (p) => p.d20, 0, 'm', () => 'Thermocline proxy'],
   ['Mixed layer depth', (p) => p.mld, 0, 'm', () => 'From the predicted profile'],
   ['OHC index · 0–300 m', (p) => p.ohc300, 2, '°C', () => 'Depth-averaged temperature'],
+  ['Cyclone heat potential', (p) => p.tchp, 0, 'kJ/cm²', (p) => (p.d26 == null ? 'Above the 26 °C isotherm' : p.d26 === 0 ? 'Surface cooler than 26 °C' : `26 °C isotherm at ${fmt(p.d26, 0)} m`)],
+  ['Dissimilarity index', (p) => p.di, 2, '', (p) => (p.di == null ? 'Not reported by this model' : p.in_domain ? 'Inside the applicability domain' : 'Outside the applicability domain')],
 ];
 
 async function trainingWindow() {
@@ -74,7 +77,9 @@ function renderChecks(root, p, window_) {
     p.in_training_set == null
       ? { ok: null, text: 'Training membership unknown: the API could not determine the training split' }
       : { ok: !p.in_training_set, text: 'No training profile in this 0.25° cell on this date', fail: 'A training profile sits in this 0.25° cell on this date: this is not an out-of-sample prediction' },
-    { ok: null, text: 'Embedding dissimilarity index: not exposed by the API yet — see Uncertainty tab' },
+    p.in_domain == null
+      ? { ok: null, text: 'Embedding dissimilarity index: not reported by the served model (protocol v2 adds it)' }
+      : { ok: p.in_domain, text: `Embedding close to the training data (DI ${fmt(p.di)} within the training-fold threshold)`, fail: `Embedding far from the training data (DI ${fmt(p.di)} above the training-fold threshold): extrapolation` },
   ];
   const ul = $(root, '[data-ref="checks"]');
   ul.replaceChildren(...checks.map((c) => {
@@ -162,6 +167,7 @@ export default {
         badges.replaceChildren(
           badge(p.data_source),
           tag(`model ${p.model_version}`, 'muted'),
+          tag(p.mode === 'nowcast' ? 'Nowcast · SST + SLA' : 'Delayed · all sensors', 'muted', 'Input mode, set in the top bar'),
           ...(p.in_training_set ? [tag('In training set', 'warn', 'This point/date was part of the training partition.')] : []),
         );
         await renderProfile(chart, {
@@ -178,6 +184,9 @@ export default {
           return c;
         }));
         renderChecks(root, p, await window_);
+        $(root, '[data-ref="csv"]').href = api.exportUrl('profile', { lat, lon, date, format: 'csv' });
+        $(root, '[data-ref="nc"]').href = api.exportUrl('profile', { lat, lon, date, format: 'netcdf' });
+        $(root, '[data-ref="export"]').hidden = state.demo;
         await renderWidth(root, p, ctx);
       } catch (err) {
         if (ctx.signal.aborted || my !== req) return;
@@ -202,6 +211,7 @@ export default {
       $(root, '[data-ref="date"]').textContent = date || 'unavailable';
       run(state.point.lat, state.point.lon);
     });
+    onState(ctx, ['mode'], () => run(state.point.lat, state.point.lon));
     reveal(root, ctx, '.grid > .card');
   },
 };

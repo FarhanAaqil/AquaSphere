@@ -26,6 +26,7 @@ from aquasphere.data.provenance import MISMATCH, NOT_RECORDED, verify_provenance
 from aquasphere.eval.metrics import compute_d20, compute_mld, compute_ohc300
 from aquasphere.models.decoder import TierAModel
 from aquasphere.serve.membership import ARGO_TABLES, TrainingMembership
+from aquasphere.serve.products import isotherm_depth, tchp
 from aquasphere.train.calibrate import ConformalCalibrator
 from aquasphere.train.train import compute_doy_features
 
@@ -83,6 +84,7 @@ class InferenceEngine:
         self.v2: Any = None
         self.conformal: dict[str, Any] = {}
         self.dissimilarity: Any = None
+        self.onnx = False
 
         self.val_df: pd.DataFrame | None = None
         self._load_validation_profiles()
@@ -120,6 +122,11 @@ class InferenceEngine:
             logger.error("Failed loading v2 checkpoint %s: %s; serving v1", path, e)
             self.v2 = None
             return
+        from aquasphere.serve.onnx_runtime import attach
+
+        self.onnx = os.environ.get("AQUASPHERE_ONNX", "1") != "0" and attach(
+            self.v2, path.with_suffix(".onnx")
+        )
         self.checkpoint_path = path
         self._checkpoint = ckpt
         self.model_version = str(ckpt.get("model_version", "tier_a_v2"))
@@ -349,6 +356,8 @@ class InferenceEngine:
                     "mld": float(mld) if not np.isnan(mld) else None,
                     "d20": float(d20) if not np.isnan(d20) else None,
                     "ohc300": float(ohc) if not np.isnan(ohc) else None,
+                    "tchp": tchp(prof),
+                    "d26": isotherm_depth(prof, 26.0),
                     "climatology": [float(c) for c in r["clim"][i]],
                     "data_source": sources_list[i],
                     "model_version": self.model_version,
@@ -512,7 +521,8 @@ class InferenceEngine:
         base, avail = scalar_features(pd.DataFrame(cols))
         s = self.v2._scalars(base, self.v2._keep(avail, CHANNELS))
         s.requires_grad_(True)
-        mean, _, _ = self.v2.model(s, None)
+        net = getattr(self.v2, "torch_model", self.v2.model)  # gradients need torch, not ONNX
+        mean, _, _ = net(s, None)
         mean[0, STANDARD_DEPTHS.index(100)].backward()
         grad = s.grad.numpy()[0] if s.grad is not None else np.zeros(len(FEATURES))
         attr = np.abs(grad * s.detach().numpy()[0])
