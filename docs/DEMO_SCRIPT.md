@@ -1,78 +1,111 @@
-# 5-Minute Hackathon Presentation Pitch & Demo Script (SIH 26066)
+# AquaSphere: 5-minute pitch and live demo (SIH 26066)
 
-> **Audience:** Smart India Hackathon Evaluators / MoES & INCOIS Ocean Scientists  
-> **Target Duration:** Exactly 5 Minutes  
-> **Speaker Role:** Lead AI & Ocean Data Systems Engineer
+> **Audience:** SIH evaluators, MoES / INCOIS ocean scientists
+> **Setup:** `make serve` (or `python -m aquasphere.serve.app`) with the trained model and the
+> 2015-2025 store in place, Chrome at `http://127.0.0.1:8000`, top-bar date 2024-07-15.
+> **Backup:** a full recorded walkthrough (`python scripts/walkthrough.py`, video in
+> `dist/demo/`) and Offline mode, which keeps the app working with the API down.
+
+Every number below comes from `docs/results/final_eval.md` (test period, read once) or
+`docs/results/phase4.md` (validation). Do not round them up.
 
 ---
 
-## ⏱️ Minute 0:00 – 1:00 | The Core Problem & Scientific Novelty
+## 0:00-0:45 · The problem
 
-> *"Good morning respected judges. Autonomous Argo floats give us gold-standard vertical temperature soundings down to 1000 meters across the North Indian Ocean—but they are sparse. Satellites pass overhead daily with dense coverage, but their sensors cannot see past the top millimeter of sea surface.*
+> "Argo floats tell us the temperature of the North Indian Ocean down to 1000 metres, but there
+> are only a few hundred of them, each surfacing every ten days. Satellites see the whole ocean
+> every day, but only its skin. Problem 26066 asks whether we can read the subsurface from space.
 >
-> *Problem Statement 26066 asks: Can deep learning learn satellite embeddings to accurately reconstruct the unseen subsurface?*
->
-> *Our solution is **AquaSphere**. Rather than treating this as a simple pointwise curve-fit, AquaSphere introduces a **16-dimensional Ocean Embedding** trained on multi-sensor satellite inputs—SST, Sea Surface Salinity from SMAP, Sea Level Anomaly from altimetry, and wind stress—to reconstruct continuous vertical profiles down to 1000m with distribution-free conformal uncertainty intervals."*
+> AquaSphere learns that link from five satellite inputs: temperature, sea level, salinity,
+> currents and winds. For any point and day it returns a temperature profile at 15 depths, a
+> calibrated 90% interval at every depth, and a warning when the inputs look unlike anything it
+> was trained on."
+
+**Show:** Overview. Let the globe settle on the Arabian Sea and Bay of Bengal, then scroll the
+descent from the surface to 1000 m.
 
 ---
 
-## ⏱️ Minute 1:00 – 2:00 | Honest Science: Why We Refused to Fake the Numbers
+## 0:45-2:15 · Live tour
 
-> *"In machine learning for oceanography, random train-test splits cause massive data leakage because two profiles from the same float just days apart are near-identical. In v1 prototypes, teams reported artificial correlations like 0.99 by essentially memorizing float tracks.*
->
-> *In AquaSphere, we implemented **strict float-grouped and time-blocked hold-outs**: no float ID in our training set ever appears in validation or testing. Under this strict protocol, we built an honest baseline ladder:
-> - Climatology achieves a thermocline RMSE of **2.29 °C**.
-> - Ridge regression anomaly modeling achieves **2.19 °C**.
-> - Our multi-sensor deep architecture cuts thermocline error down to **1.18 °C**—a **+0.622 skill score** over climatology.
-> - Furthermore, our split conformal calibrator guarantees that our 90% uncertainty bands achieve **99.6% empirical coverage** on unseen floats."*
-
----
-
-## ⏱️ Minute 2:00 – 3:30 | Live Interactive System Tour
-
-*(Screen sharing the live web application on `http://127.0.0.1:8000`)*
-
-1. **Overview View (0:20):**
-   > *"Here on the Overview, you see our 5-stage pipeline flowline. Notice our real-time regime monitoring card: it's evaluating key North Indian Ocean coordinates via vectorized batch inference to flag upper-ocean heat anomalies in the Bay of Bengal and upwelling in the Arabian Sea."*
-2. **Explore View (0:20):**
-   > *"Opening Explore: the date picker is dynamically bounded by our `/meta` API endpoint. We can toggle between SST, salinity, sea level anomalies, and subsurface temperatures at a click with zero UI lag."*
-3. **Location Profile & Conformal Uncertainty (0:25):**
-   > *"Opening Location Profile at 15°N, 88°E: You are looking at the reconstructed 0–1000m profile with shaded **conformal uncertainty intervals**. Notice the data provenance badge at the top: it explicitly marks whether this profile came from our local Zarr store, disk cache, or live ERDDAP. No silent simulations.*
-   > *Below, our gradient × input attribution highlights which satellite feature drove the subsurface prediction."*
-4. **Compare & Embedding (0:15):**
-   > *"On our Compare and Embedding views, we can contrast the fresher riverine stratification of the Bay of Bengal against the high-salinity upwelling of the Arabian Sea, projected onto our 16-dimensional learned latent space."*
-5. **Validation View (Held-Out Float Verification) (0:10):**
-   > *"On the Validation tab, we query `GET /validation/profile`. This retrieves the nearest **unseen held-out Argo float**—here Float #2902781—and plots model prediction against real in-situ truth with profile-level RMSE."*
+1. **Predict** (30 s). Click the central Bay of Bengal. Point at the 90% band, D20 and the cyclone
+   heat potential tile, then at the applicability check: "DI within the training-fold
+   threshold". Flip the top-bar switch to **Nowcast**: the profile barely moves, because nowcast
+   keeps all the skill (H1b).
+2. **Ocean Products** (25 s). Cyclone heat potential layer, then Anomaly at 100 m, then tick
+   Compare with a winter date: the difference map shows the monsoon reversal.
+3. **Sections** (25 s). Click across the Arabian Sea to the Bay of Bengal: a depth x distance
+   section with the 20 °C isotherm traced on it. Then the depth-time view at 15°N 65°E over a
+   year.
+4. **Profile Explorer** (10 s). A 2023 profile the model never saw, predicted vs observed.
 
 ---
 
-## ⏱️ Minute 3:30 – 4:15 | Production Engineering & Offline Resilience
+## 2:15-3:45 · What the test period said
 
-> *"AquaSphere is engineered for real deployment:
-> 1. **Zero Silent Simulation:** If data is missing and network is cut, the server fails fast with HTTP 503 rather than fabricating fake ocean physics.
-> 2. **Multi-Stage Resolver:** Zarr Store $\to$ Disk Cache $\to$ Remote ERDDAP.
-> 3. **Native ES Frontend:** Built in modular vanilla ES6 with in-flight promise deduplication to prevent UI race conditions—no node_modules build step required.
-> 4. **Containerized:** Packaged in a CPU-optimized Docker container with `/health` and `/ready` probes, with all 7 CI jobs on GitHub Actions (lint, types, tests with an 80% coverage gate, browser and accessibility tests, smoke training, Docker `/ready`, dependency audit)."*
+> "We trained on 2015-2022, calibrated on 2023, and locked 2024-2025. Before touching it we wrote
+> down five hypotheses with thresholds, tagged them in git, and then read the test period
+> exactly once. The access log has one line."
+
+**Show:** Experiments, the Final evaluation card.
+
+- **Three of five hypotheses supported**, after Holm correction:
+  - adding sea-level anomaly to SST cuts thermocline error by **19.8%** (needed 15%);
+  - nowcast mode keeps the full skill (ratio **1.03**, needed 0.85);
+  - the 90% intervals cover **90.0%** of test observations (needed 87-93%).
+- **Two not supported, and we say so:** self-supervised pre-training did not help (H2), and a
+  random split flattered the baseline by only 3.2%, not 20% (H4).
+- **Honest ranking:** the served model scores **1.26 °C** thermocline RMSE; LightGBM and a deep
+  ensemble score 1.24 °C. We are level with the strongest baselines, not ahead of them. What we
+  add is calibrated intervals per region and season, nowcast mode, and the applicability flag.
+
+**Show:** Uncertainty: the reliability diagram on the diagonal, then coverage by stratum, and
+point at the one weak cell: the Bay of Bengal in the NE monsoon covers 80%.
 
 ---
 
-## ⏱️ Minute 4:15 – 5:00 | Limitations & Judge Q&A Preparation
+## 3:45-4:30 · Built to be trusted
 
-> *"We document our limitations transparently in our Model Card and Report exports:
-> - Coastal zones within 50 km suffer from satellite radiometer land-contamination.
-> - Depths below 700m have weaker surface coupling, where uncertainty intervals properly expand.
->
-> AquaSphere provides INCOIS with an auditable, reproducible, and scientifically grounded tool for subsurface ocean intelligence. Thank you, and we welcome your questions."*
+- **Independent check:** at RAMA moorings, which no model ever saw, the error is 1.08 °C against
+  1.05 °C for climatology. "At fixed moorings we do not beat climatology yet, and that is on the
+  Experiments tab."
+- **No invented data:** turn on Offline demo in settings: Ocean Products refuses with "Needs the
+  live API". Every chart carries its source badge; a missing observation is a 503, not a guess.
+- **Offline:** stop the server; the app still opens and says it is showing saved results, with
+  the time they were saved.
+- **Engineering:** ONNX serving, Prometheus metrics, rate limiting, CSV/NetCDF export with
+  provenance, a regression gate and frozen result hashes in CI.
 
 ---
 
-## 🎯 Anticipated Judge Q&A
+## 4:30-5:00 · Close
 
-### Q1: *"How do you handle the monsoon reversal between Arabian Sea and Bay of Bengal?"*
-**Answer:** *"We incorporate day-of-year harmonic encoding ($\sin/\cos$) along with satellite salinity (SMAP) and SLA. Salinity is crucial here: the Bay of Bengal has strong river discharge forming barrier layers, whereas the Arabian Sea has high evaporation and monsoon upwelling. Our ablation ladder explicitly proves the benefit of multi-sensor SSS and wind forcing."*
+> "AquaSphere turns daily satellite data into calibrated subsurface temperature for the North
+> Indian Ocean, and it tells you when not to trust it. Everything is open data, reproducible with
+> one command, and every claim was tested once, on data it had never seen."
 
-### Q2: *"Why didn't you just use standard random k-fold cross validation?"*
-**Answer:** *"Because random k-fold on ocean profiles leaks data egregiously! An Argo float samples every 10 days within 20–50 km. If Profile A is in train and Profile B from the same float 10 days later is in test, the model memorizes the float's trajectory rather than learning surface-to-subsurface physics. Float-grouped hold-out is the only scientifically valid method."*
+---
 
-### Q3: *"Can this be used for submarine navigation today?"*
-**Answer:** *"No, and we state this prominently on every report export. AquaSphere is a decision-support and screening prototype. Operational tactical deployment requires independent in-situ validation by INCOIS."*
+## Anticipated questions
+
+**Why not report the best validation number?** Validation was used to tune and calibrate. The
+only unbiased numbers are from the test period, which was read once after the hypotheses were
+frozen.
+
+**The model is not better than LightGBM. Why use it?** It matches the strongest baselines on
+accuracy and adds what operations need: intervals calibrated by region and season (H3
+supported), one model for nowcast and delayed inputs (H1b supported), an embedding for the
+applicability flag, and ONNX serving.
+
+**What about the Bay of Bengal?** Bay of Bengal strata have about 22 floats each in the test
+period, too few for confirmatory claims. Coverage there is 87-88% except the NE monsoon (80%),
+and the model card lists it as a known failure mode.
+
+**Can this be used operationally today?** No. It is a decision-support prototype; operational use
+needs independent INCOIS verification, a prospective run on the preliminary near-real-time SST
+release, and longer mooring comparisons.
+
+**How do you stop leakage?** Each float belongs to the first period it appears in; climatology and
+normalisation use training years only; a static test fails if any code other than the final
+evaluation asks for the test partition.

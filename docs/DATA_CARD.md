@@ -20,6 +20,7 @@ run, cached under `data/cache/` afterwards).
 | **NOAA CoastWatch altimetry** | CoastWatch PFEG · `nesdisSSH1day` | 0.25°, daily | `sla`, `ug`, `vg` (geostrophic) | **2017-02-13** |
 | **SMAP sea-surface salinity (NRT)** | CoastWatch · `noaacwSMAPsssDaily` | 0.25°, daily (gappy) | `sss` | 2015-04-01 |
 | **NCEI Blended Sea Winds v2** | CoastWatch · `noaacwBlendedWindsDaily` | 0.25°, daily | `u10`, `v10` | 1987-07 |
+| **RAMA moorings (E8 only)** | PMEL ERDDAP · `pmelTaoDyT` | Daily, fixed sensor depths | Independent check; never used for training, tuning or calibration | 2004 |
 | *OISST v2.1 Preliminary* | CoastWatch PFEG · `ncdcOisst21NrtAgg` | 0.25°, daily | (for E7 nowcast tests) | recent ~2 weeks |
 
 Each product is fetched one month at a time with a half-cell margin, bilinearly regridded onto

@@ -10,74 +10,87 @@
 
 ## 🌊 Executive Summary
 
-Traditional vertical ocean temperature monitoring depends on autonomous **Argo profiling floats**. While Argo floats offer high physical fidelity, their coverage is sparse in space and time (typically $\sim 10$ days between vertical soundings). In contrast, satellite radiometers, altimeters, and scatterometers observe surface variables continuously, but their electromagnetic measurements attenuate within the upper millimeters of the water column.
+Argo floats measure the ocean's temperature down to 1000 m, but they are sparse: a few hundred
+floats for the whole North Indian Ocean, each surfacing every ten days. Satellites see the
+surface every day but nothing below it. **AquaSphere** learns the link between the two: from
+satellite sea-surface temperature, sea-level anomaly, salinity, currents and winds it
+reconstructs the temperature at 15 depths, with a calibrated 90% interval at every depth, a flag
+for inputs unlike anything it was trained on, and a nowcast mode that needs only the sensors
+available in real time.
 
-**AquaSphere (OceanEmbed)** bridges this observational divide by learning self-supervised, multi-sensor latent representations—the **16-dimensional Ocean Embedding**—that couple surface satellite proxies (SST, SSS, SLA, surface currents, and wind stress) to subsurface vertical temperature structures. Every estimate is delivered with **conformal uncertainty intervals** and strict **data-provenance transparency**.
-
----
-
-## 💡 Scientific Novelty & Contributions
-
-1. **Self-Supervised Satellite Pre-training (Tier C):** Pre-trains a Masked Patch Autoencoder on abundant unlabeled satellite multi-sensor fields, fine-tuning downstream heads on sparse in-situ Argo soundings.
-2. **Multi-Sensor Spatial Context (Tier B):** Captures meso-scale eddies, thermal fronts, and coastal upwelling signatures using a multi-channel Patch-CNN encoder.
-3. **Calibrated Physical Uncertainty:** Implements a heteroscedastic negative log-likelihood loss with temperature smoothing warmup, followed by split conformal calibration to provide distribution-free $90\%$ prediction intervals ($[\hat{T} - q\sigma, \hat{T} + q\sigma]$).
-4. **Honest, Leak-Free Evaluation Protocol:** Strict float-grouped and time-blocked splits guarantee zero float ID or temporal leakage between train, validation, and held-out test years.
-5. **Zero Silent Simulation Serving:** Production-grade FastAPI serving architecture with a 4-stage honest resolver (Zarr store $\to$ disk cache $\to$ live ERDDAP $\to$ explicit 503 fail-fast).
+Everything is built from open data (NOAA ERDDAP, Argovis) and evaluated the way the project
+blueprint asks: train 2015-2022, calibrate 2023, and a 2024-2025 test period that was locked and
+then read exactly once, against hypotheses frozen in advance. Negative results are reported.
 
 ---
 
-## 📊 Benchmark Baseline Ladder
+## 📊 Results on the test period 2024-2025 (read once)
 
-All models are evaluated under strict **float-grouped spatiotemporal hold-out** partitions (zero float ID leakage).
+2,466 Argo profiles from 53 floats that never appear in training or calibration. Thermocline =
+50-150 m RMSE; 95% CIs from a bootstrap over floats. Full tables: `docs/results/final_eval.md`.
 
-<!-- METRICS:START -->
-### Honest Baseline Ladder (Float-Grouped Hold-Out Evaluation)
+| Model | Thermocline RMSE (°C) | 95% CI | Skill vs climatology |
+|---|---|---|---|
+| B0 Climatology (2015-2022, 2° monthly) | 1.539 | 1.36-1.74 | 0.000 |
+| B1 Climatology + ridge | 1.333 | 1.19-1.50 | 0.249 |
+| B2 Climatology + LightGBM | 1.239 | 1.11-1.39 | 0.352 |
+| B3 v1 network, retrained | 1.470 | 1.30-1.66 | 0.087 |
+| B4 Deep ensemble (5 networks) | 1.237 | 1.11-1.38 | 0.354 |
+| **AquaSphere Tier A v2 (served)** | **1.262** | 1.13-1.41 | 0.327 |
+| AquaSphere, nowcast mode (SST + SLA only) | 1.253 | 1.13-1.41 | 0.336 |
 
-> **Evaluation Set:** 242 held-out profiles across 15 unique Argo floats.
-> **Hold-Out Rule:** Zero float ID overlap with training (leak-free guaranteed).
+The served model is level with the strongest baselines rather than better than them. What it adds
+is in the hypotheses below: calibrated intervals in every region and season, a nowcast mode that
+keeps all of its skill, and an applicability flag.
 
-| Model | Overall RMSE (°C) | Thermocline RMSE (50-150m) | 95% CI (Thermo) | Skill Score (SS) | D20 Error (m) | MLD Error (m) |
-|---|---|---|---|---|---|---|
-| **Climatology** | 1.925 | 2.290 | [2.03, 2.58] | +0.000 | 29.6 | 30.6 |
-| **Climatology + Ridge** | 1.776 | 2.195 | [1.98, 2.45] | +0.149 | 29.7 | 30.0 |
-| **Gradient Boosted Trees (HistGBDT)** | 0.954 | 1.460 | [1.18, 1.82] | +0.754 | 20.7 | 16.5 |
-| **v1 OceanEmbedNet (Re-evaluated)** | 1.184 | 1.590 | [1.43, 1.81] | +0.622 | 21.9 | 18.1 |
+| Frozen hypothesis | Estimate (95% CI) | Threshold | Holm p | Result |
+|---|---|---|---|---|
+| H1a Adding SLA to SST lowers thermocline RMSE | 19.8% (17.0-22.5%) | >= 15% | 0.002 | **supported** |
+| H1b Nowcast keeps the full-sensor skill | ratio 1.03 (0.95-1.15) | >= 0.85 | < 0.001 | **supported** |
+| H2 Self-supervised pre-training helps | -0.4% (full labels), +1.1% (10%) | >= 5%, >= 10% | 1.0 | not supported |
+| H3 90% intervals are calibrated | 90.0% coverage (88.6-91.1%) | 87-93% | 0.002 | **supported** |
+| H4 A random split flatters by >= 20% | 3.2% (-10.0-14.2%) | >= 20% | 1.0 | not supported |
 
-*Note: v1 OceanEmbedNet numbers reflect honest float-grouped hold-out splits (unlike the random split reported in v1 prototypes).*
-<!-- METRICS:END -->
+- **Coverage by stratum:** 87.1-92.6% in five of six region x season strata; the Bay of Bengal NE
+  monsoon covers 80.0% (descriptive only, 23 floats).
+- **Applicability flag:** 6.9% of test profiles fall outside the domain, and their error is
+  higher (1.45 °C vs 1.25 °C inside).
+- **Independent check (E8, RAMA moorings):** 1.08 °C against 1.05 °C for climatology over 5,334
+  daily sensor values; at fixed moorings the model does not beat climatology.
+- **Not shipped, reported:** the 9x9 patch encoder (worse than point features on validation) and
+  pre-training (H2).
 
 ---
 
-## 🧪 Experiment E1: Generalization & Leakage Gap Analysis
+## 💡 What AquaSphere does
 
-> **Objective:** Quantify the performance inflation caused by naive random splitting in oceanographic machine learning.
-> Random splitting leaks Argo float trajectories (spatial autocorrelation) and temporal persistence, producing dangerously optimistic error metrics.
-
-| Model | Random Split (Naive) | Float-Grouped | Time-Blocked | Float Leakage Gap (ΔRMSE) | Temporal Gap (ΔRMSE) |
-|---|:---:|:---:|:---:|:---:|:---:|
-| **Climatology** | 1.927 °C | 2.187 °C | 2.348 °C | **+0.260 °C** | **+0.420 °C** |
-| **Climatology + Ridge** | 1.914 °C | 2.150 °C | 2.280 °C | **+0.236 °C** | **+0.366 °C** |
-| **Gradient Boosted Trees (HistGBDT)** | 1.036 °C | 1.507 °C | 1.390 °C | **+0.471 °C** | **+0.354 °C** |
-| **v1 OceanEmbedNet** | 1.333 °C | 1.505 °C | 1.997 °C | **+0.172 °C** | **+0.663 °C** |
-
-*Key Takeaway: Naive random splitting underestimates thermocline RMSE by up to **0.471 °C**. AquaSphere enforces float-grouped and time-blocked splits to guarantee genuine operational generalization.*
+1. **One model, two modes.** Nowcast (SST + SLA, available within hours) and delayed (all
+   sensors) from the same network, trained with sensor masking.
+2. **Calibrated intervals by regime.** Split-conformal intervals calibrated separately for the
+   Arabian Sea and Bay of Bengal in each monsoon season, per depth and per mode.
+3. **Applicability domain.** A dissimilarity index in embedding space flags inputs unlike
+   anything in training, on every prediction and as a map.
+4. **Ocean products.** Cyclone heat potential, 20 °C and 26 °C isotherm depths, anomalies,
+   transects, depth-time sections and CSV/NetCDF export with provenance.
+5. **Honest serving.** Local store, disk cache, live ERDDAP, then an explicit 503: missing data is
+   never filled in, every chart carries its data source, and the app works offline with saved
+   results clearly labelled.
 
 ---
 
-## 🔬 Multi-Sensor Ablation Ladder
+## 🧪 Evaluation protocol
 
-Evaluated across multiple random seeds (42, 123, 7) to measure the incremental contribution of each satellite sensor and architectural tier:
+| Step | What |
+|---|---|
+| Splits | Train 2015-2022, validation/calibration 2023, test 2024-2025; each float belongs to the first period it appears in |
+| Freeze | Hypotheses and thresholds in `docs/hypotheses.yaml`, tagged `hypotheses-v1-2026-10-29` before any tuning |
+| Lock | The test partition needs an unlock phrase; every read is logged (`docs/results/test_access.log` has one line) |
+| Tests | Float-block bootstrap, Holm correction over the five hypotheses, power analysis per stratum |
+| Checks | `make regression` re-scores the served checkpoint; result-file hashes are frozen and checked in CI |
 
-<!-- ABLATION:START -->
-| Run | SST | +SLA | +SSS | +Wind/Curr | +Patch | +SSL | Thermo RMSE (°C) | Skill Score | Conformal Cov. |
-|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| A1 (SST only) | Yes | - | - | - | - | - | 1.317 ± 0.140 | 0.415 ± 0.124 | 94.7% ± 0.0% |
-| A2 (+ SLA) | Yes | Yes | - | - | - | - | 1.341 ± 0.141 | 0.393 ± 0.127 | 94.7% ± 0.0% |
-| A3 (+ SSS) | Yes | Yes | Yes | - | - | - | 1.312 ± 0.098 | 0.423 ± 0.084 | 94.7% ± 0.0% |
-| A4 (+ Wind/Curr) | Yes | Yes | Yes | Yes | - | - | 1.404 ± 0.103 | 0.338 ± 0.094 | 94.7% ± 0.0% |
-| B (+ Patch CNN) | Yes | Yes | Yes | Yes | Yes | - | 1.532 ± 0.043 | 0.215 ± 0.044 | 94.7% ± 0.0% |
-| C (+ SSL Pretrain) | Yes | Yes | Yes | Yes | Yes | Yes | 1.602 ± 0.115 | 0.139 ± 0.124 | 94.7% ± 0.0% |
-<!-- ABLATION:END -->
+Validation (2023) experiments: `docs/results/phase4.md` (sensor ablation E3, patch encoder E4,
+pre-training curves E5, calibration methods E6, nowcast E7). Baseline ladder and leakage gap:
+`docs/results/baseline_table_v2.md`, `docs/results/e1_leakage_v2.md`.
 
 ---
 
@@ -197,6 +210,8 @@ python -m pytest tests/ --cov=aquasphere --cov-fail-under=80 -q
 ```bash
 python -m aquasphere.serve.app --host 0.0.0.0 --port 8000
 ```
+A fresh clone has no data or weights, so the API serves untrained weights and says so on every response. To serve the trained Tier A v2 model on the real 2015-2025 store, either run `make reproduce` (about 3 hours from open data; `python scripts/reproduce.py` where `make` is missing) or unpack the release assets; see `docs/REPRODUCE.md`.
+
 Open **`http://127.0.0.1:8000`** in any web browser to interact with the dashboard (on Windows, `localhost` adds a ~2 s IPv6 fallback to every request from scripts).
 
 ### 4. Run via Docker
@@ -240,6 +255,9 @@ AquaSphere/
 
 ## 🛡️ Scientific Limitations & Operational Disclaimer
 
+- **Not better than strong baselines:** on the test period Tier A v2 (1.26 °C) is level with LightGBM and the deep ensemble (1.24 °C); at RAMA moorings it does not beat climatology.
+- **Bay of Bengal in winter:** the NE-monsoon stratum covers 80.0% with nominal 90% intervals (23 floats); Bay of Bengal strata are too thin for confirmatory claims.
+- **Nowcast inputs:** nowcast mode was evaluated on the final OISST release; the preliminary release used in real time is replaced after about two weeks and could not be tested retrospectively.
 - **Nearshore Coastal Waters:** Satellite radiometer footprint degradation and radio-frequency interference contaminate SSS and SLA retrievals within $<50\text{ km}$ of the coastline.
 - **Extreme Salinity Stratification:** Heavy monsoon freshwater plumes from the Ganges-Brahmaputra system in the northern Bay of Bengal form barrier layers requiring multi-sensor salinity correction.
 - **Abyssal Depths ($>700\text{ m}$):** Surface satellite proxies exhibit reduced physical coupling to deep abyssal water masses; uncertainty intervals widen accordingly.
