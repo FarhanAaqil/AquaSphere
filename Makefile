@@ -1,4 +1,4 @@
-.PHONY: setup data data-store data-argo data-collocate data-coverage data-patches data-demo train eval serve ui-data test lint typecheck audit reproduce clean
+.PHONY: setup data data-store data-argo data-collocate data-coverage data-patches data-demo train eval eval-phase4 serve ui-data test lint typecheck audit reproduce clean
 
 # ── Setup ────────────────────────────────────────────────────────────────────
 setup:
@@ -42,6 +42,10 @@ eval:
 eval-test:
 	@echo "Test period locked until the final evaluation (roadmap Phase 6)." && exit 1
 
+# Phase 4: physics ablation, E3-E7 on validation 2023, and the served Tier A v2 checkpoint
+eval-phase4:
+	python -m aquasphere.eval.report_phase4
+
 ablate:
 	python -m aquasphere.eval.ablation --fixture data/processed/argo_profiles.parquet --epochs 4
 
@@ -53,7 +57,7 @@ serve:
 	uvicorn aquasphere.serve.app:app --reload --port 8000
 
 ui-data:
-	python -c "import shutil, pathlib; (pathlib.Path('web/data')).mkdir(parents=True, exist_ok=True); [shutil.copy(f'docs/results/{n}.json', f'web/data/{n}.json') for n in ('metrics', 'metrics_v2', 'ablation', 'e1_leakage', 'e1_leakage_v2', 'data_coverage') if pathlib.Path(f'docs/results/{n}.json').exists()]"
+	python -c "import shutil, pathlib; (pathlib.Path('web/data')).mkdir(parents=True, exist_ok=True); [shutil.copy(f'docs/results/{n}.json', f'web/data/{n}.json') for n in ('metrics', 'metrics_v2', 'ablation', 'e1_leakage', 'e1_leakage_v2', 'phase4', 'data_coverage') if pathlib.Path(f'docs/results/{n}.json').exists()]"
 	python scripts/build_web_data.py
 
 # ── Tests ────────────────────────────────────────────────────────────────────
@@ -84,9 +88,10 @@ audit:
 reproduce:
 	@echo "=== AquaSphere full reproduce run ==="
 	$(MAKE) data
-	$(MAKE) train
 	$(MAKE) eval
-	@echo "=== Done. Check docs/results/metrics.json ==="
+	$(MAKE) eval-phase4
+	$(MAKE) ui-data
+	@echo "=== Done. Check docs/results/metrics_v2.json and phase4.json ==="
 
 # ── Cleanup ───────────────────────────────────────────────────────────────────
 clean:
