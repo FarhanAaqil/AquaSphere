@@ -209,6 +209,13 @@ async function driftCard(host, ctx) {
   const chart = body.firstChild;
   const dates = state.meta?.available_dates || [];
   if (!dates.length) return pending(chart, { title: 'No stored dates', detail: 'The drift monitor runs over dates in the local surface store.' });
+  // Scoring one grid per month over the whole store takes a while: run it when asked
+  const box = pending(chart, { title: 'Not run yet', detail: `Scores a 3° grid on one date per month from ${dates[0]} to ${dates.at(-1)} (about 20 s the first time, then cached by the API).` });
+  const go = document.createElement('button');
+  go.className = 'btn btn--sm';
+  go.textContent = 'Run drift monitor';
+  box.append(go);
+  await new Promise((resolve) => go.addEventListener('click', resolve, { once: true }));
   loading(chart, 'Scoring one grid per month…');
   try {
     const d = await api.drift({ start: dates[0], end: dates.at(-1), step_days: 30, step: 3 }, { signal: ctx.signal });
