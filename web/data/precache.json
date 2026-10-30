@@ -1,5 +1,5 @@
 {
- "version": "146848fb803cd6de",
+ "version": "6124642619bdca2a",
  "files": [
   "index.html",
   "assets/favicon.svg",
@@ -12,6 +12,7 @@
   "data/dates.json",
   "data/e1_leakage.json",
   "data/e1_leakage_v2.json",
+  "data/e8_rama.json",
   "data/floats.json",
   "data/heldout.json",
   "data/index.json",

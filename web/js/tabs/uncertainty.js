@@ -115,9 +115,13 @@ async function regionSeasonCard(host, ctx) {
   host.append(c);
   body.innerHTML = '<div class="chart chart--short"></div>';
   const p4 = await optional('phase4');
-  const mond = p4?.e6?.methods?.conformal_mondrian?.coverage?.filter((r) => r.region !== 'All');
+  const final = await optional('final_eval');
+  const onTest = final && !final.dry_run ? final.hypotheses.H3.strata.filter((r) => r.region !== 'All') : null;
+  const mond = onTest || p4?.e6?.methods?.conformal_mondrian?.coverage?.filter((r) => r.region !== 'All');
   if (mond?.length) {
-    c.querySelector('.card__sub').textContent = 'Served Mondrian intervals · 95% CI over floats · shaded 85–95% = Phase 4 gate · hatched = too few floats for claims';
+    c.querySelector('.card__sub').textContent = onTest
+      ? 'Test period 2024–25 (H3) · served Mondrian intervals · 95% CI over floats · shaded 85–95% · hatched = too few floats for claims'
+      : 'Served Mondrian intervals · validation 2023 · 95% CI over floats · shaded 85–95% = Phase 4 gate · hatched = too few floats for claims';
     meta.append(badge('results'));
     const regions = [...new Set(mond.map((r) => r.region))];
     return plot(body.firstChild, regions.map((rg, i) => {

@@ -124,6 +124,25 @@ function renderMetricsV2(host, v2) {
   cards.forEach((c) => c.run());
 }
 
+/** Phase 6: what the one read of the 2024-25 test period showed. */
+function renderFinal(host, f, p4) {
+  const a = f.ladder['Tier A v2'];
+  const h3 = f.hypotheses.H3;
+  const supported = Object.values(f.hypotheses).filter((x) => x.supported).length;
+  const evalNote = `test 2024–25 · ${f.split.test_profiles.toLocaleString()} profiles, ${f.split.test_floats} unseen floats`;
+  const cards = [
+    metricCard({ label: 'Thermocline RMSE · test period', value: a.thermocline_rmse, digits: 2, suffix: '°C', note: `95% CI ${fmt(a.ci[0])}–${fmt(a.ci[1])} °C · ${evalNote}` }),
+    metricCard({ label: 'Skill vs climatology · test', value: a.skill_thermocline, digits: 2, note: `Validation 2023 was ${fmt(p4.e7.skill_delayed, 2)}. 1 − MSE / MSE(B0).` }),
+    metricCard({ label: '90% interval coverage · test', value: h3.coverage * 100, digits: 1, suffix: '%', note: `95% CI ${(h3.ci[0] * 100).toFixed(1)}–${(h3.ci[1] * 100).toFixed(1)}% · H3 target 87–93%` }),
+    metricCard({ label: 'Frozen hypotheses supported', value: supported, digits: 0, suffix: '/5', note: 'Holm-corrected, thresholds fixed before the test period was read' }),
+  ];
+  host.replaceChildren(...cards.map((c) => c.el));
+  const n = h('<p class="note span-all"></p>');
+  n.textContent = 'These numbers come from the single, logged read of the 2024–25 test period with the model trained on 2015–22 and calibrated on 2023. Every hypothesis result, supported or not, is in Experiments.';
+  host.append(n);
+  cards.forEach((c) => c.run());
+}
+
 /** Phase 4: the served Tier A v2 model next to the strongest protocol-v2 baseline. */
 function renderPhase4(host, p4, v2) {
   const served = p4.e7.delayed;
@@ -154,6 +173,9 @@ async function renderMetrics(root, ctx) {
     api.results('phase4').catch(() => null),
   ]);
   if (ctx.signal.aborted) return;
+  const final = await api.results('final_eval').catch(() => null);
+  if (ctx.signal.aborted) return;
+  if (final && !final.dry_run && p4?.e7) return renderFinal(host, final, p4);
   if (v2 && p4?.e7) return renderPhase4(host, p4, v2);
   if (v2) return renderMetricsV2(host, v2);
   let metrics;
