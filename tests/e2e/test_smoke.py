@@ -163,7 +163,7 @@ def test_each_tab_renders(page: Page, base_url: str, tab: str) -> None:
         ("explorer", ".card__meta .badge[data-source]"),
         ("ablation", '.badge[data-source="results"]'),
         ("experiments", '.badge[data-source="results"]'),
-        ("experiments", '.badge[data-source="pending"]'),
+        ("experiments", '.card--final .badge[data-source="results"]'),
         ("cards", '.badge[data-source="results"]'),
     ],
 )

@@ -75,7 +75,7 @@ async function e2v2(host, ctx, m) {
       .forEach((x, i) => { tr.cells[i].textContent = x; });
     tb.append(tr);
   }
-  const b5 = h('<tr><td class="mono">B5</td><td colspan="7"><span class="badge badge--pending">Pending</span> <span>ARMOR3D upper reference (mooring comparison only; it assimilates Argo)</span></td></tr>');
+  const b5 = h('<tr><td class="mono">B5</td><td colspan="7"><span class="badge badge--muted" title="ARMOR3D is distributed by Copernicus Marine, which needs an account; everything else here uses open data">Not run</span> <span>ARMOR3D upper reference: needs a Copernicus Marine account, and it assimilates Argo, so it could only be a labelled reference</span></td></tr>');
   tb.append(b5);
   c.body.querySelector('.note').textContent = `Every rung is fitted on ${m.split.profiles.train.toLocaleString()} training profiles (2015–2022) with fixed, untuned settings. ± is the spread over ${m.seeds.length} seeds; deterministic rungs run once. Headline depths are 20 m and below because satellite SST already contains Argo near-surface data. ${m.split.dropped_profiles.val.toLocaleString()} 2023 profiles from floats already seen in training are excluded. Generated ${m.generated_at.slice(0, 10)}.`;
 
