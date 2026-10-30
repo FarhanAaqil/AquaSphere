@@ -1,4 +1,4 @@
-.PHONY: setup data data-store data-argo data-collocate data-coverage data-patches data-demo train eval eval-phase4 onnx serve ui-data test lint typecheck audit reproduce clean
+.PHONY: setup data data-store data-argo data-collocate data-coverage data-patches data-demo train eval eval-phase4 eval-test eval-test-dry onnx serve ui-data test lint typecheck audit reproduce clean
 
 # ── Setup ────────────────────────────────────────────────────────────────────
 setup:
@@ -37,10 +37,14 @@ train:
 eval:
 	python -m aquasphere.eval.report_v2
 
-# The 2024-25 test period is locked (aquasphere.eval.protocol) until the one final evaluation in
-# roadmap Phase 6, which adds its own target. Nothing before that may read it.
+# The one read of the 2024-25 test period (roadmap Phase 6). It logs the access to
+# docs/results/test_access.log and refuses to run again once final_eval.json exists.
 eval-test:
-	@echo "Test period locked until the final evaluation (roadmap Phase 6)." && exit 1
+	python -m aquasphere.eval.final_eval --confirm final-evaluation-once
+
+# Every step of the final evaluation on 2023 instead of the test period (no unlock, nothing logged)
+eval-test-dry:
+	python -m aquasphere.eval.final_eval --dry-run --quick --n-boot 200
 
 # Phase 4: physics ablation, E3-E7 on validation 2023, and the served Tier A v2 checkpoint
 eval-phase4:
