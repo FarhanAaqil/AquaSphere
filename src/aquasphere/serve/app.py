@@ -130,12 +130,14 @@ def readiness_check() -> ReadyResponse:
 @app.get("/meta", response_model=MetaResponse)
 def get_metadata() -> MetaResponse:
     """Return domain bounds, available date ranges, and standard depths."""
+    dates = sorted(resolver.zarr_store.get_available_dates()) if resolver.zarr_store else []
     return MetaResponse(
         title="AquaSphere Subsurface Ocean Reconstruction API",
         model_version=engine.model_version,
         data_version=engine.data_version,
-        min_date="2020-01-01",
-        max_date="2025-12-31",
+        # The store's own span; without a store, the period the model and inputs cover
+        min_date=dates[0] if dates else "2015-01-01",
+        max_date=dates[-1] if dates else "2025-12-31",
         domain={
             "lat_min": LAT_MIN,
             "lat_max": LAT_MAX,
@@ -144,9 +146,7 @@ def get_metadata() -> MetaResponse:
         },
         standard_depths=list(STANDARD_DEPTHS),
         available_sources=["offline_synthetic", "disk_cache", "live"],
-        available_dates=(
-            sorted(resolver.zarr_store.get_available_dates()) if resolver.zarr_store else []
-        ),
+        available_dates=dates,
         model_provenance={
             "weights": engine.weights,
             "status": engine.provenance_status,
@@ -253,8 +253,11 @@ async def get_grid_predictions(
     lons = np.arange(lon_min, lon_max + 1e-4, step)
 
     coords = [(float(lt), float(ln)) for lt in lats for ln in lons]
-    resolved = await resolver.resolve_many([(lt, ln, date, None) for lt, ln in coords])
-    # Cells with no observation are left out rather than invented
+    # Stored dates are authoritative (land and gaps stay empty, no live lookups per cell); cells
+    # with no observation are left out rather than invented
+    resolved = await resolver.resolve_many(
+        [(lt, ln, date, None) for lt, ln in coords], store_only=True
+    )
     kept = [(c, r) for c, r in zip(coords, resolved, strict=True) if r is not None]
     preds = engine.predict_batch(
         [{"lat": lt, "lon": ln, "date": date} for (lt, ln), _ in kept],
@@ -364,6 +367,21 @@ if WEB_DIR.exists():
     @app.get("/", include_in_schema=False)
     def serve_index() -> FileResponse:
         return FileResponse(WEB_DIR / "index.html")
+
+    @app.get("/sw.js", include_in_schema=False)
+    def serve_service_worker() -> FileResponse:
+        """Served from the root so it controls the whole app; always revalidated."""
+        return FileResponse(
+            WEB_DIR / "sw.js",
+            media_type="text/javascript",
+            headers={"Cache-Control": "no-cache", "Service-Worker-Allowed": "/"},
+        )
+
+    @app.get("/manifest.webmanifest", include_in_schema=False)
+    def serve_manifest() -> FileResponse:
+        return FileResponse(
+            WEB_DIR / "manifest.webmanifest", media_type="application/manifest+json"
+        )
 
     @app.get("/index.html", include_in_schema=False)
     def serve_index_html() -> FileResponse:

@@ -22,7 +22,7 @@ async function renderV2(root, ctx, p4) {
     <div class="page__intro"><h2>Sensor ablation &amp; modes</h2>
       <p><strong>E3</strong> adds one sensor family at a time and re-trains Tier A on 2015–2022 (three seeds each).
       <strong>E7</strong> runs the served model in nowcast mode (SST + SLA only, the inputs that arrive in real time) and delayed
-      mode (every sensor). All numbers are on the 2023 validation year; the test period stays locked.</p></div>
+      mode (every sensor). All numbers here are on the 2023 validation year; the single test-period run that decides H1a and H1b is in Experiments.</p></div>
     <div class="grid grid--main-side" data-ref="top"></div>
     <div class="grid grid--2" data-ref="bottom"></div>`;
   const cfgs = p4.e3.configs;

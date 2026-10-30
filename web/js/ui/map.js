@@ -66,6 +66,7 @@ export async function createMap(container, { onPick, label = 'Map of the North I
   }
   container.append(overlay);
 
+  const lineLayer = el('g', {}, svg);
   const layer = el('g', {}, svg);
   const target = el('g', { class: 'map__target', hidden: '' }, svg);
   el('circle', { r: 1.1 }, target);
@@ -103,6 +104,13 @@ export async function createMap(container, { onPick, label = 'Map of the North I
       if (lat == null) return target.setAttribute('hidden', '');
       target.removeAttribute('hidden');
       target.setAttribute('transform', `translate(${x(lon)} ${y(lat)})`);
+    },
+    /** A line between two points, drawn in and then flowing (transects). null clears it. */
+    setLine(a, b) {
+      lineLayer.replaceChildren();
+      if (!a || !b) return;
+      const ln = el('line', { class: 'map__line is-drawing', x1: x(a.lon), y1: y(a.lat), x2: x(b.lon), y2: y(b.lat) }, lineLayer);
+      ln.addEventListener('animationend', () => ln.classList.remove('is-drawing'), { once: true });
     },
     /** points: [{id, lat, lon, color, r, label, muted}] */
     setPoints(points, { onClick, selected } = {}) {

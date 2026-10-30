@@ -48,7 +48,7 @@ const V2_SERIES = { B0: C.faint, B1: C.indigo, B2: C.teal, B3: C.violet, B4: C.c
 async function e2v2(host, ctx, m) {
   const c = card({ title: 'E2 · baseline ladder (protocol v2)', sub: `Validation 2023 · ${m.split.profiles.val} profiles from ${m.split.floats.val} floats never seen in training · 95% CI from a bootstrap over floats` });
   host.append(c.card);
-  c.meta.append(badge('results'), tag('Test 2024–25 locked', 'heldout', 'Read once, in the final evaluation.'));
+  c.meta.append(badge('results'), tag('Validation 2023', 'heldout', 'The test-period ladder is in the Final evaluation card.'));
   c.body.innerHTML = `<div class="grid grid--2"><div class="chart"></div><div class="chart"></div></div>
     <div class="table-wrap" tabindex="0" role="region" aria-label="E2 baseline ladder"><table class="table"><thead><tr><th>Rung</th><th>Model</th><th class="num">Thermocline RMSE</th><th class="num">95% CI</th><th class="num">Skill vs B0</th><th class="num">≥ 20 m RMSE</th><th class="num">D20 RMSE (m)</th><th class="num">vs B0, p (Holm)</th></tr></thead><tbody></tbody></table></div>
     <p class="note"></p>`;
@@ -75,7 +75,7 @@ async function e2v2(host, ctx, m) {
       .forEach((x, i) => { tr.cells[i].textContent = x; });
     tb.append(tr);
   }
-  const b5 = h('<tr><td class="mono">B5</td><td colspan="7"><span class="badge badge--pending">Pending</span> <span>ARMOR3D upper reference (mooring comparison only; it assimilates Argo)</span></td></tr>');
+  const b5 = h('<tr><td class="mono">B5</td><td colspan="7"><span class="badge badge--muted" title="ARMOR3D is distributed by Copernicus Marine, which needs an account; everything else here uses open data">Not run</span> <span>ARMOR3D upper reference: needs a Copernicus Marine account, and it assimilates Argo, so it could only be a labelled reference</span></td></tr>');
   tb.append(b5);
   c.body.querySelector('.note').textContent = `Every rung is fitted on ${m.split.profiles.train.toLocaleString()} training profiles (2015–2022) with fixed, untuned settings. ± is the spread over ${m.seeds.length} seeds; deterministic rungs run once. Headline depths are 20 m and below because satellite SST already contains Argo near-surface data. ${m.split.dropped_profiles.val.toLocaleString()} 2023 profiles from floats already seen in training are excluded. Generated ${m.generated_at.slice(0, 10)}.`;
 
@@ -154,6 +154,49 @@ async function e2(host, ctx) {
   c.body.append(n);
 }
 
+
+const HYP_LABEL = {
+  H1a: ['H1a', 'SLA adds to SST', (h) => `${(h.reduction * 100).toFixed(1)}% lower RMSE`, (h) => `${(h.ci[0] * 100).toFixed(1)} to ${(h.ci[1] * 100).toFixed(1)}%`, '≥ 15%'],
+  H1b: ['H1b', 'Nowcast keeps skill', (h) => `ratio ${fmt(h.ratio, 3)}`, (h) => `${fmt(h.ci[0], 3)} to ${fmt(h.ci[1], 3)}`, '≥ 0.85'],
+  H2: ['H2', 'Pre-training helps', (h) => `${(h.labels_100pct.reduction * 100).toFixed(1)}% · ${(h.labels_10pct.reduction * 100).toFixed(1)}% at 10%`, (h) => `${(h.labels_100pct.ci[0] * 100).toFixed(1)} to ${(h.labels_100pct.ci[1] * 100).toFixed(1)}%`, '≥ 5% and ≥ 10%'],
+  H3: ['H3', 'Calibrated 90% intervals', (h) => `${(h.coverage * 100).toFixed(1)}% coverage`, (h) => `${(h.ci[0] * 100).toFixed(1)} to ${(h.ci[1] * 100).toFixed(1)}%`, '87–93%, strata 85–95%'],
+  H4: ['H4', 'Random split flatters', (h) => `${(h.gap * 100).toFixed(1)}% gap`, (h) => `${(h.ci[0] * 100).toFixed(1)} to ${(h.ci[1] * 100).toFixed(1)}%`, '≥ 20%'],
+};
+
+/** The one run on 2024-25: frozen hypotheses with Holm, and the test-period ladder. */
+async function finalCard(host, ctx, f) {
+  const n = Object.values(f.hypotheses).filter((x) => x.supported).length;
+  const c = card({ title: 'Final evaluation · test period 2024–25', sub: `Read once · ${f.split.test_profiles.toLocaleString()} profiles from ${f.split.test_floats} floats never used for training or calibration · hypotheses frozen ${f.hypotheses_file.frozen_at}` });
+  host.append(c.card);
+  c.card.classList.add('card--final');
+  c.meta.append(badge('results'), tag(`${n} of 5 hypotheses supported`, n ? 'ok' : 'warn', 'After Holm correction, at alpha 0.05, and only when the estimate also meets its frozen threshold.'));
+  c.body.innerHTML = `<div class="table-wrap" tabindex="0" role="region" aria-label="Confirmatory hypotheses"><table class="table"><thead><tr><th>Hypothesis</th><th>Estimate</th><th class="num">95% CI</th><th>Threshold</th><th class="num">p (Holm)</th><th>Result</th></tr></thead><tbody></tbody></table></div>
+    <div class="chart"></div><p class="note"></p>`;
+  const tb = c.body.querySelector('tbody');
+  for (const [key, [id, claim, est, ci, thr]] of Object.entries(HYP_LABEL)) {
+    const hyp = f.hypotheses[key];
+    if (!hyp) continue;
+    const tr = h('<tr><td></td><td></td><td class="num"></td><td></td><td class="num"></td><td></td></tr>');
+    tr.cells[0].innerHTML = `<strong>${id}</strong> `;
+    tr.cells[0].append(claim);
+    [est(hyp), ci(hyp), thr, hyp.p_holm < 0.001 ? '< 0.001' : fmt(hyp.p_holm, 3)].forEach((v, i) => { tr.cells[i + 1].textContent = v; });
+    tr.cells[5].append(tag(hyp.supported ? 'Supported' : 'Not supported', hyp.supported ? 'ok' : 'warn'));
+    if (hyp.supported) tr.classList.add('is-best');
+    tb.append(tr);
+  }
+  const keys = Object.keys(f.ladder);
+  const colors = keys.map((k) => (k.startsWith('Tier A') ? (k.includes('nowcast') ? C.teal : C.cyan) : V2_SERIES[k] || C.faint));
+  await plot(c.body.querySelector('.chart'), [{
+    type: 'bar', x: keys, y: keys.map((k) => f.ladder[k].thermocline_rmse),
+    error_y: { type: 'data', symmetric: false, array: keys.map((k) => f.ladder[k].ci[1] - f.ladder[k].thermocline_rmse), arrayminus: keys.map((k) => f.ladder[k].thermocline_rmse - f.ladder[k].ci[0]), color: C.glow },
+    marker: { color: colors }, customdata: keys.map((k) => [f.ladder[k].name, f.ladder[k].skill_thermocline]),
+    hovertemplate: '%{customdata[0]}<br>%{y:.3f} °C · skill %{customdata[1]:.3f}<extra></extra>',
+  }], { yaxis: { title: { text: 'Test thermocline RMSE (°C)' } }, margin: { l: 56, r: 12, t: 8, b: 60 }, showlegend: false }, ctx, 'aquasphere-final');
+  const a = f.ladder['Tier A v2'];
+  const best = keys.filter((k) => !k.startsWith('Tier A')).sort((x, y) => f.ladder[x].thermocline_rmse - f.ladder[y].thermocline_rmse)[0];
+  c.body.querySelector('.note').textContent = `On the test period the served model scores ${fmt(a.thermocline_rmse, 3)} °C (95% CI ${fmt(a.ci[0], 3)}–${fmt(a.ci[1], 3)}) against ${fmt(f.ladder[best].thermocline_rmse, 3)} °C for the best baseline (${best}). A hypothesis counts as supported only if its Holm-adjusted p is below 0.05 and its estimate meets the threshold frozen before this run; the rest are reported as they came out.`;
+}
+
 const pct = (x) => (x == null ? '—' : `${x >= 0 ? '+' : ''}${(x * 100).toFixed(1)}%`);
 const ciText = (ci) => (ci?.[0] == null ? '—' : `${fmt(ci[0], 3)} to ${fmt(ci[1], 3)}`);
 
@@ -229,6 +272,23 @@ async function e8(host, ctx) {
   const c = card({ title: 'E8 · RAMA mooring comparison', sub: 'Independent check against moored buoy temperature time series' });
   host.append(c.card);
   const d = await optional('e8_rama');
+  if (d?.pooled_headline) {
+    c.card.querySelector('.card__sub').textContent = `${d.period[0]} to ${d.period[1]} · daily sensor temperatures at 20 m and deeper · 95% CI from 30-day blocks · never used for training`;
+    c.meta.append(badge('results'));
+    c.body.innerHTML = '<div class="chart"></div><p class="note"></p>';
+    const ms = d.moorings.filter((x) => x.n);
+    await plot(c.body.firstChild, [
+      { type: 'bar', name: 'Tier A v2', x: ms.map((x) => x.id), y: ms.map((x) => x.headline.rmse), marker: { color: C.cyan },
+        error_y: { type: 'data', symmetric: false, array: ms.map((x) => x.headline.ci[1] - x.headline.rmse), arrayminus: ms.map((x) => x.headline.rmse - x.headline.ci[0]), color: C.glow },
+        customdata: ms.map((x) => [x.n, x.region]), hovertemplate: '%{x} (%{customdata[1]}): %{y:.3f} °C, n=%{customdata[0]}<extra>Tier A v2</extra>' },
+      { type: 'bar', name: 'B0 climatology', x: ms.map((x) => x.id), y: ms.map((x) => x.headline_b0.rmse), marker: { color: C.faint }, hovertemplate: '%{x}: %{y:.3f} °C<extra>Climatology</extra>' },
+    ], { barmode: 'group', yaxis: { title: { text: 'RMSE at ≥ 20 m (°C)' } }, legend: { orientation: 'h', y: 1.12 } }, ctx, 'aquasphere-e8');
+    const p = d.pooled_headline;
+    const b = d.pooled_headline_b0;
+    const skipped = d.moorings.filter((x) => !x.n).map((x) => `${x.id} (${x.note})`);
+    c.body.querySelector('.note').textContent = `Pooled over ${p.n.toLocaleString()} observations: ${fmt(p.rmse, 3)} °C (95% CI ${fmt(p.ci[0], 3)}–${fmt(p.ci[1], 3)}) against ${fmt(b.rmse, 3)} °C for climatology, so at the moorings the model is not better than climatology. ${skipped.length ? `Not scored: ${skipped.join('; ')}. ` : ''}${d.armor3d}`;
+    return;
+  }
   if (!d) {
     c.meta.append(badge('pending'));
     return pending(c.body, { title: 'Pending', detail: 'No RAMA comparison has been produced. Moorings are fully independent of Argo, so this is the strongest external test.', needs: 'web/data/e8_rama.json → { "moorings": [{ "id", "lat", "lon", "rmse", "n" }] }' });
@@ -252,6 +312,12 @@ export default {
     else await e2(a, ctx);
     if (e1v2Data) await e1v2(a, ctx, e1v2Data);
     else await e1(a, ctx);
+    const final = await optional('final_eval');
+    if (final && !final.dry_run) {
+      const fRow = h('<div class="grid"></div>');
+      a.before(fRow);
+      await finalCard(fRow, ctx, final);
+    }
     const p4 = await optional('phase4');
     if (p4) {
       const p = h('<div class="grid grid--2"></div>');

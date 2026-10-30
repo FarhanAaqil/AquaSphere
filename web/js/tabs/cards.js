@@ -38,7 +38,7 @@ const LIMITATIONS = [
 function servedLimitations(modelVersion) {
   if (String(modelVersion || '').startsWith('tier_a_v2')) {
     return [
-      'The served model is Tier A v2: trained on 2015–2022 only, calibrated per region and monsoon season on 2023. Its validation numbers are in Experiments and Uncertainty; the 2024–25 test period has not been read.',
+      'The served model is Tier A v2: trained on 2015–2022 only, calibrated per region and monsoon season on 2023. Its validation numbers are in Experiments and Uncertainty; the 2024–25 test period was read exactly once, for the final evaluation, after the hypotheses were frozen.',
       'Calibration strata in the Bay of Bengal have 12–14 floats each, so their coverage estimates are wide; the conformal calibrator falls back to region or global quantiles where a stratum has fewer than 30 scores at a depth.',
     ];
   }
@@ -107,7 +107,7 @@ export default {
     const v2 = await api.results('metrics_v2').catch(() => null);
     if (v2) {
       split.card.querySelector('.card__sub').textContent = 'Protocol v2: time-blocked and float-grouped, as the blueprint specifies';
-      split.meta.append(badge('results'), tag('Test locked', 'heldout', 'Read once, in the final evaluation (roadmap Phase 6).'));
+      split.meta.append(badge('results'), tag('Test read once', 'heldout', 'Locked until the final evaluation, then read a single time (docs/results/test_access.log).'));
       const p = v2.split.profiles;
       const total = p.train + p.val + p.test;
       const w = (k) => `${((p[k] / total) * 100).toFixed(1)}%`;
@@ -115,7 +115,7 @@ export default {
         <div class="split-bar" role="img" aria-label="Train ${p.train} profiles, validation ${p.val}, test ${p.test}">
           <div style="width:${w('train')};background:${C.teal}">Train 2015–22 · ${p.train.toLocaleString()}</div>
           <div style="width:${w('val')};min-width:3.5em;background:${C.amber}" title="Validation 2023">${p.val}</div>
-          <div style="width:${w('test')};min-width:4.5em;background:${C.coral}" title="Test 2024–25 (locked)">${p.test.toLocaleString()}</div></div>
+          <div style="width:${w('test')};min-width:4.5em;background:${C.coral}" title="Test 2024–25 (read once, final evaluation)">${p.test.toLocaleString()}</div></div>
         <p class="card__foot"></p><p class="note"></p>`;
       split.body.querySelector('.card__foot').textContent = `Profiles in each partition: train ${p.train.toLocaleString()} (${v2.split.floats.train} floats), validation 2023 ${p.val} (${v2.split.floats.val} floats), test 2024–25 ${p.test.toLocaleString()} (${v2.split.floats.test} floats).`;
       split.body.querySelector('.note').textContent = `Every float belongs to the first period it appears in, so ${v2.split.dropped_profiles.val.toLocaleString()} validation-year and ${v2.split.dropped_profiles.test.toLocaleString()} test-year profiles from floats already seen earlier are excluded. Hypotheses were frozen before the test period was read (docs/hypotheses.yaml).`;

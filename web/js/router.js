@@ -1,6 +1,7 @@
 // Hash router. Each tab module default-exports { mount(root, ctx) }.
 // ctx.signal aborts in-flight requests when the user leaves; ctx.cleanup(fn) registers
 // teardown (Plotly.purge, three.js dispose, listeners) that runs on every tab switch.
+import { pageIn } from './ui/motion.js';
 
 export const ROUTES = [
   { id: 'overview', label: 'Overview', icon: 'i-overview', load: () => import('./tabs/overview.js') },
@@ -51,7 +52,9 @@ async function navigate() {
     page.className = 'page';
     page.dataset.tab = route.id;
     view.append(page);
-    await mod.default.mount(page, ctx);
+    const mounted = mod.default.mount(page, ctx);
+    pageIn(page);
+    await mounted;
   } catch (err) {
     if (ctrl.signal.aborted) return;
     console.error(err);

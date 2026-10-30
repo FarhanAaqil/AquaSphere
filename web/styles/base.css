@@ -152,7 +152,8 @@ button, input, select { font: inherit; color: inherit; }
   min-height: 100vh;
   padding: calc(var(--topbar-h) + var(--sp-3) * 2 + var(--sp-4)) var(--sp-5) var(--sp-7) calc(var(--sidebar-w) + var(--sp-3) * 2 + var(--sp-4));
 }
-.demo-on .view { padding-top: calc(var(--topbar-h) + var(--sp-3) * 2 + 56px); }
+.demo-on .view, .saved-on .view { padding-top: calc(var(--topbar-h) + var(--sp-3) * 2 + 56px); }
+.saved-banner { background: repeating-linear-gradient(-45deg, rgba(34, 211, 238, 0.14) 0 12px, rgba(34, 211, 238, 0.06) 12px 24px); border-color: rgba(34, 211, 238, 0.5); color: #a5f3fc; }
 
 .noscript { position: relative; z-index: 2; padding: var(--sp-6); }
 

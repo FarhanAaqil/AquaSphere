@@ -7,6 +7,7 @@ import { toast } from './ui/toasts.js';
 import { DOMAIN } from './geo.js';
 import { registerDepthSink, setDepth } from './depth.js';
 import { initUrlState, writeUrlState } from './urlstate.js';
+import { initMotion, moveNavIndicator } from './ui/motion.js';
 
 const body = document.body;
 const STATUS_POLL_MS = 30000;
@@ -90,14 +91,24 @@ function exportView() {
   window.print();
 }
 
+// ── Offline app shell (web/sw.js) ─────────────────────────────────────────────
+// Off under automation unless asked for (?sw=1), so browser tests see the network as it is.
+function registerServiceWorker() {
+  const wanted = !navigator.webdriver || new URLSearchParams(location.search).has('sw');
+  if (!wanted || !('serviceWorker' in navigator) || !location.protocol.startsWith('http')) return;
+  navigator.serviceWorker.register('sw.js', { scope: './' }).catch((err) => console.warn('Offline mode unavailable:', err));
+}
+
 function init() {
   paintFlags();
+  initMotion();
   const sidebar = initSidebar();
   initUrlState(); // before /meta so a linked date is honoured when it is available
   initTopbar({ onExport: exportView });
 
   startRouter((route) => {
     sidebar.setActive(route.id);
+    requestAnimationFrame(moveNavIndicator);
     document.getElementById('view-title').textContent = route.label;
     document.title = route.id === 'overview' ? 'AquaSphere' : `${route.label} · AquaSphere`;
     setDepth(0);
@@ -116,6 +127,15 @@ function init() {
       toast(s.demo ? 'Offline demo on: views now show synthetic data, labelled as such.' : 'Offline demo off: views use the API again.');
     }
   });
+
+  subscribe((s, changed) => {
+    if (!('savedAt' in changed)) return;
+    const on = Boolean(s.savedAt);
+    document.getElementById('saved-banner').hidden = !on;
+    document.body.classList.toggle('saved-on', on);
+    if (on) document.getElementById('saved-at').textContent = new Date(s.savedAt).toLocaleString();
+  });
+  registerServiceWorker();
 
   syncBackground();
   refreshStatus();
