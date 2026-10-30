@@ -7,6 +7,7 @@ import { toast } from './ui/toasts.js';
 import { DOMAIN } from './geo.js';
 import { registerDepthSink, setDepth } from './depth.js';
 import { initUrlState, writeUrlState } from './urlstate.js';
+import { initMotion, moveNavIndicator } from './ui/motion.js';
 
 const body = document.body;
 const STATUS_POLL_MS = 30000;
@@ -100,12 +101,14 @@ function registerServiceWorker() {
 
 function init() {
   paintFlags();
+  initMotion();
   const sidebar = initSidebar();
   initUrlState(); // before /meta so a linked date is honoured when it is available
   initTopbar({ onExport: exportView });
 
   startRouter((route) => {
     sidebar.setActive(route.id);
+    requestAnimationFrame(moveNavIndicator);
     document.getElementById('view-title').textContent = route.label;
     document.title = route.id === 'overview' ? 'AquaSphere' : `${route.label} · AquaSphere`;
     setDepth(0);

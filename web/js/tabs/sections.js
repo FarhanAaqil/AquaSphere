@@ -62,6 +62,7 @@ export default {
         if (!inside) return toast('Pick points inside the 5–30°N, 45–105°E domain.', { kind: 'warn' });
         ends = ends.length >= 2 ? [{ lat, lon }] : [...ends, { lat, lon }];
         tMap.setPoints(ends.map((p, i) => ({ id: i, ...p, color: i ? C.coral : C.cyan, r: 0.6, label: i ? 'End' : 'Start' })));
+        tMap.setLine(ends[0], ends[1]);
         $(tPick.body, '[data-ref="ends"]').textContent = ends.map((p, i) => `${i ? 'End' : 'Start'} ${fmtLat(p.lat)} ${fmtLon(p.lon)}`).join(' → ');
         if (ends.length === 2) drawTransect();
       },

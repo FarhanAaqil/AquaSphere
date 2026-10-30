@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="styles/components.css">
   <link rel="stylesheet" href="styles/tabs/overview.css">
   <link rel="stylesheet" href="styles/tabs/workbench.css">
+  <link rel="stylesheet" href="styles/motion.css">
   <script type="importmap">
     { "imports": {
         "three": "./vendor/three/three.module.min.js",
@@ -28,6 +29,8 @@
 </head>
 <body>
   <a class="skip-link" href="#view">Skip to content</a>
+  <div class="progress" id="progress" aria-hidden="true"></div>
+  <div class="page-sweep" id="page-sweep" aria-hidden="true"></div>
 
   <div class="ocean-bg" aria-hidden="true">
     <canvas id="bg-canvas"></canvas>

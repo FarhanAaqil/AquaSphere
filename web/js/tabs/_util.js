@@ -1,6 +1,7 @@
 // Small helpers shared by tab modules.
 
 import { state, subscribe } from '../state.js';
+import { pulse } from '../ui/motion.js';
 
 /** Build DOM from an HTML string (trusted, static templates only — data goes in via textContent). */
 export function h(html) {
@@ -43,7 +44,7 @@ export function countUp(el, value, { digits = 2, suffix = '', duration = 1.1 } =
   const write = (v) => { el.innerHTML = `${v.toFixed(digits)}${suffix ? `<small>${suffix}</small>` : ''}`; };
   if (state.reduced || state.perf || !window.gsap) return write(value);
   const o = { v: 0 };
-  window.gsap.to(o, { v: value, duration, ease: 'power2.out', onUpdate: () => write(o.v) });
+  window.gsap.to(o, { v: value, duration, ease: 'power2.out', onUpdate: () => write(o.v), onComplete: () => pulse(el) });
 }
 
 /** Staggered reveal of cards as they enter the viewport. */

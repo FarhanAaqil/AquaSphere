@@ -14,6 +14,7 @@
 
 import { state, set } from './state.js';
 import * as demo from './demo.js';
+import { trackRequest } from './ui/motion.js';
 
 const BASE = (new URLSearchParams(location.search).get('api') || '').replace(/\/$/, '');
 
@@ -48,6 +49,7 @@ async function request(path, { method = 'GET', body, timeout = 10000, retries = 
     const timer = setTimeout(() => ctrl.abort(new DOMException('timeout', 'TimeoutError')), timeout);
     const onAbort = () => ctrl.abort(signal.reason);
     signal?.addEventListener('abort', onAbort, { once: true });
+    trackRequest(1);
     try {
       const res = await fetch(BASE + path, {
         method,
@@ -76,6 +78,7 @@ async function request(path, { method = 'GET', body, timeout = 10000, retries = 
         detail: err?.name === 'AbortError' || err?.name === 'TimeoutError' ? `No response within ${timeout / 1000}s` : String(err?.message || err),
       });
     } finally {
+      trackRequest(-1);
       clearTimeout(timer);
       signal?.removeEventListener('abort', onAbort);
     }

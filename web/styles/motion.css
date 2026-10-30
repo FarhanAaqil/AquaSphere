@@ -1,0 +1,111 @@
+/* Motion and interaction layer (web/js/ui/motion.js). Off with reduced motion or perf mode. */
+
+/* ── Request progress bar (top edge) ───────────────────────────────────────── */
+.progress {
+  position: fixed; z-index: 40; top: 0; left: 0; right: 0; height: 3px;
+  pointer-events: none; opacity: 0; transform-origin: 0 50%;
+  background: linear-gradient(90deg, transparent, var(--bio-cyan), var(--bio-glow), var(--thermo-teal), transparent);
+  background-size: 200% 100%;
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.7);
+  transition: opacity 0.35s var(--ease);
+}
+.progress.is-active { opacity: 1; animation: progress-flow 1.1s linear infinite, progress-grow 8s cubic-bezier(0.1, 0.7, 0.2, 1) both; }
+.progress.is-done { animation: progress-flow 1.1s linear infinite, progress-finish 0.4s var(--ease) forwards; }
+@keyframes progress-flow { to { background-position: -200% 0; } }
+@keyframes progress-grow { from { transform: scaleX(0.05); } to { transform: scaleX(0.92); } }
+@keyframes progress-finish { to { transform: scaleX(1); opacity: 0; } }
+
+/* ── Page sweep: a band of light passing down the water column on tab change ─ */
+.page-sweep {
+  position: fixed; z-index: 2; inset: 0; pointer-events: none; opacity: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(103, 232, 249, 0.10) 45%, rgba(34, 211, 238, 0.16) 50%, rgba(103, 232, 249, 0.10) 55%, transparent 100%);
+  background-size: 100% 300%;
+}
+.page-sweep.is-on { animation: sweep-down 0.9s var(--ease) both; }
+@keyframes sweep-down {
+  0% { opacity: 0; background-position: 0 0; }
+  20% { opacity: 1; }
+  100% { opacity: 0; background-position: 0 100%; }
+}
+
+/* ── Card spotlight: a soft glow that follows the cursor, plus a lit border ─── */
+.card { transition: border-color var(--dur-fast), box-shadow 0.3s var(--ease), transform 0.25s var(--ease); }
+.card::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  opacity: 0; transition: opacity 0.35s var(--ease);
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), rgba(103, 232, 249, 0.09), transparent 45%);
+}
+.card:hover::after { opacity: 1; }
+.card:hover { box-shadow: 0 12px 40px -18px rgba(34, 211, 238, 0.45), var(--glow, 0 0 0 transparent); }
+.stat-card, .metric-card { will-change: transform; transform-style: preserve-3d; }
+
+/* ── Click ripples ─────────────────────────────────────────────────────────── */
+.btn, .chip, .segmented button, .nav__link, .icon-btn { position: relative; overflow: hidden; }
+.ripple {
+  position: absolute; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(103, 232, 249, 0.45) 0%, rgba(103, 232, 249, 0) 70%);
+  transform: scale(0); animation: ripple 0.65s var(--ease) forwards;
+}
+@keyframes ripple { to { transform: scale(1); opacity: 0; } }
+
+/* ── Sliding nav indicator (replaces the static bar once motion.js places it) ─ */
+.nav { position: relative; }
+.nav__indicator {
+  position: absolute; left: 0; right: 0; top: 0; z-index: 0; border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, rgba(34, 211, 238, 0.18), rgba(34, 211, 238, 0.02));
+  box-shadow: inset 3px 0 0 var(--bio-cyan), 0 0 22px -8px rgba(34, 211, 238, 0.6);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), height 0.3s var(--ease);
+}
+.nav.has-indicator .nav__link[aria-current="page"] { background: transparent; }
+.nav.has-indicator .nav__link[aria-current="page"]::before { display: none; }
+.nav__link { z-index: 1; }
+
+/* ── Headings: a slow bioluminescent shimmer across the page title ─────────── */
+.page__intro h2 {
+  background: linear-gradient(100deg, var(--text) 0%, var(--text) 40%, var(--bio-glow) 50%, var(--text) 60%, var(--text) 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: title-shimmer 7s ease-in-out infinite;
+}
+@keyframes title-shimmer { 0%, 100% { background-position: 100% 0; } 50% { background-position: 0% 0; } }
+
+/* ── Value pulse when a stat updates ───────────────────────────────────────── */
+.is-pulsing { animation: value-pulse 0.9s var(--ease); }
+@keyframes value-pulse {
+  0% { text-shadow: 0 0 0 rgba(103, 232, 249, 0); }
+  30% { text-shadow: 0 0 18px rgba(103, 232, 249, 0.85); }
+  100% { text-shadow: 0 0 0 rgba(103, 232, 249, 0); }
+}
+
+/* ── Map: pulsing target ring and an animated transect line ────────────────── */
+.map__target circle:first-child { animation: target-ring 2.2s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes target-ring { 0% { transform: scale(0.6); opacity: 1; } 100% { transform: scale(2.2); opacity: 0; } }
+.map__line {
+  fill: none; stroke: var(--bio-glow); stroke-width: 0.22; stroke-linecap: round;
+  stroke-dasharray: 0.6 0.4; filter: drop-shadow(0 0 0.4px var(--bio-cyan));
+  animation: line-flow 1.2s linear infinite;
+}
+.map__line.is-drawing { stroke-dasharray: 200; stroke-dashoffset: 200; animation: line-draw 0.9s var(--ease) forwards; }
+@keyframes line-draw { to { stroke-dashoffset: 0; } }
+@keyframes line-flow { to { stroke-dashoffset: -1; } }
+.map__pt { transition: r 0.2s var(--ease); animation: pt-pop 0.45s var(--ease) both; transform-box: fill-box; transform-origin: center; }
+@keyframes pt-pop { from { transform: scale(0); } }
+
+/* ── Focus: an animated glow ring for keyboard users ───────────────────────── */
+:focus-visible { outline: 2px solid var(--bio-glow); outline-offset: 2px; transition: outline-offset 0.15s var(--ease); }
+.btn:focus-visible, .chip:focus-visible { outline-offset: 3px; box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.18); }
+
+/* ── Buttons: lift and glow on hover ───────────────────────────────────────── */
+.btn { transition: transform 0.18s var(--ease), box-shadow 0.25s var(--ease), background 0.2s var(--ease); }
+.btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px -10px rgba(34, 211, 238, 0.7); }
+.btn:active { transform: translateY(0) scale(0.98); }
+
+/* ── Off switches ──────────────────────────────────────────────────────────── */
+body.reduced *, body.perf * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+body.reduced .page__intro h2, body.perf .page__intro h2 { animation: none; }
+body.reduced .page-sweep, body.perf .page-sweep, body.reduced .ripple, body.perf .ripple { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .page__intro h2, .map__line, .map__target circle:first-child, .progress.is-active { animation: none !important; }
+  .card { transform: none !important; }
+}
+@media print { .progress, .page-sweep { display: none !important; } .page__intro h2 { color: inherit; background: none; } }
