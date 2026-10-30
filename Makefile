@@ -1,4 +1,4 @@
-.PHONY: setup data data-store data-argo data-collocate data-coverage data-patches data-demo train eval eval-phase4 serve ui-data test lint typecheck audit reproduce clean
+.PHONY: setup data data-store data-argo data-collocate data-coverage data-patches data-demo train eval eval-phase4 onnx serve ui-data test lint typecheck audit reproduce clean
 
 # ── Setup ────────────────────────────────────────────────────────────────────
 setup:
@@ -45,6 +45,10 @@ eval-test:
 # Phase 4: physics ablation, E3-E7 on validation 2023, and the served Tier A v2 checkpoint
 eval-phase4:
 	python -m aquasphere.eval.report_phase4
+
+# Optional faster CPU serving (pip install -e ".[onnx]")
+onnx:
+	python -m aquasphere.serve.onnx_runtime
 
 ablate:
 	python -m aquasphere.eval.ablation --fixture data/processed/argo_profiles.parquet --epochs 4

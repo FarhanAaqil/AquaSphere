@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 import torch
@@ -125,3 +127,18 @@ def test_held_out_lookup_never_returns_training_floats(engine: InferenceEngine) 
     res = engine.find_nearest_held_out_profile(15.0, 65.0)
     assert res is not None and res["in_training_set"] is False
     assert len(res["pred_temperatures"]) == 15 and res["rmse"] is not None
+
+
+def test_onnx_export_serves_with_parity(tmp_path: Path) -> None:
+    pytest.importorskip("onnx")
+    pytest.importorskip("onnxruntime")
+    from aquasphere.serve import onnx_runtime
+
+    train = _table(400, 5).assign(float_id=lambda d: d["profile_id"].str.split("_").str[0])
+    model = ProfileModel(Config(epochs=2)).fit(train, seed=0)
+    ref = model.predict(train)[0]
+    path = onnx_runtime.export(model.model.net, len(FEATURES), tmp_path / "m.onnx")
+    assert onnx_runtime.attach(model, path)
+    assert isinstance(model.model, onnx_runtime.OnnxNet) and model.torch_model is not None
+    assert np.allclose(model.predict(train)[0], ref, atol=1e-4)
+    assert not onnx_runtime.attach(model, tmp_path / "missing.onnx")
