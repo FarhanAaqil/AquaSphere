@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy source code, trained model, scaler, and dashboard HTML
 COPY . .
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir -e ".[onnx]"
 
 # Expose default port (Render will route via $PORT)
 EXPOSE 8000

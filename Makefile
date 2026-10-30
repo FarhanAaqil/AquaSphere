@@ -1,4 +1,4 @@
-.PHONY: setup data data-store data-argo data-collocate data-coverage data-patches data-demo train eval eval-phase4 eval-test eval-test-dry eval-rama onnx serve ui-data test lint typecheck audit reproduce clean
+.PHONY: setup data data-store data-argo data-collocate data-coverage data-patches data-demo train eval eval-phase4 eval-test eval-test-dry eval-rama regression freeze-results release onnx serve ui-data test lint typecheck audit reproduce clean
 
 # ── Setup ────────────────────────────────────────────────────────────────────
 setup:
@@ -45,6 +45,18 @@ eval-test:
 # E8: independent check against RAMA moorings (downloads ~1 MB per mooring once)
 eval-rama:
 	python -m aquasphere.eval.e8_rama
+
+# The served checkpoint must still reproduce the frozen validation numbers
+regression:
+	python scripts/regression_check.py
+
+# Record result-file hashes after a deliberate re-evaluation (CI checks them)
+freeze-results:
+	python scripts/freeze_results.py
+
+# Weights and data stores as release archives with SHA256SUMS in dist/release
+release:
+	python scripts/package_release.py
 
 # Every step of the final evaluation on 2023 instead of the test period (no unlock, nothing logged)
 eval-test-dry:
