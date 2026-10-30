@@ -2,6 +2,7 @@
 // Land cells are masked client-side; the API itself would happily predict over land.
 
 import * as api from './api.js';
+import { state } from './state.js';
 import { DOMAIN, nioLand, onLand } from './geo.js';
 
 export const GRID_STEP = 2.5;
@@ -9,7 +10,7 @@ export const GRID_STEP = 2.5;
 const cache = new Map();
 
 export async function loadGrid(date, { signal } = {}) {
-  const key = `${date}|${api.isDemo?.() ? 'demo' : 'api'}`;
+  const key = `${date}|${state.mode}|${api.isDemo?.() ? 'demo' : 'api'}`;
   if (cache.has(key)) return cache.get(key);
   await nioLand();
 
@@ -22,7 +23,7 @@ export async function loadGrid(date, { signal } = {}) {
   const index = [];
   lats.forEach((lat, j) => lons.forEach((lon, i) => {
     if (onLand(lat, lon)) return;
-    items.push({ lat, lon, date });
+    items.push({ lat, lon, date, mode: state.mode });
     index.push([j, i]);
   }));
 

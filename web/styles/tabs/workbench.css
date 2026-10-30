@@ -66,3 +66,8 @@
 .cube-msg:empty { display: none; }
 .cube-msg { position: absolute; inset: var(--sp-4); z-index: 2; }
 .cube-msg .state { min-height: 100%; background: rgba(2, 6, 23, 0.8); }
+
+/* Tool panels (Ocean Products, Sections): stacked controls and button rows */
+.tool-stack { display: flex; flex-direction: column; gap: var(--sp-3); }
+.btn-row { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.btn-row .btn { text-decoration: none; }

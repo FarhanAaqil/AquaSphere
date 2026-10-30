@@ -7,6 +7,7 @@
 //   not_found    404
 //   invalid      400 / 422 (bad lat/lon/date)
 //   server       other 5xx
+//   demo         offline demo mode has no stand-in for this view (nothing is invented)
 //
 // When offline demo mode is on, data endpoints are answered by demo.js instead and
 // every payload carries data_source = "demo_synthetic".
@@ -82,9 +83,9 @@ export const ready = (opts) => request('/ready', { timeout: 4000, retries: 0, ..
 export const meta = (opts) => request('/meta', { timeout: 6000, ...opts });
 
 // ── Data endpoints ─────────────────────────────────────────────────────────────
-export function predict({ lat, lon, date }, opts) {
+export function predict({ lat, lon, date, mode = state.mode }, opts) {
   if (state.demo) return demo.predict({ lat, lon, date });
-  return request(`/predict?${qs({ lat, lon, date })}`, opts);
+  return request(`/predict?${qs({ lat, lon, date, mode })}`, opts);
 }
 
 const batchCache = new Map();
@@ -96,6 +97,43 @@ export async function predictBatch(items, opts) {
   if (batchCache.size > 12) batchCache.delete(batchCache.keys().next().value);
   batchCache.set(key, res);
   return res;
+}
+
+// ── API v2 product routes (no demo stand-ins: the demo says plainly they need the API) ──
+function needsApi(what) {
+  return Promise.reject(new ApiError('demo', `${what} is not part of the offline demo`, {
+    detail: `${what} is not part of the offline demo.`,
+  }));
+}
+
+export function v2meta(opts) {
+  if (state.demo) return needsApi('Model capabilities');
+  return request('/v2/meta', { timeout: 8000, retries: 0, ...opts });
+}
+
+export function gridV2(params, opts) {
+  if (state.demo) return needsApi('This map layer');
+  return request(`/v2/grid?${qs({ mode: state.mode, ...params })}`, { timeout: 90000, retries: 0, ...opts });
+}
+
+export function transect(params, opts) {
+  if (state.demo) return needsApi('The transect tool');
+  return request(`/v2/transect?${qs({ mode: state.mode, ...params })}`, { timeout: 60000, retries: 0, ...opts });
+}
+
+export function timeseries(params, opts) {
+  if (state.demo) return needsApi('The depth-time view');
+  return request(`/v2/timeseries?${qs({ mode: state.mode, ...params })}`, { timeout: 90000, retries: 0, ...opts });
+}
+
+export function drift(params, opts) {
+  if (state.demo) return needsApi('The drift monitor');
+  return request(`/v2/drift?${qs(params)}`, { timeout: 180000, retries: 0, ...opts });
+}
+
+/** Download link for /v2/export/* (the browser fetches it directly; no demo version). */
+export function exportUrl(kind, params) {
+  return `${BASE}/v2/export/${kind}?${qs({ mode: state.mode, ...params })}`;
 }
 
 export function grid(params, opts) {
