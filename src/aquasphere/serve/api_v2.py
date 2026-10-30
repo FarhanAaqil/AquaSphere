@@ -25,11 +25,23 @@ from pydantic import BaseModel, Field
 
 from aquasphere.constants import LAT_MAX, LAT_MIN, LON_MAX, LON_MIN, STANDARD_DEPTHS
 from aquasphere.serve import products
+from aquasphere.serve.schemas import PredictRequest, PredictResponse
 
 DATE = r"^\d{4}-\d{2}-\d{2}$"
 Mode = Literal["delayed", "nowcast"]
 MAX_SERIES = 200
 MAX_GRID = 1200
+
+
+class BatchV2Request(BaseModel):
+    items: list[PredictRequest] = Field(..., min_length=1, max_length=5000)
+
+
+class BatchV2Response(BaseModel):
+    count: int
+    missing: list[int] = Field(description="Request indices with no surface observation")
+    predictions: list[PredictResponse]
+    index: list[int] = Field(description="Request index of each prediction")
 
 
 class GridCell(BaseModel):
@@ -149,6 +161,36 @@ def build_router(engine: Any, resolver: Any) -> APIRouter:
             mode=mode,
         )
         return preds, missing
+
+    @r.post("/predict_batch", response_model=BatchV2Response)
+    async def predict_batch(req: BatchV2Request) -> BatchV2Response:
+        """Like /predict_batch, but points without an observation are listed instead of failing
+        the whole batch (a grid over a real store always has a few coastal gaps)."""
+        out: dict[int, dict[str, Any]] = {}
+        missing: list[int] = []
+        for mode in sorted({it.mode for it in req.items}):
+            idx = [i for i, it in enumerate(req.items) if it.mode == mode]
+            resolved = await resolver.resolve_many(
+                [
+                    (req.items[i].lat, req.items[i].lon, req.items[i].date, req.items[i].features)
+                    for i in idx
+                ],
+                store_only=True,
+            )
+            pts = [(req.items[i].lat, req.items[i].lon, req.items[i].date) for i in idx]
+            preds, miss = run(pts, resolved, mode)
+            kept = [i for j, i in enumerate(idx) if j not in set(miss)]
+            out.update(zip(kept, preds, strict=True))
+            missing += [idx[j] for j in miss]
+        order = sorted(out)
+        if not order:
+            raise HTTPException(503, "No surface observation for any requested point")
+        return BatchV2Response(
+            count=len(order),
+            missing=sorted(missing),
+            predictions=[PredictResponse(**out[i]) for i in order],
+            index=order,
+        )
 
     @r.get("/meta")
     def meta() -> dict[str, Any]:

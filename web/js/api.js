@@ -136,6 +136,28 @@ export function exportUrl(kind, params) {
   return `${BASE}/v2/export/${kind}?${qs({ mode: state.mode, ...params })}`;
 }
 
+/** Grid-style batch: points without an observation come back in `missing` instead of a 503. */
+export async function predictBatchV2(items, opts) {
+  if (state.demo) {
+    const res = await demo.predictBatch(items);
+    return { ...res, missing: [], index: items.map((_, i) => i) };
+  }
+  const key = `v2|${JSON.stringify(items)}`;
+  if (batchCache.has(key)) return batchCache.get(key);
+  let res;
+  try {
+    res = await request('/v2/predict_batch', { method: 'POST', body: { items }, timeout: 60000, retries: 0, ...opts });
+  } catch (err) {
+    if (err.kind !== 'not_found') throw err;
+    // Older API without /v2: the all-or-nothing v1 batch
+    const v1 = await predictBatch(items, opts);
+    return { ...v1, missing: [], index: items.map((_, i) => i) };
+  }
+  if (batchCache.size > 12) batchCache.delete(batchCache.keys().next().value);
+  batchCache.set(key, res);
+  return res;
+}
+
 export function grid(params, opts) {
   if (state.demo) return demo.grid(params);
   return request(`/grid?${qs(params)}`, { timeout: 60000, retries: 0, ...opts });

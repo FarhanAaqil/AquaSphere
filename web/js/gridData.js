@@ -27,7 +27,7 @@ export async function loadGrid(date, { signal } = {}) {
     index.push([j, i]);
   }));
 
-  const res = await api.predictBatch(items, { signal });
+  const res = await api.predictBatchV2(items, { signal });
   const depths = res.predictions[0]?.depths || [];
   const blank = () => lats.map(() => lons.map(() => null));
   const values = depths.map(blank);
@@ -37,8 +37,9 @@ export async function loadGrid(date, { signal } = {}) {
   const mld = blank();
   const sources = [];
 
+  // Cells the store has no observation for (coastal gaps) stay null
   res.predictions.forEach((p, n) => {
-    const [j, i] = index[n];
+    const [j, i] = index[res.index[n]];
     p.temperatures.forEach((t, d) => {
       values[d][j][i] = t;
       lower[d][j][i] = p.interval_lower[d];
@@ -49,7 +50,7 @@ export async function loadGrid(date, { signal } = {}) {
     sources.push(p.data_source);
   });
 
-  const grid = { date, lats, lons, depths, values, lower, upper, d20, mld, sources, nOcean: items.length };
+  const grid = { date, lats, lons, depths, values, lower, upper, d20, mld, sources, nOcean: items.length, missing: res.missing.length };
   if (cache.size > 8) cache.delete(cache.keys().next().value);
   cache.set(key, grid);
   return grid;

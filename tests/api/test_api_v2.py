@@ -199,3 +199,16 @@ def test_rate_limit_returns_429_with_retry_after() -> None:
     assert codes[:3] == [200, 200, 200] and codes[3:] == [429, 429]
     r = c.get("/x")
     assert int(r.headers["retry-after"]) >= 1
+
+
+def test_batch_v2_lists_missing_points_instead_of_failing(client: TestClient) -> None:
+    items = [
+        {"lat": 15, "lon": 65, "date": "2023-01-05"},
+        {"lat": 15, "lon": 102, "date": "2023-01-05"},  # no data east of 100E
+        {"lat": 12, "lon": 88, "date": "2023-01-05", "mode": "nowcast"},
+    ]
+    r = client.post("/v2/predict_batch", json={"items": items}).json()
+    assert r["missing"] == [1] and r["index"] == [0, 2] and r["count"] == 2
+    assert [p["mode"] for p in r["predictions"]] == ["delayed", "nowcast"]
+    none = client.post("/v2/predict_batch", json={"items": [items[1]]})
+    assert none.status_code == 503
