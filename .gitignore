@@ -51,3 +51,5 @@ Thumbs.db
 ui reference
 ui_reference/
 aquasphere_implementation_plan.md
+# The one test-period read is evidence, not a log to ignore
+!docs/results/test_access.log
