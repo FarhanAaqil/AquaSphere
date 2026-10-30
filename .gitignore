@@ -35,6 +35,7 @@ data/cache/
 data/store/
 data/processed/argo_profiles.parquet
 data/processed/argo_nio_*.parquet
+data/processed/*.npz
 data/collect.log
 
 # Logs
