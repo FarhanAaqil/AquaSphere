@@ -17,7 +17,8 @@ protocol v2 model either rebuild everything (below, about 3 hours on a laptop CP
 release assets:
 
 ```bash
-# from the GitHub release page: model weights, the 2015-2025 store and the Argo tables
+# download from https://github.com/FarhanAaqil/AquaSphere/releases/tag/v1.0.0 into dist/release/:
+# model weights, the 2015-2025 store, the Argo tables and SHA256SUMS
 python scripts/package_release.py --verify   # after placing the archives in dist/release
 tar -xzf dist/release/aquasphere-model-tier_a_v2.tar.gz
 tar -xzf dist/release/aquasphere-nio-store-2015-2025.tar.gz

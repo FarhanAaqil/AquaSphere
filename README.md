@@ -210,7 +210,7 @@ python -m pytest tests/ --cov=aquasphere --cov-fail-under=80 -q
 ```bash
 python -m aquasphere.serve.app --host 0.0.0.0 --port 8000
 ```
-A fresh clone has no data or weights, so the API serves untrained weights and says so on every response. To serve the trained Tier A v2 model on the real 2015-2025 store, either run `make reproduce` (about 3 hours from open data; `python scripts/reproduce.py` where `make` is missing) or unpack the release assets; see `docs/REPRODUCE.md`.
+A fresh clone has no data or weights, so the API serves untrained weights and says so on every response. To serve the trained Tier A v2 model on the real 2015-2025 store, either run `make reproduce` (about 3 hours from open data; `python scripts/reproduce.py` where `make` is missing) or download the release assets from [v1.0.0](https://github.com/FarhanAaqil/AquaSphere/releases/tag/v1.0.0) (model, 2015-2025 store and Argo tables, with SHA256SUMS) and unpack them; see `docs/REPRODUCE.md`.
 
 Open **`http://127.0.0.1:8000`** in any web browser to interact with the dashboard (on Windows, `localhost` adds a ~2 s IPv6 fallback to every request from scripts).
 
