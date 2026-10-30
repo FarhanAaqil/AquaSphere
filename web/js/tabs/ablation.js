@@ -13,8 +13,76 @@ const DELAYED_RUN = 'A4 (+ Wind/Curr)';
 const SENSORS = ['sst', 'sla', 'sss', 'wind', 'patch', 'ssl'];
 const SENSOR_LABEL = { sst: 'SST', sla: 'SLA', sss: 'SSS', wind: 'Wind/Curr', patch: 'Patch CNN', ssl: 'SSL pre-train' };
 
+const ci = (c) => (c?.[0] == null ? '—' : `${fmt(c[0], 3)} to ${fmt(c[1], 3)}`);
+const pct = (x) => (x == null ? '—' : `${x >= 0 ? '+' : ''}${(x * 100).toFixed(1)}%`);
+
+/** Protocol v2 (roadmap Phase 4): E3 and E7 on the real 2015-2025 data, validation 2023. */
+async function renderV2(root, ctx, p4) {
+  root.innerHTML = `
+    <div class="page__intro"><h2>Sensor ablation &amp; modes</h2>
+      <p><strong>E3</strong> adds one sensor family at a time and re-trains Tier A on 2015–2022 (three seeds each).
+      <strong>E7</strong> runs the served model in nowcast mode (SST + SLA only, the inputs that arrive in real time) and delayed
+      mode (every sensor). All numbers are on the 2023 validation year; the test period stays locked.</p></div>
+    <div class="grid grid--main-side" data-ref="top"></div>
+    <div class="grid grid--2" data-ref="bottom"></div>`;
+  const cfgs = p4.e3.configs;
+  const keys = Object.keys(cfgs);
+  const ladder = card({ title: 'E3 · sensor ladder', sub: `Thermocline RMSE (50–150 m), seed-averaged prediction, 95% CI over floats · ${p4.split.val_profiles} validation profiles` });
+  ladder.meta.append(badge('results'));
+  ladder.body.innerHTML = '<div class="chart"></div>';
+  const modes = card({ title: 'E7 · nowcast vs delayed', sub: 'Same model, two input sets' });
+  modes.meta.append(badge('results'));
+  $(root, '[data-ref="top"]').append(ladder.card, modes.card);
+  await plot(ladder.body.firstChild, [{
+    type: 'bar', orientation: 'h', y: keys.map((k) => `${k} · ${cfgs[k].label}`), x: keys.map((k) => cfgs[k].thermocline_rmse),
+    error_x: { type: 'data', symmetric: false, array: keys.map((k) => cfgs[k].ci[1] - cfgs[k].thermocline_rmse), arrayminus: keys.map((k) => cfgs[k].thermocline_rmse - cfgs[k].ci[0]), color: C.glow, thickness: 1.2 },
+    marker: { color: keys.map((k) => (k === 'A2' && state.mode === 'nowcast') || (k === 'A4' && state.mode === 'delayed') ? C.cyan : 'rgba(20,184,166,0.55)') },
+    customdata: keys.map((k) => [cfgs[k].skill_thermocline, cfgs[k].seeds.mean, cfgs[k].seeds.std]),
+    hovertemplate: '%{y}<br>RMSE %{x:.3f} °C · skill %{customdata[0]:.3f}<br>per seed %{customdata[1]:.3f} ± %{customdata[2]:.3f}<extra></extra>',
+  }], { xaxis: { title: { text: 'Thermocline RMSE (°C) — lower is better' } }, yaxis: { autorange: 'reversed' }, margin: { l: 210, r: 16, t: 8, b: 48 }, showlegend: false }, ctx, 'aquasphere-e3-ladder');
+
+  const e7 = p4.e7;
+  const box = (label, key, s) => `<div class="mode-box ${state.mode === key ? 'is-active' : ''}">
+    <div class="stat__label">${label}</div>
+    <div class="stat"><span class="stat__value">${fmt(s.thermocline_rmse)}<small>°C</small></span>
+    <span class="stat__note">skill ${fmt(s.skill_thermocline, 3)}</span></div></div>`;
+  modes.body.innerHTML = `<div class="mode-compare">${box('Nowcast · SST + SLA', 'nowcast', e7.nowcast)}<span class="vs">vs</span>${box('Delayed · all sensors', 'delayed', e7.delayed)}</div>
+    <div class="stat" style="margin-top:var(--sp-4)"><span class="stat__label">Skill retained in nowcast</span><span class="stat__value">${(e7.skill_ratio * 100).toFixed(0)}<small>%</small></span>
+    <span class="stat__note">95% CI ${(e7.skill_ratio_ci[0] * 100).toFixed(0)}–${(e7.skill_ratio_ci[1] * 100).toFixed(0)}% · H1b asks ≥ ${(e7.h1b_threshold * 100).toFixed(0)}% on the test period</span></div>
+    <p class="note"></p><p class="note note--warn"></p>`;
+  const [n1, n2] = modes.body.querySelectorAll('.note');
+  n1.textContent = `Nowcast − delayed: ${fmt(e7.nowcast_minus_delayed.diff_c, 3)} °C (95% CI ${ci(e7.nowcast_minus_delayed.ci)}).`;
+  n2.textContent = e7.preliminary_sst;
+
+  const steps = card({ title: 'What each sensor adds', sub: 'Paired difference in thermocline RMSE, same profiles, bootstrap over floats' });
+  steps.meta.append(badge('results'));
+  steps.body.innerHTML = '<div class="table-wrap" tabindex="0" role="region" aria-label="E3 steps"><table class="table"><thead><tr><th>Step</th><th class="num">Δ RMSE (°C)</th><th class="num">95% CI</th><th class="num">Relative</th><th class="num">p</th></tr></thead><tbody></tbody></table></div><p class="note"></p>';
+  for (const [k, d] of Object.entries(p4.e3.steps)) {
+    const tr = h('<tr><td></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td></tr>');
+    [k, fmt(d.diff_c, 3), ci(d.ci), pct(d.relative), d.p < 0.001 ? '< 0.001' : fmt(d.p, 3)].forEach((v, i) => { tr.cells[i].textContent = v; });
+    if (d.ci[1] < 0) tr.classList.add('is-best');
+    steps.body.querySelector('tbody').append(tr);
+  }
+  steps.body.querySelector('.note').textContent = `Adding SLA to SST changes thermocline RMSE by ${pct(p4.e3.h1a_direction_validation)} on validation. H1a (≥ 15% reduction) is decided once, on the test period. Highlighted rows: CI entirely below zero.`;
+
+  const strata = card({ title: 'By region and monsoon season', sub: 'Thermocline RMSE per stratum for each sensor set' });
+  strata.meta.append(badge('results'));
+  strata.body.innerHTML = '<div class="chart"></div>';
+  const labels = cfgs.A1.strata.map((r) => `${r.region === 'Arabian Sea' ? 'AS' : 'BoB'} · ${r.season}`);
+  const colors = [C.faint, C.teal, C.indigo, C.cyan, C.violet];
+  $(root, '[data-ref="bottom"]').append(steps.card, strata.card);
+  await plot(strata.body.firstChild, keys.map((k, i) => ({
+    type: 'bar', name: k, x: labels, y: cfgs[k].strata.map((r) => r.thermocline_rmse), marker: { color: colors[i % colors.length] },
+    customdata: cfgs[k].strata.map((r) => [r.profiles, r.floats]), hovertemplate: `${k} · %{x}: %{y:.3f} °C (%{customdata[0]} profiles, %{customdata[1]} floats)<extra></extra>`,
+  })), { barmode: 'group', yaxis: { title: { text: 'Thermocline RMSE (°C)' } }, xaxis: { tickangle: -20 }, margin: { l: 56, r: 12, t: 8, b: 80 }, legend: { orientation: 'h', y: 1.12 } }, ctx, 'aquasphere-e3-strata');
+  onState(ctx, ['mode'], () => renderV2(root, ctx, p4));
+  reveal(root, ctx, '.card');
+}
+
 export default {
   async mount(root, ctx) {
+    const p4 = await api.results('phase4').catch(() => null);
+    if (p4?.e3) return renderV2(root, ctx, p4);
     root.innerHTML = `
       <div class="page__intro"><h2>Sensor ablation &amp; modes</h2>
         <p><strong>E3</strong> adds one sensor family at a time and re-trains. <strong>E7</strong> asks how much skill survives in

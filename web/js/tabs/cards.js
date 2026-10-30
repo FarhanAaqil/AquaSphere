@@ -26,17 +26,27 @@ const SOURCES = [
 ];
 
 const LIMITATIONS = [
-  'The served model and the E3/E7 ablation runs were trained on tables whose SSS, SLA, current and wind columns came from the synthetic demo store (proven by the audit above). Only their SST input is real. They are replaced by models trained on the real 2015–2025 store in roadmap Phase 4.',
   'Decision-support prototype. Not validated for navigation, safety-critical offshore work or search and rescue without independent INCOIS verification.',
-  'The API\'s local surface store reports offline_synthetic, so live-looking predictions on this site are driven by fixture inputs unless the source badge says Disk cache or Live.',
   'Validation 2023 is small once floats seen in training are excluded: 761 profiles from 37 floats. Every Bay of Bengal stratum is too small for claims and is reported descriptively.',
-  'The /validation/profile lookup store (tests/fixtures/argo_200.parquet) is mostly training floats for the served model: only 39 of its 200 profiles are held out. The API now returns held-out profiles by default and flags the rest.',
-  'The served model predates protocol v2 (it was trained on a 2025 snapshot with an 80/20 float split). It is replaced by a model trained on the protocol v2 training partition in roadmap Phase 4.',
   'OISST contains Argo near-surface values, so errors at 0–10 m are not an independent test. Protocol v2 reports 0–10 m as its own band and headline skill at 20 m and below; the older v1 metrics files still group 0–30 m together.',
   'Under protocol v2 the retrained v1 network (B3) is not distinguishable from climatology; LightGBM (B2) and the deep ensemble (B4) set the bar AquaSphere has to beat, and the B4 90% intervals under-cover (83.8%).',
-  'Interval coverage is identical across all ablation runs (std ≈ 0) on 38 validation profiles; calibration evidence is thin.',
-  'No dissimilarity index or reliability diagram exists yet; those views are pending.',
+  'Nowcast mode is evaluated on the final OISST release. The preliminary near-real-time release it would see in live use is replaced after about two weeks and no longer exists for 2023, so that shift is untested until a prospective run.',
+  'Time series and drift views use only dates held in the local surface store; dates outside it are not fetched live for a series.',
 ];
+
+/** Limitations that depend on which checkpoint the API is serving right now. */
+function servedLimitations(modelVersion) {
+  if (String(modelVersion || '').startsWith('tier_a_v2')) {
+    return [
+      'The served model is Tier A v2: trained on 2015–2022 only, calibrated per region and monsoon season on 2023. Its validation numbers are in Experiments and Uncertainty; the 2024–25 test period has not been read.',
+      'Calibration strata in the Bay of Bengal have 12–14 floats each, so their coverage estimates are wide; the conformal calibrator falls back to region or global quantiles where a stratum has fewer than 30 scores at a depth.',
+    ];
+  }
+  return [
+    'The served checkpoint is the v1 model, trained on tables whose SSS, SLA, current and wind columns came from the synthetic demo store (proven by the audit above), with an 80/20 float split of a 2025 snapshot. Run make eval-phase4 to train and serve Tier A v2.',
+    'The v1 model reports no dissimilarity index, so the applicability-domain views stay pending while it is served.',
+  ];
+}
 
 function kv(dl, rows) {
   dl.replaceChildren();
@@ -84,7 +94,9 @@ export default {
         ['Web data built at commit', info?.git_sha ? `${info.git_sha.slice(0, 12)}${info.git_dirty ? ' (uncommitted changes)' : ''}` : 'not recorded'],
         ['Branch', info?.git_branch],
         ['Web data built', info?.generated_at],
-        ['Architecture', 'Encoder → 16-d L2-normalised embedding → heteroscedastic decoder (15 depths, mean + σ) → split conformal 90%'],
+        ['Architecture', String(d.model_version || '').startsWith('tier_a_v2')
+          ? '18 inputs (7 sensors + availability flags, position, season) → 16-d L2-normalised embedding → heteroscedastic anomaly decoder over the 2015–2022 climatology → Mondrian conformal 90% by region × season, per mode → dissimilarity index'
+          : 'Encoder → 16-d L2-normalised embedding → heteroscedastic decoder (15 depths, mean + σ) → split conformal 90%'],
       ]);
     };
     paintModel();
@@ -235,7 +247,12 @@ export default {
     }
     const lim = card({ title: 'Known limitations', sub: 'Found while building this interface; stated rather than hidden' });
     lim.body.innerHTML = '<ul class="plain-list"></ul>';
-    lim.body.firstChild.append(...LIMITATIONS.map((t) => { const li = document.createElement('li'); li.textContent = t; return li; }));
+    const paintLimits = () => {
+      const items = [...servedLimitations(state.ready?.details?.model_version || state.meta?.model_version), ...LIMITATIONS];
+      lim.body.firstChild.replaceChildren(...items.map((t) => { const li = document.createElement('li'); li.textContent = t; return li; }));
+    };
+    paintLimits();
+    onState(ctx, ['ready', 'meta'], paintLimits);
     $(root, '[data-ref="row3"]').append(arts.card, lim.card);
     reveal(root, ctx, '.card');
   },

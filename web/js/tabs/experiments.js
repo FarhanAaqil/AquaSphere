@@ -154,6 +154,61 @@ async function e2(host, ctx) {
   c.body.append(n);
 }
 
+const pct = (x) => (x == null ? '—' : `${x >= 0 ? '+' : ''}${(x * 100).toFixed(1)}%`);
+const ciText = (ci) => (ci?.[0] == null ? '—' : `${fmt(ci[0], 3)} to ${fmt(ci[1], 3)}`);
+
+async function e5v2(host, ctx, p4) {
+  const c = card({ title: 'E5 · pre-training learning curves', sub: 'Tier C (pre-trained patch encoder) vs the same network from scratch · thermocline RMSE on validation 2023, seed-averaged' });
+  host.append(c.card);
+  const h2 = p4.e5.h2_validation;
+  c.meta.append(badge('results'), tag(`H2 at validation: ${h2.decision}`, h2.decision === 'go' ? 'ok' : 'warn', 'Go/no-go before the test period; the confirmatory test runs once in Phase 6.'));
+  c.body.innerHTML = '<div class="chart"></div><p class="note"></p>';
+  const arms = [['scratch', 'From scratch', C.faint, 2.5], ['masked', 'Masked reconstruction', C.teal, 2.5], ['masked+temporal', 'Masked + temporal pretext', C.cyan, 3]];
+  await plot(c.body.firstChild, arms.map(([k, name, color, width]) => {
+    const pts = p4.e5.curves[k];
+    return {
+      x: pts.map((p) => p.fraction * 100), y: pts.map((p) => p.thermocline_rmse), name, mode: 'lines+markers', line: { color, width },
+      error_y: { type: 'data', array: pts.map((p) => p.seeds.std), color, thickness: 1 },
+      hovertemplate: `${name} · %{x}% labels: %{y:.3f} °C<extra></extra>`,
+    };
+  }), { xaxis: { title: { text: 'Labelled floats used (%)' }, type: 'log', tickvals: [10, 25, 50, 100] }, yaxis: { title: { text: 'Thermocline RMSE (°C)' } }, legend: { orientation: 'h', y: 1.12 } }, ctx, 'aquasphere-e5');
+  c.body.querySelector('.note').textContent = `Best pretext (${h2.best_pretext}): ${pct(h2.reduction_full_labels)} RMSE reduction at full labels (H2 needs ≥ ${pct(h2.thresholds.full)}) and ${pct(h2.reduction_10pct_labels)} at 10% (needs ≥ ${pct(h2.thresholds['10%'])}). `
+    + (h2.decision === 'go' ? 'Both thresholds are met on validation.' : 'Not met, so the pre-trained model is not shipped and the negative result is reported. Pre-training used 2015–2022 patches only.');
+}
+
+async function e4v2(host, ctx, p4) {
+  const e = p4.e4;
+  const c = card({ title: 'E4 · point features vs 9×9 patch encoder', sub: 'Tier A (scalars at the profile) vs Tier B (4 lags × 7 channels × 9×9 patch) · validation 2023' });
+  host.append(c.card);
+  c.meta.append(badge('results'));
+  c.body.innerHTML = '<div class="chart chart--short"></div><p class="note"></p>';
+  const rows = [['Tier A · point', e.tier_a, C.teal], ['Tier B · patch', e.tier_b, C.cyan]];
+  await plot(c.body.firstChild, [{
+    type: 'bar', x: rows.map((r) => r[0]), y: rows.map((r) => r[1].thermocline_rmse),
+    error_y: { type: 'data', symmetric: false, array: rows.map((r) => r[1].ci[1] - r[1].thermocline_rmse), arrayminus: rows.map((r) => r[1].thermocline_rmse - r[1].ci[0]), color: C.glow },
+    marker: { color: rows.map((r) => r[2]) }, hovertemplate: '%{x}: %{y:.3f} °C<extra></extra>',
+  }], { yaxis: { title: { text: 'Thermocline RMSE (°C)' } }, margin: { l: 56, r: 12, t: 8, b: 40 }, showlegend: false }, ctx, 'aquasphere-e4');
+  const d = e.b_minus_a;
+  c.body.querySelector('.note').textContent = `Tier B − Tier A = ${fmt(d.diff_c, 3)} °C (95% CI ${ciText(d.ci)}, ${pct(d.relative)}). `
+    + (d.ci[0] > 0 ? 'Spatial context made the thermocline worse here, so the point model is served.' : d.ci[1] < 0 ? 'Spatial context helped beyond the bootstrap noise.' : 'The difference is within bootstrap noise.');
+}
+
+async function physicsCard(host, p4) {
+  const ph = p4.physics;
+  const c = card({ title: 'Loss · physics terms', sub: 'Tier A with and without the vertical-gradient and anti-inversion terms (blueprint §9.3)' });
+  host.append(c.card);
+  c.meta.append(badge('results'));
+  c.body.innerHTML = '<div class="table-wrap" tabindex="0" role="region" aria-label="Physics-term ablation"><table class="table"><thead><tr><th>Arm</th><th class="num">Thermocline RMSE</th><th class="num">95% CI</th><th class="num">Skill vs B0</th></tr></thead><tbody></tbody></table></div><p class="note"></p>';
+  for (const k of ['with', 'without']) {
+    const tr = h('<tr><td></td><td class="num"></td><td class="num"></td><td class="num"></td></tr>');
+    [k === 'with' ? 'With physics terms' : 'Without', fmt(ph[k].thermocline_rmse, 3), ciText(ph[k].ci), fmt(ph[k].skill_thermocline, 3)].forEach((v, i) => { tr.cells[i].textContent = v; });
+    if (k === ph.chosen) tr.classList.add('is-best');
+    c.body.querySelector('tbody').append(tr);
+  }
+  const d = ph.with_minus_without;
+  c.body.querySelector('.note').textContent = `Difference ${fmt(d.diff_c, 3)} °C (95% CI ${ciText(d.ci)}). The served model uses the arm with lower validation RMSE: ${ph.chosen}.`;
+}
+
 async function e5(host, ctx) {
   const c = card({ title: 'E5 · pre-training learning curves', sub: 'Thermocline RMSE with 10 / 25 / 50 / 100% of labels, with and without self-supervised pre-training' });
   host.append(c.card);
@@ -197,7 +252,17 @@ export default {
     else await e2(a, ctx);
     if (e1v2Data) await e1v2(a, ctx, e1v2Data);
     else await e1(a, ctx);
-    await Promise.all([e5(b, ctx), e8(b, ctx)]);
+    const p4 = await optional('phase4');
+    if (p4) {
+      const p = h('<div class="grid grid--2"></div>');
+      a.after(p);
+      await e4v2(p, ctx, p4);
+      await physicsCard(p, p4);
+      await e5v2(b, ctx, p4);
+    } else {
+      await e5(b, ctx);
+    }
+    await e8(b, ctx);
     reveal(root, ctx, '.card');
   },
 };

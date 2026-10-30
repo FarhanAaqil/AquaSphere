@@ -124,11 +124,37 @@ function renderMetricsV2(host, v2) {
   cards.forEach((c) => c.run());
 }
 
+/** Phase 4: the served Tier A v2 model next to the strongest protocol-v2 baseline. */
+function renderPhase4(host, p4, v2) {
+  const served = p4.e7.delayed;
+  const [bestKey, best] = Object.entries(v2.e2).sort((a, b) => a[1].thermocline_rmse - b[1].thermocline_rmse)[0];
+  const cov = p4.e6.methods.conformal_mondrian.coverage[0];
+  const evalNote = `validation 2023 · ${p4.split.val_profiles} profiles, ${p4.split.val_floats} unseen floats`;
+  const cards = [
+    metricCard({ label: 'Thermocline RMSE · Tier A v2', value: served.thermocline_rmse, digits: 2, suffix: '°C', note: `95% CI ${fmt(served.ci[0])}–${fmt(served.ci[1])} °C · ${evalNote}` }),
+    metricCard({ label: 'Skill vs climatology · thermocline', value: p4.e7.skill_delayed, digits: 2, note: `Best baseline ${bestKey}: ${fmt(best.skill_thermocline, 2)}. 1 − MSE / MSE(B0); B0 = 0.` }),
+    metricCard({ label: '90% interval coverage · Mondrian', value: cov.coverage * 100, digits: 1, suffix: '%', note: `95% CI ${(cov.ci_low * 100).toFixed(1)}–${(cov.ci_high * 100).toFixed(1)}% · out-of-fold over floats` }),
+    metricCard({ label: 'Skill retained in nowcast', value: p4.e7.skill_ratio * 100, digits: 0, suffix: '%', note: `SST + SLA only vs all sensors · 95% CI ${(p4.e7.skill_ratio_ci[0] * 100).toFixed(0)}–${(p4.e7.skill_ratio_ci[1] * 100).toFixed(0)}%` }),
+  ];
+  host.replaceChildren(...cards.map((c) => c.el));
+  const overlap = served.ci[0] <= best.thermocline_ci_95[1] && best.thermocline_ci_95[0] <= served.ci[1];
+  const n = h('<p class="note span-all"></p>');
+  n.textContent = `Tier A v2 is the served model: trained on 2015–22, calibrated on 2023, test period still locked. Against the best baseline ${bestKey} (${fmt(best.thermocline_rmse)} °C) its thermocline RMSE is ${fmt(served.thermocline_rmse)} °C`
+    + (overlap ? '; the confidence intervals overlap, so on validation it is not shown to be better.' : '.')
+    + ' Details in Experiments, Sensors & Modes and Uncertainty.';
+  host.append(n);
+  cards.forEach((c) => c.run());
+}
+
 async function renderMetrics(root, ctx) {
   const host = $(root, '[data-ref="metrics"]');
   host.innerHTML = '<div class="card skeleton" style="min-height:130px"></div>'.repeat(4);
-  const v2 = await api.results('metrics_v2').catch(() => null);
+  const [v2, p4] = await Promise.all([
+    api.results('metrics_v2').catch(() => null),
+    api.results('phase4').catch(() => null),
+  ]);
   if (ctx.signal.aborted) return;
+  if (v2 && p4?.e7) return renderPhase4(host, p4, v2);
   if (v2) return renderMetricsV2(host, v2);
   let metrics;
   let ablation;
