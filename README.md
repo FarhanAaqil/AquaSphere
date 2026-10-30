@@ -130,21 +130,40 @@ flowchart TD
 
 A single-page app in vanilla ES modules: no build step, no bundler, no framework, and no CDN calls at runtime. Three.js r170, GSAP 3.12.5 + ScrollTrigger, Plotly 2.35.2 and the Sora / Inter / JetBrains Mono fonts are all vendored, so it works fully offline.
 
-Nine views, served at `/` with hash routes:
+Eleven views, served at `/` with hash routes. The top-bar mode switch (Delayed / Nowcast) is sent to every prediction:
 
 | Tab | What it shows | Data |
 |---|---|---|
 | Overview | Zooming globe with real Argo float positions, headline results, live `/health` + `/ready`, scroll descent to 1000 m | metrics.json, `/predict` |
-| Predict | Click-to-predict profile with 90% conformal band, D20/MLD, applicability check, interval width | `/predict` |
+| Predict | Click-to-predict profile with 90% conformal band, D20/MLD/TCHP, dissimilarity index, applicability check, CSV/NetCDF export | `/predict`, `/v2/export/profile` |
 | Profile Explorer | Predicted vs held-out Argo, per-depth errors, Arabian Sea / Bay of Bengal filter, training floats flagged | `/validation/profile` |
 | Ocean Cube | 3-D stacked depth slices + 2-D map, date scrubber | `/predict_batch` |
-| Uncertainty | Coverage, interval-width maps; reliability, region/season and dissimilarity views pending | ablation.json, `/predict_batch` |
-| Sensors & Modes | E3 sensor ladder, E7 nowcast vs delayed | ablation.json |
-| Experiments | E1 leakage gap, E2 baseline ladder; E5, E8 pending | e1_leakage.json, metrics.json |
+| Ocean Products | Cyclone heat potential, D26/D20/MLD, temperature and anomaly at a depth, interval width, dissimilarity; compare two dates; grid export | `/v2/grid`, `/v2/export/grid` |
+| Sections | Transect (depth x distance) between two clicks; depth x time (Hovmoller) at a point | `/v2/transect`, `/v2/timeseries` |
+| Uncertainty | E6 calibration comparison, reliability diagram, Mondrian coverage by region x season, dissimilarity map, drift monitor, interval-width maps | phase4.json, `/v2/grid`, `/v2/drift` |
+| Sensors & Modes | E3 sensor ladder with paired differences and strata, E7 nowcast vs delayed | phase4.json |
+| Experiments | E1 leakage gap, E2 baseline ladder, E4 patch encoder, physics-term ablation, E5 learning curves; E8 pending | metrics_v2.json, phase4.json |
 | Explain | Feature and sensor-family attribution, embedding map | `/explain`, `/grid` |
 | Data & Model Cards | Build SHA, artefact hashes, splits, source audit, limitations, PDF export | build_info.json, `/ready` |
 
 Every chart carries a provenance badge (Local store, Disk cache, Live, Offline demo (synthetic), Results file). A 503 renders as "Data unavailable"; missing experiment results render as "Pending". Offline demo mode (display settings) is opt-in and watermarked.
+
+### API v2
+
+The v1 routes keep their contract; every addition is a new optional field or a new route.
+
+| Route | Purpose |
+|---|---|
+| `GET /predict?mode=delayed\|nowcast` (also `/predict_batch`, `/grid`) | Nowcast withholds salinity, winds and currents (they arrive days late). Responses add `mode`, `interval_method`, `tchp`, `d26`, `di`, `in_domain` |
+| `GET /v2/meta` | Served protocol, modes, interval method, dissimilarity threshold, ONNX in use |
+| `GET /v2/grid?date&depth&step&mode` | Map layers: temperature, anomaly, sigma, interval width, MLD, D20, D26, TCHP, DI |
+| `GET /v2/transect?lat1&lon1&lat2&lon2&date&n` | Depth x distance section along the great circle |
+| `GET /v2/timeseries?lat&lon&start&end&step_days` | Depth x time at one point, local-store dates only |
+| `GET /v2/export/profile`, `/v2/export/grid` (`format=csv\|netcdf`) | Profiles with intervals and a provenance header (model, git commit, data source) |
+| `GET /v2/drift?start&end&step_days` | Mean dissimilarity of the domain over time against the training data |
+| `GET /metrics` | Prometheus metrics (requests, latency histogram, 429s, readiness) |
+
+Every response is gzip-compressed when large, carries an `ETag` (a repeat request with `If-None-Match` gets a 304), an `X-Request-ID`, and one JSON access-log line. Clients are rate limited per IP (`AQUASPHERE_RATE_LIMIT` per minute, default 600). With `pip install -e ".[onnx]"` and `make onnx`, the Tier A v2 network is served by onnxruntime after a parity check against torch. Cells, points or dates without a surface observation are left out and listed, never filled in.
 
 ```bash
 make ui-data            # copy results into web/data and build dates/floats/held-out/build-info files

@@ -39,6 +39,8 @@ TABS = [
     "predict",
     "explorer",
     "cube",
+    "products",
+    "sections",
     "uncertainty",
     "ablation",
     "experiments",
@@ -46,8 +48,10 @@ TABS = [
     "cards",
 ]
 API_PATH = re.compile(
-    r"^https?://[^/]+/(health|ready|meta|predict|predict_batch|grid|explain|validation(/profile)?)(\?.*)?$"
+    r"^https?://[^/]+/(health|ready|meta|predict|predict_batch|grid|explain|validation(/profile)?|v2/[a-z/]+)(\?.*)?$"
 )
+V2_GRID = re.compile(r"^https?://[^/]+/v2/grid\?.*$")
+V2_TRANSECT = re.compile(r"^https?://[^/]+/v2/transect\?.*$")
 PREDICT_PATH = re.compile(r"^https?://[^/]+/predict\?.*$")
 
 
@@ -247,3 +251,73 @@ def test_offline_demo_is_labelled(page: Page, base_url: str) -> None:
     page.wait_for_selector('.badge[data-source="demo_synthetic"]', timeout=15000)
     assert page.locator("#demo-banner").is_visible()
     assert page.locator("#demo-badge").is_visible()
+
+
+# ── Phase 5 views ─────────────────────────────────────────────────────────────
+
+
+def test_products_503_shows_data_unavailable(page: Page, base_url: str) -> None:
+    body = json.dumps({"detail": "No surface observations for this date in this area (test)."})
+    page.route(V2_GRID, lambda r: r.fulfill(status=503, content_type="application/json", body=body))
+    _open(page, base_url, "products")
+    page.wait_for_selector('.state--error[data-error-kind="unavailable"]', timeout=20000)
+    assert page.locator(".js-plotly-plot").count() == 0  # no map drawn from nothing
+    assert not _errors(page)
+
+
+def _section_payload() -> dict[str, object]:
+    depths = [0, 5, 10, 20, 30, 50, 75, 100, 125, 150, 200, 300, 500, 700, 1000]
+    temp = [[28.0 - 0.02 * z for z in depths] for _ in range(3)]
+    return {
+        "kind": "transect",
+        "mode": "delayed",
+        "depths": depths,
+        "axis": [0.0, 120.5, 241.0],
+        "lats": [15.0, 15.0, 15.0],
+        "lons": [60.0, 61.0, 62.0],
+        "dates": ["2023-01-01"] * 3,
+        "temperature": temp,
+        "sigma": [[0.5] * 15] * 3,
+        "d20": [400.0] * 3,
+        "tchp": [10.0] * 3,
+        "data_source": ["local_store"] * 3,
+        "skipped": ["15.00N 63.00E"],
+        "model_version": "test",
+    }
+
+
+def test_transect_renders_section_with_provenance(page: Page, base_url: str) -> None:
+    page.route(
+        V2_TRANSECT,
+        lambda r: r.fulfill(
+            status=200, content_type="application/json", body=json.dumps(_section_payload())
+        ),
+    )
+    _open(page, base_url, "sections")
+    hit = page.locator(".map .map__hit").first
+    hit.wait_for(timeout=15000)
+    box = hit.bounding_box()
+    assert box is not None
+    page.mouse.click(box["x"] + box["width"] * 0.3, box["y"] + box["height"] * 0.55)
+    page.mouse.click(box["x"] + box["width"] * 0.45, box["y"] + box["height"] * 0.55)
+    page.wait_for_selector('.card[data-ref="transect"] .js-plotly-plot', timeout=20000)
+    card = page.locator('.card[data-ref="transect"]')
+    assert card.locator('.badge[data-source="local_store"]').count() == 1
+    assert "left out" in card.inner_text()  # skipped points are reported, not interpolated
+    assert not _errors(page)
+
+
+@pytest.mark.parametrize("tab", ["products", "sections"])
+def test_v2_views_refuse_to_invent_data_in_demo(page: Page, base_url: str, tab: str) -> None:
+    page.add_init_script("localStorage.setItem('aquasphere.prefs', JSON.stringify({demo: true}))")
+    _open(page, base_url, tab)
+    if tab == "sections":
+        hit = page.locator(".map .map__hit").first
+        hit.wait_for(timeout=15000)
+        box = hit.bounding_box()
+        assert box is not None
+        page.mouse.click(box["x"] + box["width"] * 0.3, box["y"] + box["height"] * 0.55)
+        page.mouse.click(box["x"] + box["width"] * 0.45, box["y"] + box["height"] * 0.55)
+    page.wait_for_selector("text=not part of the offline demo", timeout=20000)
+    assert page.locator('.badge[data-source="demo_synthetic"]').count() == 0
+    assert not _errors(page)
