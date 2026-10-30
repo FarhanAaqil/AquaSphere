@@ -14,13 +14,14 @@ Outputs (all derived from real artefacts, nothing simulated):
 
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 import sys
 from contextlib import chdir
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
@@ -213,6 +214,24 @@ def input_audit() -> dict:
     return {"generated_at": datetime.now(UTC).isoformat(timespec="seconds"), "tables": tables}
 
 
+def precache() -> dict[str, Any]:
+    """App shell for the service worker (web/sw.js): every static file, versioned by content."""
+    web = OUT.parent
+    files = sorted(
+        p.relative_to(web).as_posix()
+        for p in web.rglob("*")
+        if p.is_file() and p.name not in ("sw.js", "precache.json") and not p.name.startswith(".")
+    )
+    digest = hashlib.sha256()
+    for f in files:
+        digest.update(f.encode())
+        digest.update(hashlib.sha256((web / f).read_bytes()).digest())
+    return {
+        "version": digest.hexdigest()[:16],
+        "files": ["index.html", *[f for f in files if f != "index.html"]],
+    }
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     for name, payload in (
@@ -224,7 +243,11 @@ def main() -> None:
     ):
         (OUT / name).write_text(json.dumps(payload, indent=1), encoding="utf-8")
         print(f"wrote web/data/{name}")
-    present = sorted(p.stem for p in OUT.glob("*.json") if p.name != "index.json")
+    (OUT / "precache.json").write_text(json.dumps(precache(), indent=1), encoding="utf-8")
+    print("wrote web/data/precache.json")
+    present = sorted(
+        p.stem for p in OUT.glob("*.json") if p.name not in ("index.json", "precache.json")
+    )
     (OUT / "index.json").write_text(json.dumps({"files": present}, indent=1), encoding="utf-8")
     print(f"wrote web/data/index.json ({len(present)} files)")
 

@@ -35,6 +35,7 @@ export const state = {
   mode: prefs.mode === 'nowcast' ? 'nowcast' : 'delayed',
   perf: Boolean(prefs.perf),
   demo: Boolean(prefs.demo),
+  savedAt: null,         // set when the service worker answers from saved results (offline)
   reduced: reducedMotion.matches,
   lite: smallScreen.matches,   // phones / touch: 2D fallback
   point: { lat: 15.0, lon: 65.0 },

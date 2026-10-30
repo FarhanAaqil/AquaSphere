@@ -12,7 +12,7 @@
 // When offline demo mode is on, data endpoints are answered by demo.js instead and
 // every payload carries data_source = "demo_synthetic".
 
-import { state } from './state.js';
+import { state, set } from './state.js';
 import * as demo from './demo.js';
 
 const BASE = (new URLSearchParams(location.search).get('api') || '').replace(/\/$/, '');
@@ -28,6 +28,11 @@ export class ApiError extends Error {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** Remember the oldest saved-copy time currently on screen (the page banner shows it). */
+function noteSaved(iso) {
+  if (!state.savedAt || iso < state.savedAt) set({ savedAt: iso });
+}
 
 function detailText(body) {
   if (!body) return '';
@@ -51,7 +56,13 @@ async function request(path, { method = 'GET', body, timeout = 10000, retries = 
         body: body ? JSON.stringify(body) : undefined,
       });
       const json = await res.json().catch(() => null);
-      if (res.ok) return json;
+      if (res.ok) {
+        // The service worker answered from its saved copy because the network failed
+        const saved = res.headers.get('X-AquaSphere-Saved-At');
+        if (saved) noteSaved(saved);
+        else if (state.savedAt && !path.startsWith('/health')) set({ savedAt: null });
+        return json;
+      }
 
       const detail = detailText(json);
       if (res.status === 503) throw new ApiError('unavailable', 'Data unavailable', { status: 503, detail });

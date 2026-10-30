@@ -1,0 +1,11 @@
+{
+  "name": "AquaSphere · North Indian Ocean subsurface temperature",
+  "short_name": "AquaSphere",
+  "description": "Calibrated subsurface ocean temperature reconstruction from multi-sensor satellite embeddings.",
+  "start_url": "./#/overview",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#0b1f3a",
+  "icons": [{ "src": "assets/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

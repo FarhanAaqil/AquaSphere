@@ -365,6 +365,21 @@ if WEB_DIR.exists():
     def serve_index() -> FileResponse:
         return FileResponse(WEB_DIR / "index.html")
 
+    @app.get("/sw.js", include_in_schema=False)
+    def serve_service_worker() -> FileResponse:
+        """Served from the root so it controls the whole app; always revalidated."""
+        return FileResponse(
+            WEB_DIR / "sw.js",
+            media_type="text/javascript",
+            headers={"Cache-Control": "no-cache", "Service-Worker-Allowed": "/"},
+        )
+
+    @app.get("/manifest.webmanifest", include_in_schema=False)
+    def serve_manifest() -> FileResponse:
+        return FileResponse(
+            WEB_DIR / "manifest.webmanifest", media_type="application/manifest+json"
+        )
+
     @app.get("/index.html", include_in_schema=False)
     def serve_index_html() -> FileResponse:
         return FileResponse(WEB_DIR / "index.html")

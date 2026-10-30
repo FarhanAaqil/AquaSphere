@@ -90,6 +90,14 @@ function exportView() {
   window.print();
 }
 
+// ── Offline app shell (web/sw.js) ─────────────────────────────────────────────
+// Off under automation unless asked for (?sw=1), so browser tests see the network as it is.
+function registerServiceWorker() {
+  const wanted = !navigator.webdriver || new URLSearchParams(location.search).has('sw');
+  if (!wanted || !('serviceWorker' in navigator) || !location.protocol.startsWith('http')) return;
+  navigator.serviceWorker.register('sw.js', { scope: './' }).catch((err) => console.warn('Offline mode unavailable:', err));
+}
+
 function init() {
   paintFlags();
   const sidebar = initSidebar();
@@ -116,6 +124,15 @@ function init() {
       toast(s.demo ? 'Offline demo on: views now show synthetic data, labelled as such.' : 'Offline demo off: views use the API again.');
     }
   });
+
+  subscribe((s, changed) => {
+    if (!('savedAt' in changed)) return;
+    const on = Boolean(s.savedAt);
+    document.getElementById('saved-banner').hidden = !on;
+    document.body.classList.toggle('saved-on', on);
+    if (on) document.getElementById('saved-at').textContent = new Date(s.savedAt).toLocaleString();
+  });
+  registerServiceWorker();
 
   syncBackground();
   refreshStatus();
