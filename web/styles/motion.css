@@ -78,6 +78,7 @@
 }
 
 /* ── Map: pulsing target ring and an animated transect line ────────────────── */
+.map__target { pointer-events: none; } /* the selection marker must never block clicks on points */
 .map__target circle:first-child { animation: target-ring 2.2s ease-out infinite; transform-box: fill-box; transform-origin: center; }
 @keyframes target-ring { 0% { transform: scale(0.6); opacity: 1; } 100% { transform: scale(2.2); opacity: 0; } }
 .map__line {

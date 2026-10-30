@@ -130,12 +130,14 @@ def readiness_check() -> ReadyResponse:
 @app.get("/meta", response_model=MetaResponse)
 def get_metadata() -> MetaResponse:
     """Return domain bounds, available date ranges, and standard depths."""
+    dates = sorted(resolver.zarr_store.get_available_dates()) if resolver.zarr_store else []
     return MetaResponse(
         title="AquaSphere Subsurface Ocean Reconstruction API",
         model_version=engine.model_version,
         data_version=engine.data_version,
-        min_date="2020-01-01",
-        max_date="2025-12-31",
+        # The store's own span; without a store, the period the model and inputs cover
+        min_date=dates[0] if dates else "2015-01-01",
+        max_date=dates[-1] if dates else "2025-12-31",
         domain={
             "lat_min": LAT_MIN,
             "lat_max": LAT_MAX,
@@ -144,9 +146,7 @@ def get_metadata() -> MetaResponse:
         },
         standard_depths=list(STANDARD_DEPTHS),
         available_sources=["offline_synthetic", "disk_cache", "live"],
-        available_dates=(
-            sorted(resolver.zarr_store.get_available_dates()) if resolver.zarr_store else []
-        ),
+        available_dates=dates,
         model_provenance={
             "weights": engine.weights,
             "status": engine.provenance_status,

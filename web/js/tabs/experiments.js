@@ -48,7 +48,7 @@ const V2_SERIES = { B0: C.faint, B1: C.indigo, B2: C.teal, B3: C.violet, B4: C.c
 async function e2v2(host, ctx, m) {
   const c = card({ title: 'E2 · baseline ladder (protocol v2)', sub: `Validation 2023 · ${m.split.profiles.val} profiles from ${m.split.floats.val} floats never seen in training · 95% CI from a bootstrap over floats` });
   host.append(c.card);
-  c.meta.append(badge('results'), tag('Test 2024–25 locked', 'heldout', 'Read once, in the final evaluation.'));
+  c.meta.append(badge('results'), tag('Validation 2023', 'heldout', 'The test-period ladder is in the Final evaluation card.'));
   c.body.innerHTML = `<div class="grid grid--2"><div class="chart"></div><div class="chart"></div></div>
     <div class="table-wrap" tabindex="0" role="region" aria-label="E2 baseline ladder"><table class="table"><thead><tr><th>Rung</th><th>Model</th><th class="num">Thermocline RMSE</th><th class="num">95% CI</th><th class="num">Skill vs B0</th><th class="num">≥ 20 m RMSE</th><th class="num">D20 RMSE (m)</th><th class="num">vs B0, p (Holm)</th></tr></thead><tbody></tbody></table></div>
     <p class="note"></p>`;

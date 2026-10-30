@@ -156,6 +156,7 @@ export default {
         return errorState(chart, { kind: 'offline' }, { retry: () => location.reload() });
       }
       const my = ++req;
+      $(root, '[data-ref="export"]').hidden = true; // never offer the previous point's file
       loading(chart, 'Resolving surface observations and running the model…');
       badges.replaceChildren();
       try {
