@@ -138,3 +138,34 @@ def test_grid_skips_cells_without_observations(
     assert {p["data_source"] for p in data["points"]} == {"local_store"}
     empty = client.get("/grid?date=1999-01-01&step=5").json()
     assert empty["count"] == 0
+
+
+def test_store_only_never_sends_stored_dates_down_the_live_chain(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    r = _resolver(tmp_path)
+    chain: list[tuple[float, float, str]] = []
+
+    async def fake_resolve(lat: float, lon: float, date: str, overrides: Any = None) -> Any:
+        chain.append((lat, lon, date))
+        raise RuntimeError("live chain must not be used for a stored date")
+
+    monkeypatch.setattr(r, "resolve", fake_resolve)
+    land = (float(DEFAULT_LAT_GRID[1]), float(DEFAULT_LON_GRID[1]), "2021-03-01", None)
+    ocean = (15.0, 65.0, "2021-03-01", None)
+    out = asyncio.run(r.resolve_many([land, ocean], store_only=True))
+    assert out[0] is None and out[1] is not None and chain == []
+
+
+def test_store_series_matches_point_resolution(tmp_path: Path) -> None:
+    r = _resolver(tmp_path)
+    dates = ["2021-03-02", "1999-01-01", "2021-03-01"]
+    series = r.store_series(15.0, 65.0, dates)
+    assert series[1] is None  # not a stored date: never fetched live
+    many = asyncio.run(r.resolve_many([(15.0, 65.0, d, None) for d in dates], store_only=True))
+    for a, b in zip(series, many, strict=True):
+        assert (a is None) == (b is None)
+        if a is not None and b is not None:
+            assert a[1] == b[1] and all(np.isclose(a[0][k], b[0][k]) for k in b[0])
+    land = r.store_series(float(DEFAULT_LAT_GRID[1]), float(DEFAULT_LON_GRID[1]), DATES)
+    assert land == [None, None]

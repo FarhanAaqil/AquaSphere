@@ -84,6 +84,13 @@ class PredictResponse(BaseModel):
         default=None,
         description="Upper 300 m depth-averaged ocean heat content index (°C)",
     )
+    tchp: float | None = Field(
+        default=None,
+        description="Tropical cyclone heat potential above the 26 °C isotherm (kJ/cm²)",
+    )
+    d26: float | None = Field(
+        default=None, description="Depth of the 26 °C isotherm (m); 0 when the surface is cooler"
+    )
     data_source: str = Field(
         description="Provenance of surface observations: 'local_store' | 'disk_cache' | 'live' | 'unavailable'"
     )

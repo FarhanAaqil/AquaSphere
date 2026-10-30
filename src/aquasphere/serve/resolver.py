@@ -26,7 +26,7 @@ from fastapi import HTTPException
 
 from aquasphere.data.audit import store_is_synthetic
 from aquasphere.data.sources import SOURCES
-from aquasphere.data.store import SurfaceZarrStore
+from aquasphere.data.store import SATELLITE_VARS, SurfaceZarrStore
 
 logger = logging.getLogger(__name__)
 
@@ -123,6 +123,35 @@ class SurfaceResolver:
         if len(self._days) > DAY_CACHE:
             self._days.popitem(last=False)
         return fields
+
+    def store_series(
+        self, lat: float, lon: float, dates: list[str]
+    ) -> list[tuple[dict[str, float], str] | None]:
+        """One cell through many stored dates, reading each time chunk once (Hovmoller views).
+
+        Dates the store does not hold come back as None; nothing goes to the live chain.
+        """
+        store = self.zarr_store
+        out: list[tuple[dict[str, float], str] | None] = [None] * len(dates)
+        if store is None:
+            return out
+        held = [(n, store.date_to_idx[d]) for n, d in enumerate(dates) if d in store.date_to_idx]
+        if not held:
+            return out
+        row, col = store.snap_indices(lat, lon)
+        t_idx = np.array([t for _, t in held])
+        cols = {
+            v: np.asarray(
+                store.root[v].get_orthogonal_selection((t_idx, row, col)), dtype=np.float64
+            )
+            for v in SATELLITE_VARS
+            if v in store.root
+        }
+        for j, (n, _) in enumerate(held):
+            obs = _valid_point({v: float(a[j]) for v, a in cols.items()})
+            if obs is not None:
+                out[n] = (obs, self.store_source)
+        return out
 
     def _hash_key(self, lat: float, lon: float, date: str) -> str:
         """Compute deterministic SHA-256 cache key."""
@@ -263,12 +292,18 @@ class SurfaceResolver:
         )
 
     async def resolve_many(
-        self, points: list[tuple[float, float, str, dict[str, float] | None]]
+        self,
+        points: list[tuple[float, float, str, dict[str, float] | None]],
+        store_only: bool = False,
     ) -> list[tuple[dict[str, float], str] | None]:
         """Resolve many points at once; None marks a point with no observation.
 
         Store lookups read each date's fields once and index every point on that date with
         vectorised nearest-cell lookups, instead of one full read per point.
+
+        store_only: on a date the local store holds, a cell with no value there (land, or a
+        product gap) is final rather than sent down the live chain. Grids and series use it so
+        hundreds of land cells do not each become a network request.
         """
         out: list[tuple[dict[str, float], str] | None] = [None] * len(points)
         pending: list[int] = []
@@ -299,7 +334,8 @@ class SurfaceResolver:
             for n, k in enumerate(idx):
                 obs = _valid_point({v: float(vals[n]) for v, vals in values.items()})
                 if obs is None:
-                    pending.append(k)
+                    if not store_only:
+                        pending.append(k)
                     continue
                 out[k] = (obs, self.store_source)
                 self._update_mem_cache(self._hash_key(*points[k][:3]), obs, self.store_source)
