@@ -253,8 +253,11 @@ async def get_grid_predictions(
     lons = np.arange(lon_min, lon_max + 1e-4, step)
 
     coords = [(float(lt), float(ln)) for lt in lats for ln in lons]
-    resolved = await resolver.resolve_many([(lt, ln, date, None) for lt, ln in coords])
-    # Cells with no observation are left out rather than invented
+    # Stored dates are authoritative (land and gaps stay empty, no live lookups per cell); cells
+    # with no observation are left out rather than invented
+    resolved = await resolver.resolve_many(
+        [(lt, ln, date, None) for lt, ln in coords], store_only=True
+    )
     kept = [(c, r) for c, r in zip(coords, resolved, strict=True) if r is not None]
     preds = engine.predict_batch(
         [{"lat": lt, "lon": ln, "date": date} for (lt, ln), _ in kept],
