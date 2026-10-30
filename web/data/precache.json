@@ -1,5 +1,5 @@
 {
- "version": "54d35506aaf08b56",
+ "version": "146848fb803cd6de",
  "files": [
   "index.html",
   "assets/favicon.svg",
@@ -54,6 +54,7 @@
   "js/ui/badges.js",
   "js/ui/loaders.js",
   "js/ui/map.js",
+  "js/ui/motion.js",
   "js/ui/sidebar.js",
   "js/ui/toasts.js",
   "js/ui/topbar.js",
@@ -61,6 +62,7 @@
   "manifest.webmanifest",
   "styles/base.css",
   "styles/components.css",
+  "styles/motion.css",
   "styles/tabs/overview.css",
   "styles/tabs/workbench.css",
   "styles/tokens.css",

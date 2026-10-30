@@ -13,14 +13,14 @@ const STAGES = [
   {
     depth: 'Surface · 0 m',
     title: 'Satellites see the skin of the ocean',
-    body: 'Four sensor families are collocated onto each point: sea-surface temperature (NOAA OISST v2.1), sea-level anomaly and geostrophic currents (CMEMS DUACS), surface salinity (NASA SMAP) and 10 m winds (ERA5 / CCMP). With position, season and availability masks that makes 18 input features.',
+    body: 'Four sensor families are collocated onto each point from open NOAA ERDDAP products: sea-surface temperature (OISST v2.1), sea-level anomaly and geostrophic currents (NOAA/NESDIS altimetry), surface salinity (SMAP via CoastWatch) and 10 m winds (NOAA Blended Winds). With position, season and an availability flag per sensor that makes 18 inputs.',
     chips: ['SST', 'SLA', 'SSS', 'u/v geostrophic', 'u/v 10 m wind'],
   },
   {
     depth: 'Mixed layer · 10–30 m',
     title: 'An encoder turns them into an ocean embedding',
-    body: 'The encoder compresses each multi-sensor snapshot into a 16-dimensional, L2-normalised embedding. A self-supervised stage (masked patch autoencoder) can pre-train it on abundant unlabelled satellite fields before any Argo labels are used.',
-    chips: ['16-d embedding', 'masked autoencoder', 'self-supervised'],
+    body: 'The encoder compresses each multi-sensor snapshot into a 16-dimensional, L2-normalised embedding. One model serves two modes: nowcast (SST + SLA, available within hours) and delayed (every sensor). Patch encoders and self-supervised pre-training were tested too and are reported, not shipped.',
+    chips: ['16-d embedding', 'nowcast + delayed', 'Tier A v2'],
   },
   {
     depth: 'Thermocline · 50–150 m',
@@ -31,14 +31,14 @@ const STAGES = [
   {
     depth: 'Intermediate · 200–500 m',
     title: 'Profiles come with calibrated uncertainty',
-    body: 'Split conformal calibration on held-out residuals widens σ into 90% prediction intervals. From each profile we derive the 20 °C isotherm depth (D20), mixed-layer depth (MLD) and upper-300 m heat content.',
-    chips: ['90% conformal band', 'D20', 'MLD', 'OHC300'],
+    body: 'Conformal calibration on 2023, separately for each region and monsoon season, turns σ into 90% prediction intervals, and a dissimilarity index flags inputs unlike anything in training. From each profile come the 20 °C and 26 °C isotherm depths, mixed-layer depth and cyclone heat potential.',
+    chips: ['Mondrian 90% band', 'dissimilarity index', 'D20 · D26', 'TCHP'],
   },
   {
     depth: 'Deep · 700–1000 m',
     title: 'And every claim is checked honestly',
-    body: 'Evaluation uses float-grouped splits so no Argo float appears in both training and test, and the leakage gap between random and blocked splits is reported rather than hidden. Results that do not exist yet are shown as pending.',
-    chips: ['float-grouped split', 'leakage gap', 'no placeholder numbers'],
+    body: 'Training uses 2015–2022, calibration 2023, and 2024–2025 was read once to test hypotheses frozen in advance. No Argo float appears in two periods, independent RAMA moorings give an outside check, and negative results are reported rather than hidden.',
+    chips: ['time-blocked + float-grouped', 'frozen hypotheses', 'RAMA moorings'],
     cta: true,
   },
 ];
@@ -50,7 +50,7 @@ function template() {
       <p class="eyebrow">SIH 26066 · OceanEmbed · North Indian Ocean</p>
       <h2 class="hero__title" id="hero-title">Reading the ocean's first 1,000 metres <span>from space.</span></h2>
       <p class="hero__lede">AquaSphere reconstructs subsurface temperature profiles across the Arabian Sea and Bay of Bengal
-        (5–30°N, 45–105°E, 15 depths to 1000 m) from self-supervised multi-sensor satellite embeddings,
+        (5–30°N, 45–105°E, 15 depths to 1000 m) from multi-sensor satellite embeddings,
         and attaches a calibrated 90% interval to every depth.</p>
       <div class="hero__cta">
         <a class="btn" href="#/predict"><svg aria-hidden="true"><use href="assets/icons.svg#i-predict"></use></svg>Predict a profile</a>

@@ -33,10 +33,21 @@ logger = logging.getLogger(__name__)
 CACHE_DIR = Path("cache/observations")
 # OISST v2.1 Final on NOAA CoastWatch (the NCEI ERDDAP dataset this used to point at now 400s)
 ERDDAP_URL = f"{SOURCES['oisst'].griddap}.csv"
-# Which store to serve from: AQUASPHERE_STORE overrides; the default is the demo store the current
-# checkpoint was trained against (see aquasphere.data.audit). Switch to the real multi-year store
-# together with a model trained on it.
-DEFAULT_STORE = Path(os.environ.get("AQUASPHERE_STORE", "data/store/surface.zarr"))
+REAL_STORE = Path("data/store/surface_nio.zarr")
+DEMO_STORE = Path("data/store/surface.zarr")
+
+
+def default_store() -> Path:
+    """AQUASPHERE_STORE overrides. Otherwise the real 2015-2025 store is served together with the
+    protocol v2 model trained on it, and the demo store only with the v1 checkpoint that was
+    trained against it (aquasphere.data.audit)."""
+    if os.environ.get("AQUASPHERE_STORE"):
+        return Path(os.environ["AQUASPHERE_STORE"])
+    v2 = Path(os.environ.get("AQUASPHERE_CHECKPOINT_V2", "checkpoints/tier_a_v2/model.pt"))
+    return REAL_STORE if REAL_STORE.exists() and v2.exists() else DEMO_STORE
+
+
+DEFAULT_STORE = default_store()
 DAY_CACHE = 8  # days of full fields kept in memory for batch lookups
 # AQUASPHERE_OFFLINE=1 disables live fetching (offline demos, deterministic tests)
 NETWORK_DEFAULT = os.environ.get("AQUASPHERE_OFFLINE", "") not in ("1", "true", "yes")

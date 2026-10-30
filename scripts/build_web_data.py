@@ -33,7 +33,10 @@ sys.path.insert(0, str(ROOT / "src"))
 OUT = ROOT / "web" / "data"
 CHECKPOINT = ROOT / "checkpoints" / "tier_a" / "model_a.pt"
 
+V2_TABLE = ROOT / "data" / "processed" / "argo_nio_collocated.parquet"
+V2_CHECKPOINT = ROOT / "checkpoints" / "tier_a_v2" / "model.pt"
 ARCHIVE_CANDIDATES = [
+    V2_TABLE,
     ROOT / "data" / "processed" / "argo_profiles.parquet",
     ROOT / "data" / "argo_sst_training.csv",
 ]
@@ -145,24 +148,35 @@ def floats() -> dict:
 
 def served_membership() -> TrainingMembership:
     """Training membership of the served model, exactly as the API computes it."""
-    from aquasphere.serve.membership import TrainingMembership
+    from aquasphere.serve.membership import ARGO_TABLES, TrainingMembership
 
     checkpoint = None
-    if CHECKPOINT.exists():
+    path = V2_CHECKPOINT if V2_CHECKPOINT.exists() else CHECKPOINT
+    if path.exists():
         try:
             import torch
 
-            checkpoint = torch.load(CHECKPOINT, map_location="cpu", weights_only=False)
+            checkpoint = torch.load(path, map_location="cpu", weights_only=False)
         except Exception as e:  # unreadable checkpoint: fall back to reconstructing the split
-            print(f"warning: could not read {CHECKPOINT}: {e}")
+            print(f"warning: could not read {path}: {e}")
+    tables = (V2_TABLE.relative_to(ROOT), *ARGO_TABLES) if path == V2_CHECKPOINT else ARGO_TABLES
     with chdir(ROOT):
-        return TrainingMembership.resolve(checkpoint)
+        return TrainingMembership.resolve(checkpoint, tables=tables)
 
 
 def heldout() -> dict:
-    if not HELDOUT_STORE.exists():
+    # With the protocol v2 model served, lookups come from the 2023 validation year
+    v2 = V2_CHECKPOINT.exists() and V2_TABLE.exists()
+    source = V2_TABLE if v2 else HELDOUT_STORE
+    if not source.exists():
         return {"source": None, "profiles": []}
-    df = load_table(HELDOUT_STORE)
+    if v2:
+        from aquasphere.eval.protocol import assign
+
+        df = assign(pd.read_parquet(V2_TABLE))
+        df = df[df["partition"] == "val"]
+    else:
+        df = load_table(HELDOUT_STORE)
     membership = served_membership()
 
     def split_of(float_id: str) -> str:
@@ -182,7 +196,8 @@ def heldout() -> dict:
         for r in df.itertuples()
     ]
     return {
-        "source": str(HELDOUT_STORE.relative_to(ROOT)).replace("\\", "/"),
+        "source": str(source.relative_to(ROOT)).replace("\\", "/")
+        + (" (validation 2023)" if v2 else ""),
         "split_rule": f"served model's training split ({membership.source})",
         "profiles": rows,
     }
@@ -190,11 +205,15 @@ def heldout() -> dict:
 
 def store_dates() -> dict:
     """Read the date index straight from the Zarr v3 group metadata (no zarr import needed)."""
-    meta = ROOT / "data" / "store" / "surface.zarr" / "zarr.json"
+    with chdir(ROOT):
+        from aquasphere.serve.resolver import default_store
+
+        store = default_store()
+    meta = ROOT / store / "zarr.json"
     if not meta.exists():
         return {"source": None, "dates": []}
     attrs = json.loads(meta.read_text(encoding="utf-8")).get("attributes", {})
-    return {"source": "data/store/surface.zarr", "dates": sorted(attrs.get("dates", []))}
+    return {"source": store.as_posix(), "dates": sorted(attrs.get("dates", []))}
 
 
 def input_audit() -> dict:
