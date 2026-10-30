@@ -233,6 +233,9 @@ def input_audit() -> dict:
     return {"generated_at": datetime.now(UTC).isoformat(timespec="seconds"), "tables": tables}
 
 
+TEXT_SUFFIXES = {".js", ".css", ".html", ".json", ".svg", ".webmanifest", ".txt", ".md"}
+
+
 def precache() -> dict[str, Any]:
     """App shell for the service worker (web/sw.js): every static file, versioned by content."""
     web = OUT.parent
@@ -244,7 +247,10 @@ def precache() -> dict[str, Any]:
     digest = hashlib.sha256()
     for f in files:
         digest.update(f.encode())
-        digest.update(hashlib.sha256((web / f).read_bytes()).digest())
+        body = (web / f).read_bytes()
+        if Path(f).suffix in TEXT_SUFFIXES:  # Windows and Linux checkouts must agree
+            body = body.replace(b"\r\n", b"\n")
+        digest.update(hashlib.sha256(body).digest())
     return {
         "version": digest.hexdigest()[:16],
         "files": ["index.html", *[f for f in files if f != "index.html"]],

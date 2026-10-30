@@ -38,3 +38,15 @@ def test_precache_lists_existing_files_only() -> None:
     missing = [f for f in manifest["files"] if not (WEB / f).is_file()]
     assert missing == []
     assert "sw.js" not in manifest["files"]
+
+
+def test_precache_version_matches_the_current_files() -> None:
+    """A stale version would leave returning visitors on old cached files: rebuild with
+    `make ui-data` (scripts/build_web_data.py) after changing anything under web/."""
+    import sys
+
+    sys.path.insert(0, str(WEB.parent / "scripts"))
+    from build_web_data import precache
+
+    committed = json.loads((WEB / "data" / "precache.json").read_text(encoding="utf-8"))
+    assert committed == precache()
