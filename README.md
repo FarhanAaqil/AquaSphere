@@ -28,7 +28,7 @@ It was built for **Smart India Hackathon problem statement 26066** (Ministry of 
 
 ## ✨ What you get
 
-| | |
+| Feature | What it means |
 |---|---|
 | 🌡️ **A full profile** | Temperature at 15 depths, plus mixed-layer depth, the 20 °C and 26 °C isotherm depths and upper-ocean heat content |
 | 🎯 **A calibrated 90% band** | Conformal intervals calibrated separately for each region and monsoon season; **90.0% coverage** on the test period |
@@ -212,7 +212,7 @@ AquaSphere/
 
 ## 📚 Documentation
 
-| | |
+| Document | Contents |
 |---|---|
 | [Model card](docs/MODEL_CARD.md) | What the model is, how it was trained, every result and known failure mode |
 | [Data card](docs/DATA_CARD.md) | Sources, coverage, quality control and the input-independence audit |
