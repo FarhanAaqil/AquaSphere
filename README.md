@@ -1,264 +1,240 @@
-# AquaSphere — OceanEmbed
+<div align="center">
 
-> **Smart India Hackathon Problem Statement 26066**  
-> **Problem:** Satellite Embedding-Based Deep Learning Framework for Reconstruction of Subsurface Ocean Temperature from Surface Satellite Observations  
-> **Host Organization:** Ministry of Earth Sciences (MoES) / Indian National Centre for Ocean Information Services (INCOIS)  
-> **Target Domain:** North Indian Ocean ($5^\circ\text{N}–30^\circ\text{N}, 45^\circ\text{E}–105^\circ\text{E}$)  
-> **Vertical Resolution:** 15 Standard Depths ($0, 5, 10, 20, 30, 50, 75, 100, 125, 150, 200, 300, 500, 700, 1000\text{ m}$)
+# 🌊 AquaSphere
 
----
+**Reading the North Indian Ocean's first 1,000 metres from space, with uncertainty you can trust.**
 
-## 🌊 Executive Summary
+Subsurface temperature reconstructed from daily satellite observations, with a calibrated 90% interval at every depth, a real-time nowcast mode and a flag for inputs it has never seen.
 
-Argo floats measure the ocean's temperature down to 1000 m, but they are sparse: a few hundred
-floats for the whole North Indian Ocean, each surfacing every ten days. Satellites see the
-surface every day but nothing below it. **AquaSphere** learns the link between the two: from
-satellite sea-surface temperature, sea-level anomaly, salinity, currents and winds it
-reconstructs the temperature at 15 depths, with a calibrated 90% interval at every depth, a flag
-for inputs unlike anything it was trained on, and a nowcast mode that needs only the sensors
-available in real time.
+[![CI](https://github.com/FarhanAaqil/AquaSphere/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/FarhanAaqil/AquaSphere/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-14b8a6.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-22d3ee.svg)](pyproject.toml)
+[![Release v1.0.0](https://img.shields.io/github/v/release/FarhanAaqil/AquaSphere?color=6366f1)](https://github.com/FarhanAaqil/AquaSphere/releases/tag/v1.0.0)
+[![SIH 26066](https://img.shields.io/badge/SIH-26066%20·%20MoES%20%2F%20INCOIS-fbbf24.svg)](#)
 
-Everything is built from open data (NOAA ERDDAP, Argovis) and evaluated the way the project
-blueprint asks: train 2015-2022, calibrate 2023, and a 2024-2025 test period that was locked and
-then read exactly once, against hypotheses frozen in advance. Negative results are reported.
+<img src="docs/images/tour.gif" alt="A tour of the AquaSphere interface: overview globe, profile prediction, ocean products, a transect, uncertainty, the 3D ocean cube and the final evaluation" width="100%">
+
+[Quick start](#-quick-start) · [Screenshots](#-the-interface) · [Results](#-results) · [How it works](#-how-it-works) · [API](#-api) · [Docs](#-documentation)
+
+</div>
 
 ---
 
-## 📊 Results on the test period 2024-2025 (read once)
+## Why
 
-2,466 Argo profiles from 53 floats that never appear in training or calibration. Thermocline =
-50-150 m RMSE; 95% CIs from a bootstrap over floats. Full tables: `docs/results/final_eval.md`.
+Argo floats measure ocean temperature down to 1,000 m, but the North Indian Ocean has only a few hundred of them, each surfacing every ten days. Satellites see the whole ocean every day, but only its skin. **AquaSphere learns the link between the two**, so that for any point and day it can estimate the full temperature profile from surface observations alone.
 
-| Model | Thermocline RMSE (°C) | 95% CI | Skill vs climatology |
-|---|---|---|---|
-| B0 Climatology (2015-2022, 2° monthly) | 1.539 | 1.36-1.74 | 0.000 |
+It was built for **Smart India Hackathon problem statement 26066** (Ministry of Earth Sciences / INCOIS): the Arabian Sea and Bay of Bengal, 5-30°N and 45-105°E, at 15 depths from the surface to 1,000 m.
+
+## ✨ What you get
+
+| Feature | What it means |
+|---|---|
+| 🌡️ **A full profile** | Temperature at 15 depths, plus mixed-layer depth, the 20 °C and 26 °C isotherm depths and upper-ocean heat content |
+| 🎯 **A calibrated 90% band** | Conformal intervals calibrated separately for each region and monsoon season; **90.0% coverage** on the test period |
+| ⚡ **Nowcast mode** | Runs on SST and sea level alone, the inputs available in real time, and **keeps all of its skill** |
+| 🧭 **An applicability flag** | A dissimilarity index warns when the inputs look unlike anything in training |
+| 🌀 **Ocean products** | Cyclone heat potential, anomaly maps, transects, depth-time sections, two-date comparisons, CSV/NetCDF export |
+| 🛡️ **Honesty by design** | Every chart names its data source; a missing observation is a "Data unavailable", never a guess; the app works offline and says so |
+
+## 🖥️ The interface
+
+Every screenshot below is the running app on real 2015-2025 data, captured during the final click-through test (49 of 49 checks passed in Chrome).
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/overview.jpg" alt="Overview with the globe and the 418 Argo floats"><br><b>Overview</b> · a globe with the 418 Argo floats, the headline results, and a scroll-driven descent from the surface to 1,000 m.</td>
+<td width="50%"><img src="docs/images/predict.jpg" alt="Predict view with a temperature profile and its 90% band"><br><b>Predict</b> · click anywhere for a profile with its 90% band, isotherm depths, cyclone heat potential and an applicability check.</td>
+</tr>
+<tr>
+<td><img src="docs/images/products.jpg" alt="Ocean products map of cyclone heat potential"><br><b>Ocean Products</b> · cyclone heat potential, the 26 °C isotherm, anomalies, interval width and the dissimilarity index, with a two-date compare mode.</td>
+<td><img src="docs/images/transect.jpg" alt="Transect from the Arabian Sea to the Bay of Bengal"><br><b>Sections</b> · a depth × distance transect between any two clicks, with the 20 °C isotherm traced on it.</td>
+</tr>
+<tr>
+<td><img src="docs/images/hovmoller.jpg" alt="Depth by time section at one point"><br><b>Depth-time</b> · follow one point through a year of the stored record.</td>
+<td><img src="docs/images/uncertainty.jpg" alt="Calibration comparison and reliability diagram"><br><b>Uncertainty</b> · four ways to build the band compared, and a reliability diagram that sits on the diagonal.</td>
+</tr>
+<tr>
+<td><img src="docs/images/cube.jpg" alt="3D ocean cube of temperature slices"><br><b>Ocean Cube</b> · stacked temperature slices for the whole domain, with a date player.</td>
+<td><img src="docs/images/final.jpg" alt="Final evaluation card with the hypothesis verdicts"><br><b>Experiments</b> · the one test-period verdict on each frozen hypothesis, next to the baseline ladder.</td>
+</tr>
+</table>
+
+Eleven views in all, also including the Profile Explorer (predictions against 2023 Argo profiles the model never saw), Sensors & Modes, Explain and Data & Model Cards. The interface is vanilla ES modules with three.js, GSAP and Plotly vendored: no build step, no CDN calls, and it keeps working offline.
+
+## 📊 Results
+
+The test period, **2024-2025**, was locked during development and **read exactly once**, against five hypotheses frozen in advance. It covers 2,466 Argo profiles from 53 floats that never appear in training or calibration.
+
+| Model | Thermocline RMSE, 50-150 m (°C) | 95% CI | Skill vs climatology |
+|---|---:|---:|---:|
+| B0 Climatology (2015-2022) | 1.539 | 1.36-1.74 | 0.000 |
 | B1 Climatology + ridge | 1.333 | 1.19-1.50 | 0.249 |
 | B2 Climatology + LightGBM | 1.239 | 1.11-1.39 | 0.352 |
 | B3 v1 network, retrained | 1.470 | 1.30-1.66 | 0.087 |
 | B4 Deep ensemble (5 networks) | 1.237 | 1.11-1.38 | 0.354 |
 | **AquaSphere Tier A v2 (served)** | **1.262** | 1.13-1.41 | 0.327 |
-| AquaSphere, nowcast mode (SST + SLA only) | 1.253 | 1.13-1.41 | 0.336 |
+| AquaSphere, nowcast mode | 1.253 | 1.13-1.41 | 0.336 |
 
-The served model is level with the strongest baselines rather than better than them. What it adds
-is in the hypotheses below: calibrated intervals in every region and season, a nowcast mode that
-keeps all of its skill, and an applicability flag.
+| Frozen hypothesis | Estimate (95% CI) | Threshold | Holm p | |
+|---|---|---|---|:---:|
+| H1a Adding sea level to SST lowers thermocline error | 19.8% (17.0-22.5%) | ≥ 15% | 0.002 | ✅ |
+| H1b Nowcast keeps the full-sensor skill | ratio 1.03 (0.95-1.15) | ≥ 0.85 | < 0.001 | ✅ |
+| H2 Self-supervised pre-training helps | -0.4% / +1.1% | ≥ 5% / ≥ 10% | 1.0 | ❌ |
+| H3 The 90% intervals are calibrated | 90.0% coverage (88.6-91.1%) | 87-93% | 0.002 | ✅ |
+| H4 A random split flatters error by ≥ 20% | 3.2% (-10.0-14.2%) | ≥ 20% | 1.0 | ❌ |
 
-| Frozen hypothesis | Estimate (95% CI) | Threshold | Holm p | Result |
-|---|---|---|---|---|
-| H1a Adding SLA to SST lowers thermocline RMSE | 19.8% (17.0-22.5%) | >= 15% | 0.002 | **supported** |
-| H1b Nowcast keeps the full-sensor skill | ratio 1.03 (0.95-1.15) | >= 0.85 | < 0.001 | **supported** |
-| H2 Self-supervised pre-training helps | -0.4% (full labels), +1.1% (10%) | >= 5%, >= 10% | 1.0 | not supported |
-| H3 90% intervals are calibrated | 90.0% coverage (88.6-91.1%) | 87-93% | 0.002 | **supported** |
-| H4 A random split flatters by >= 20% | 3.2% (-10.0-14.2%) | >= 20% | 1.0 | not supported |
+**In plain terms:**
+- AquaSphere is as accurate as the strongest baselines, not more accurate.
+- What it adds is calibrated intervals by regime, a nowcast mode that loses nothing, an applicability flag, and the products and interface around them.
+- **Weak spot:** the Bay of Bengal in the NE monsoon is under-covered at 80% (23 floats, descriptive only).
+- **Independent check:** at the RAMA moorings, which no model ever saw, the error is 1.08 °C against 1.05 °C for climatology. At fixed sites it does not beat climatology yet.
+- **Negative results reported:** the 9×9 patch encoder and the pre-training were both tested; neither earned a place.
 
-- **Coverage by stratum:** 87.1-92.6% in five of six region x season strata; the Bay of Bengal NE
-  monsoon covers 80.0% (descriptive only, 23 floats).
-- **Applicability flag:** 6.9% of test profiles fall outside the domain, and their error is
-  higher (1.45 °C vs 1.25 °C inside).
-- **Independent check (E8, RAMA moorings):** 1.08 °C against 1.05 °C for climatology over 5,334
-  daily sensor values; at fixed moorings the model does not beat climatology.
-- **Not shipped, reported:** the 9x9 patch encoder (worse than point features on validation) and
-  pre-training (H2).
+Full tables: [`docs/results/final_eval.md`](docs/results/final_eval.md) · validation experiments: [`docs/results/phase4.md`](docs/results/phase4.md) · moorings: [`docs/results/e8_rama.md`](docs/results/e8_rama.md)
 
----
+## 🚀 Quick start
 
-## 💡 What AquaSphere does
+```bash
+git clone https://github.com/FarhanAaqil/AquaSphere.git && cd AquaSphere
+pip install -e ".[dev,onnx]"
+```
 
-1. **One model, two modes.** Nowcast (SST + SLA, available within hours) and delayed (all
-   sensors) from the same network, trained with sensor masking.
-2. **Calibrated intervals by regime.** Split-conformal intervals calibrated separately for the
-   Arabian Sea and Bay of Bengal in each monsoon season, per depth and per mode.
-3. **Applicability domain.** A dissimilarity index in embedding space flags inputs unlike
-   anything in training, on every prediction and as a map.
-4. **Ocean products.** Cyclone heat potential, 20 °C and 26 °C isotherm depths, anomalies,
-   transects, depth-time sections and CSV/NetCDF export with provenance.
-5. **Honest serving.** Local store, disk cache, live ERDDAP, then an explicit 503: missing data is
-   never filled in, every chart carries its data source, and the app works offline with saved
-   results clearly labelled.
+A fresh clone has the code and results but not the data or weights. Download them from the [**v1.0.0 release**](https://github.com/FarhanAaqil/AquaSphere/releases/tag/v1.0.0) into `dist/release/`, then:
 
----
+```bash
+python scripts/package_release.py --verify                     # checks SHA256SUMS
+tar -xzf dist/release/aquasphere-model-tier_a_v2.tar.gz        # trained model (2 MB)
+tar -xzf dist/release/aquasphere-nio-store-2015-2025.tar.gz    # satellite store (870 MB)
+tar -xzf dist/release/aquasphere-argo-nio.tar.gz               # Argo tables (21 MB)
+python -m uvicorn aquasphere.serve.app:app --port 8000
+```
 
-## 🧪 Evaluation protocol
+Open **http://127.0.0.1:8000**. The status pill should read *API ready*, and the server picks up the trained model and the real store automatically.
 
-| Step | What |
-|---|---|
-| Splits | Train 2015-2022, validation/calibration 2023, test 2024-2025; each float belongs to the first period it appears in |
-| Freeze | Hypotheses and thresholds in `docs/hypotheses.yaml`, tagged `hypotheses-v1-2026-10-29` before any tuning |
-| Lock | The test partition needs an unlock phrase; every read is logged (`docs/results/test_access.log` has one line) |
-| Tests | Float-block bootstrap, Holm correction over the five hypotheses, power analysis per stratum |
-| Checks | `make regression` re-scores the served checkpoint; result-file hashes are frozen and checked in CI |
+<details>
+<summary><b>Rebuild everything from open data instead (about 3 hours)</b></summary>
 
-Validation (2023) experiments: `docs/results/phase4.md` (sensor ablation E3, patch encoder E4,
-pre-training curves E5, calibration methods E6, nowcast E7). Baseline ladder and leakage gap:
-`docs/results/baseline_table_v2.md`, `docs/results/e1_leakage_v2.md`.
+```bash
+make reproduce                 # or: python scripts/reproduce.py   (no make needed)
+make regression                # the served checkpoint reproduces its recorded numbers
+```
 
----
+A rebuild from a clean clone reproduced every committed number exactly. Steps and timings are in [`docs/REPRODUCE.md`](docs/REPRODUCE.md).
+</details>
 
-## 🏛️ System Architecture
+<details>
+<summary><b>Docker</b></summary>
+
+```bash
+docker build -t aquasphere .
+docker run -p 8000:8000 -v "$PWD/checkpoints:/app/checkpoints" -v "$PWD/data/store:/app/data/store" aquasphere
+```
+</details>
+
+## 🔬 How it works
 
 ```mermaid
-flowchart TD
-    subgraph Multi_Sensor_Ingestion[1. Satellite & In-Situ Data Ingestion]
-        A[NOAA OISST v2.1\nAVHRR Surface Temp]
-        B[CMEMS DUACS\nSea Level Anomaly + Currents]
-        C[NASA SMAP\nSea Surface Salinity]
-        D[CCMP / ERA5\nSurface Wind Stress]
-        ARGO[Argo GDAC\nDelayed-Mode In-Situ Profiles]
+flowchart LR
+    subgraph Inputs[Open data]
+        SST[OISST v2.1<br/>sea-surface temperature]
+        SSH[NESDIS altimetry<br/>sea level + currents]
+        SSS[SMAP<br/>salinity]
+        WND[NOAA blended<br/>winds]
+        ARGO[Argo via Argovis<br/>56,114 profiles]
     end
-
-    subgraph Storage[2. Data Layer]
-        ZARR[(Multi-Sensor Zarr Store\n0.25° Regular NIO Grid)]
-        MAN[Data Provenance Manifest\nSHA-256 Checksums]
-    end
-
-    subgraph Model_Hierarchy[3. Model Architecture]
-        TA[Tier A: Multi-Sensor MLP\n18-d input -> 16-d Latent Embedding]
-        TB[Tier B: Patch CNN\nSpatial Eddies & Thermal Fronts]
-        TC[Tier C: Masked Autoencoder\nSelf-Supervised Pre-Training]
-        CAL[Conformal Calibrator\nDistribution-Free 90% Bounds]
-    end
-
-    subgraph Serving[4. FastAPI Serving Layer]
-        RES[4-Stage Honest Resolver\nZarr -> Disk Cache -> ERDDAP -> 503]
-        API[FastAPI Endpoints\n/predict · /predict_batch · /grid · /validation/profile]
-    end
-
-    subgraph Frontend[5. Modular Web Interface]
-        UI[Native ES Modules Frontend\n9 Dynamic Interactive Views]
-    end
-
-    A & B & C & D --> ZARR
-    ARGO --> ZARR
-    ZARR --> MAN
-    ZARR --> TA & TB & TC
-    TA & TB --> CAL
-    CAL --> API
-    RES --> API
+    STORE[(0.25° daily Zarr store<br/>2015-2025)]
+    MODEL[Tier A v2<br/>encoder → 16-d embedding<br/>→ μ, σ at 15 depths]
+    CAL[Mondrian conformal<br/>region × season, per mode]
+    DI[Dissimilarity index]
+    API[FastAPI + ONNX<br/>store → cache → live → 503]
+    UI[Web app<br/>11 views, offline-ready]
+    SST & SSH & SSS & WND --> STORE
+    STORE --> MODEL
+    ARGO --> MODEL
+    MODEL --> CAL --> API
+    MODEL --> DI --> API
     API --> UI
 ```
 
----
+1. **Data.** Five open NOAA products are fetched from ERDDAP onto a 0.25° daily grid for 2015-2025. Missing days stay missing. Argo profiles get quality control, pressure-to-depth conversion and interpolation to the 15 standard depths.
+2. **Model.** 18 inputs per point: position, season, seven sensors and an availability flag for each. A residual MLP encodes them into a 16-dimensional embedding, and a decoder predicts the anomaly from a training-years climatology, with a mean and a variance at every depth. 30% of training samples see only SST and sea level, so one network serves both modes.
+3. **Uncertainty.** Split-conformal quantiles are fitted on 2023, separately for the Arabian Sea and Bay of Bengal in each monsoon season. The embedding also drives the applicability flag.
+4. **Evaluation (protocol v2).** Train on 2015-2022, calibrate on 2023, test on 2024-2025, with every float in only one period. Hypotheses were frozen under a git tag before tuning. The test partition sits behind an unlock phrase and an access log, which holds exactly one entry. Statistics use a float-block bootstrap, Holm correction and a power analysis per stratum.
+5. **Serving.** FastAPI with an honest resolver that tries the local store, then the disk cache, then a live ERDDAP fetch, and otherwise returns an explicit 503. ONNX inference is verified against torch at load. Gzip, ETags, Prometheus metrics and rate limiting are built in.
 
-## 🖥️ Modular Interactive Frontend (`web/`)
+## 🔌 API
 
-A single-page app in vanilla ES modules: no build step, no bundler, no framework, and no CDN calls at runtime. Three.js r170, GSAP 3.12.5 + ScrollTrigger, Plotly 2.35.2 and the Sora / Inter / JetBrains Mono fonts are all vendored, so it works fully offline.
+Interactive docs are at `/docs`. The v1 routes keep their contract; v2 adds products.
 
-Eleven views, served at `/` with hash routes. The top-bar mode switch (Delayed / Nowcast) is sent to every prediction:
-
-| Tab | What it shows | Data |
-|---|---|---|
-| Overview | Zooming globe with real Argo float positions, headline results, live `/health` + `/ready`, scroll descent to 1000 m | metrics.json, `/predict` |
-| Predict | Click-to-predict profile with 90% conformal band, D20/MLD/TCHP, dissimilarity index, applicability check, CSV/NetCDF export | `/predict`, `/v2/export/profile` |
-| Profile Explorer | Predicted vs held-out Argo, per-depth errors, Arabian Sea / Bay of Bengal filter, training floats flagged | `/validation/profile` |
-| Ocean Cube | 3-D stacked depth slices + 2-D map, date scrubber | `/predict_batch` |
-| Ocean Products | Cyclone heat potential, D26/D20/MLD, temperature and anomaly at a depth, interval width, dissimilarity; compare two dates; grid export | `/v2/grid`, `/v2/export/grid` |
-| Sections | Transect (depth x distance) between two clicks; depth x time (Hovmoller) at a point | `/v2/transect`, `/v2/timeseries` |
-| Uncertainty | E6 calibration comparison, reliability diagram, Mondrian coverage by region x season, dissimilarity map, drift monitor, interval-width maps | phase4.json, `/v2/grid`, `/v2/drift` |
-| Sensors & Modes | E3 sensor ladder with paired differences and strata, E7 nowcast vs delayed | phase4.json |
-| Experiments | E1 leakage gap, E2 baseline ladder, E4 patch encoder, physics-term ablation, E5 learning curves; E8 pending | metrics_v2.json, phase4.json |
-| Explain | Feature and sensor-family attribution, embedding map | `/explain`, `/grid` |
-| Data & Model Cards | Build SHA, artefact hashes, splits, source audit, limitations, PDF export | build_info.json, `/ready` |
-
-Every chart carries a provenance badge (Local store, Disk cache, Live, Offline demo (synthetic), Results file). A 503 renders as "Data unavailable"; missing experiment results render as "Pending". Offline demo mode (display settings) is opt-in and watermarked.
-
-### API v2
-
-The v1 routes keep their contract; every addition is a new optional field or a new route.
-
-| Route | Purpose |
+| Route | What it returns |
 |---|---|
-| `GET /predict?mode=delayed\|nowcast` (also `/predict_batch`, `/grid`) | Nowcast withholds salinity, winds and currents (they arrive days late). Responses add `mode`, `interval_method`, `tchp`, `d26`, `di`, `in_domain` |
-| `GET /v2/meta` | Served protocol, modes, interval method, dissimilarity threshold, ONNX in use |
-| `GET /v2/grid?date&depth&step&mode` | Map layers: temperature, anomaly, sigma, interval width, MLD, D20, D26, TCHP, DI |
-| `GET /v2/transect?lat1&lon1&lat2&lon2&date&n` | Depth x distance section along the great circle |
-| `GET /v2/timeseries?lat&lon&start&end&step_days` | Depth x time at one point, local-store dates only |
-| `GET /v2/export/profile`, `/v2/export/grid` (`format=csv\|netcdf`) | Profiles with intervals and a provenance header (model, git commit, data source) |
-| `GET /v2/drift?start&end&step_days` | Mean dissimilarity of the domain over time against the training data |
-| `GET /metrics` | Prometheus metrics (requests, latency histogram, 429s, readiness) |
-
-Every response is gzip-compressed when large, carries an `ETag` (a repeat request with `If-None-Match` gets a 304), an `X-Request-ID`, and one JSON access-log line. Clients are rate limited per IP (`AQUASPHERE_RATE_LIMIT` per minute, default 600). With `pip install -e ".[onnx]"` and `make onnx`, the Tier A v2 network is served by onnxruntime after a parity check against torch. Cells, points or dates without a surface observation are left out and listed, never filled in.
+| `GET /predict?lat&lon&date&mode=delayed\|nowcast` | One profile with its 90% interval, MLD, D20, D26, TCHP, `di`, `in_domain` |
+| `POST /predict_batch`, `POST /v2/predict_batch` | Up to 5,000 points (v2 lists points without data instead of failing) |
+| `GET /v2/grid?date&depth&step&mode` | Map layers: temperature, anomaly, σ, interval width, MLD, D20, D26, TCHP, DI |
+| `GET /v2/transect`, `GET /v2/timeseries` | Depth × distance and depth × time sections |
+| `GET /v2/export/profile`, `GET /v2/export/grid` | CSV or NetCDF with a provenance header |
+| `GET /v2/drift` | Domain-mean dissimilarity over time |
+| `GET /validation/profile` | Nearest held-out Argo profile with prediction and RMSE |
+| `GET /health`, `/ready`, `/meta`, `/metrics` | Liveness, readiness and provenance, metadata, Prometheus |
 
 ```bash
-make ui-data            # copy results into web/data and build dates/floats/held-out/build-info files
-make serve              # API + frontend on http://127.0.0.1:8000
-pip install -e ".[e2e]" && python -m playwright install chromium
-pytest tests/e2e --no-cov   # browser smoke + WCAG 2.1 AA accessibility tests
+curl "http://127.0.0.1:8000/predict?lat=15&lon=65&date=2024-07-15&mode=nowcast"
 ```
 
----
+## 🧪 Quality
 
-## ⚡ Fast Deployment & Quickstart
+- **CI on every push and pull request:** ruff, mypy, about 270 tests with an 80% coverage gate, 40 Playwright browser tests including WCAG 2.1 AA checks, a dependency audit, a Docker build and a smoke training run.
+- **Numbers cannot drift silently:** a regression gate re-scores the served model, and CI fails if any results file changes without being re-frozen.
+- **A full click-through in real Chrome** (`python scripts/walkthrough.py`) covers every tab, control and export, plus opening the app with the API stopped.
 
-### Prerequisites
-- Python 3.11+
-- Virtual environment (`venv` or `uv`)
-
-### 1. Installation
 ```bash
-git clone https://github.com/FarhanAaqil/AquaSphere.git
-cd AquaSphere
-pip install -e ".[dev]"
+pytest tests/ --cov=aquasphere --cov-fail-under=80
+pytest tests/e2e --no-cov          # needs: python -m playwright install chromium
 ```
 
-### 2. Run Test Suite
-```bash
-# Run pytest with code coverage gate (>= 80%)
-python -m pytest tests/ --cov=aquasphere --cov-fail-under=80 -q
-```
-
-### 3. Start the Serving Layer
-```bash
-python -m aquasphere.serve.app --host 0.0.0.0 --port 8000
-```
-A fresh clone has no data or weights, so the API serves untrained weights and says so on every response. To serve the trained Tier A v2 model on the real 2015-2025 store, either run `make reproduce` (about 3 hours from open data; `python scripts/reproduce.py` where `make` is missing) or download the release assets from [v1.0.0](https://github.com/FarhanAaqil/AquaSphere/releases/tag/v1.0.0) (model, 2015-2025 store and Argo tables, with SHA256SUMS) and unpack them; see `docs/REPRODUCE.md`.
-
-Open **`http://127.0.0.1:8000`** in any web browser to interact with the dashboard (on Windows, `localhost` adds a ~2 s IPv6 fallback to every request from scripts).
-
-### 4. Run via Docker
-```bash
-docker build -t aquasphere:latest .
-docker run -p 8000:8000 aquasphere:latest
-```
-
----
-
-## 📜 Repository Structure
+## 📁 Repository layout
 
 ```text
 AquaSphere/
-├── pyproject.toml              # Dependencies, ruff, mypy, pytest & coverage configuration
-├── Makefile                    # reproduce, test, lint, train, eval commands
-├── Dockerfile                  # Lightweight CPU-optimized container deployment
-├── configs/
-│   ├── model_a.yaml            # Tier A scalar MLP hyperparameters
-│   ├── model_b.yaml            # Tier B patch CNN configuration
-│   └── ssl.yaml                # Tier C masked autoencoder pre-training setup
 ├── src/aquasphere/
-│   ├── constants.py            # NIO spatial bounds, standard depths, mask names
-│   ├── data/                   # Argo loader, satellite client, collocator, Zarr store, splits
-│   ├── models/                 # Tier A encoder/decoder, Patch CNN, Masked Autoencoder, losses
-│   ├── train/                  # Training loop, conformal calibration, anomaly modeling
-│   ├── eval/                   # Metrics (RMSE, D20, MLD, SS), baseline ladder, ablation runner
-│   └── serve/                  # FastAPI app, Pydantic schemas, 4-stage honest resolver, engine
-├── web/                        # Vanilla ES module single-page frontend (no build step)
-│   ├── index.html              # App shell, import map, nine hash-routed tabs
-│   ├── styles/                 # tokens.css, base.css, components.css, tabs/
-│   ├── js/                     # main, router, api, state, demo; three/, charts/, tabs/, ui/
-│   ├── vendor/                 # three r170 (+ OrbitControls), GSAP 3.12.5 + ScrollTrigger, Plotly 2.35.2
-│   ├── fonts/ assets/          # Self-hosted fonts, icon sprite, Natural Earth coastlines
-│   └── data/                   # Results files + files written by scripts/build_web_data.py
-├── tests/                      # Unit, ML behavior, API contract, and data integrity tests
-└── docs/                       # ARCHITECTURE.md, MODEL_CARD.md, DATA_CARD.md, REPRODUCE.md
+│   ├── data/        ERDDAP fetch, Argovis ingest, QC, collocation, patches, Zarr store
+│   ├── models/      Tier A encoder/decoder, patch CNN, masked autoencoder, losses
+│   ├── train/       Protocol v2 training core, Mondrian conformal
+│   ├── eval/        Splits and test lock, metrics, baselines, experiments, final evaluation, RAMA
+│   └── serve/       FastAPI app, v2 routes, resolver, engine, ONNX, ops middleware
+├── web/             The interface (vanilla ES modules, service worker, vendored libraries)
+├── tests/           Unit, ML, data, API and browser tests
+├── scripts/         Web data, freeze, regression, release, reproduce, walkthrough
+├── docs/            Model card, data card, architecture, reproduce guide, results
+└── Makefile         serve · reproduce · eval-phase4 · eval-rama · regression · release
 ```
 
----
+## 📚 Documentation
 
-## 🛡️ Scientific Limitations & Operational Disclaimer
+| Document | Contents |
+|---|---|
+| [Model card](docs/MODEL_CARD.md) | What the model is, how it was trained, every result and known failure mode |
+| [Data card](docs/DATA_CARD.md) | Sources, coverage, quality control and the input-independence audit |
+| [Architecture](docs/ARCHITECTURE.md) | Pipeline, resolver and frontend structure |
+| [Reproduce](docs/REPRODUCE.md) | Rebuild from open data, release assets, the one-time test read |
+| [Hypotheses](docs/hypotheses.yaml) · [deviations](docs/hypotheses_deviations.md) | What was frozen before the test period, and every clarification made since |
+| [Demo script](docs/DEMO_SCRIPT.md) | A five-minute pitch and live tour |
 
-- **Not better than strong baselines:** on the test period Tier A v2 (1.26 °C) is level with LightGBM and the deep ensemble (1.24 °C); at RAMA moorings it does not beat climatology.
-- **Bay of Bengal in winter:** the NE-monsoon stratum covers 80.0% with nominal 90% intervals (23 floats); Bay of Bengal strata are too thin for confirmatory claims.
-- **Nowcast inputs:** nowcast mode was evaluated on the final OISST release; the preliminary release used in real time is replaced after about two weeks and could not be tested retrospectively.
-- **Nearshore Coastal Waters:** Satellite radiometer footprint degradation and radio-frequency interference contaminate SSS and SLA retrievals within $<50\text{ km}$ of the coastline.
-- **Extreme Salinity Stratification:** Heavy monsoon freshwater plumes from the Ganges-Brahmaputra system in the northern Bay of Bengal form barrier layers requiring multi-sensor salinity correction.
-- **Abyssal Depths ($>700\text{ m}$):** Surface satellite proxies exhibit reduced physical coupling to deep abyssal water masses; uncertainty intervals widen accordingly.
-- **Operational Status:** AquaSphere is a research and decision-support prototype. It is not approved for submarine navigation or safety-critical offshore operations without independent INCOIS oceanographic verification.
+## ⚠️ Limitations
+
+- **Accuracy:** level with LightGBM and a deep ensemble on the test period, not ahead.
+- **Moorings:** no better than climatology at the RAMA moorings.
+- **Bay of Bengal in winter:** intervals under-cover (80%), and its strata are too thin for confirmatory claims.
+- **Real-time SST untested:** nowcast mode was evaluated on the final SST release, not the preliminary near-real-time one.
+- **A research prototype:** not validated for navigation, safety-critical offshore work or search and rescue without independent INCOIS verification.
+
+## 🙏 Acknowledgements
+
+- **Data:** sea-surface temperature, altimetry, salinity and winds come from NOAA ERDDAP (NCEI OISST v2.1, NOAA/NESDIS, NASA SMAP via CoastWatch, NOAA Blended Sea Winds).
+- **Argo:** profiles come via [Argovis](https://argovis.colorado.edu). They were collected and made freely available by the International Argo Program and the national programs that contribute to it.
+- **Moorings:** RAMA data come from NOAA PMEL's Global Tropical Moored Buoy Array.
+
+## 📄 License
+
+[MIT](LICENSE) © 2026 Farhan Aaqil
