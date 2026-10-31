@@ -53,3 +53,8 @@ ui_reference/
 aquasphere_implementation_plan.md
 # The one test-period read is evidence, not a log to ignore
 !docs/results/test_access.log
+
+# docs/ on GitHub holds only the README images and the results files
+docs/*
+!docs/images/
+!docs/results/

@@ -1,0 +1,1433 @@
+{
+ "generated_at": "2026-10-30T00:06:01+00:00",
+ "quick": false,
+ "split": {
+  "train_profiles": 45645,
+  "val_profiles": 761,
+  "val_floats": 37
+ },
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "physics": {
+  "with": {
+   "thermocline_rmse": 1.2746,
+   "ci": [
+    1.0812,
+    1.4862
+   ],
+   "headline_rmse": 1.1239,
+   "skill_thermocline": 0.3439,
+   "bands": [
+    {
+     "band": "0-10 m (OISST-dependent)",
+     "rmse": 0.7913,
+     "bias": -0.1999,
+     "n": 2271
+    },
+    {
+     "band": "20-30 m",
+     "rmse": 1.411,
+     "bias": -0.1706,
+     "n": 1518
+    },
+    {
+     "band": "50-150 m (thermocline)",
+     "rmse": 1.2746,
+     "bias": 0.2246,
+     "n": 3781
+    },
+    {
+     "band": "200-300 m",
+     "rmse": 0.9851,
+     "bias": 0.0571,
+     "n": 1484
+    },
+    {
+     "band": "500-1000 m",
+     "rmse": 0.5273,
+     "bias": -0.0757,
+     "n": 2067
+    }
+   ],
+   "seeds": {
+    "mean": 1.2903,
+    "std": 0.0157
+   }
+  },
+  "without": {
+   "thermocline_rmse": 1.2728,
+   "ci": [
+    1.0798,
+    1.4834
+   ],
+   "headline_rmse": 1.1233,
+   "skill_thermocline": 0.3458,
+   "bands": [
+    {
+     "band": "0-10 m (OISST-dependent)",
+     "rmse": 0.792,
+     "bias": -0.2019,
+     "n": 2271
+    },
+    {
+     "band": "20-30 m",
+     "rmse": 1.4118,
+     "bias": -0.1734,
+     "n": 1518
+    },
+    {
+     "band": "50-150 m (thermocline)",
+     "rmse": 1.2728,
+     "bias": 0.2209,
+     "n": 3781
+    },
+    {
+     "band": "200-300 m",
+     "rmse": 0.9855,
+     "bias": 0.0554,
+     "n": 1484
+    },
+    {
+     "band": "500-1000 m",
+     "rmse": 0.5274,
+     "bias": -0.0758,
+     "n": 2067
+    }
+   ],
+   "seeds": {
+    "mean": 1.2891,
+    "std": 0.0151
+   }
+  },
+  "with_minus_without": {
+   "diff_c": 0.0019,
+   "ci": [
+    0.0004,
+    0.0031
+   ],
+   "p": 0.011,
+   "relative": 0.0015
+  },
+  "chosen": "without"
+ },
+ "e3": {
+  "configs": {
+   "A1": {
+    "label": "SST",
+    "channels": [
+     "sst"
+    ],
+    "thermocline_rmse": 1.5515,
+    "ci": [
+     1.3033,
+     1.8599
+    ],
+    "headline_rmse": 1.2704,
+    "skill_thermocline": 0.0278,
+    "bands": [
+     {
+      "band": "0-10 m (OISST-dependent)",
+      "rmse": 0.7645,
+      "bias": -0.1287,
+      "n": 2271
+     },
+     {
+      "band": "20-30 m",
+      "rmse": 1.4015,
+      "bias": -0.1748,
+      "n": 1518
+     },
+     {
+      "band": "50-150 m (thermocline)",
+      "rmse": 1.5515,
+      "bias": 0.1892,
+      "n": 3781
+     },
+     {
+      "band": "200-300 m",
+      "rmse": 1.0402,
+      "bias": 0.0013,
+      "n": 1484
+     },
+     {
+      "band": "500-1000 m",
+      "rmse": 0.5362,
+      "bias": -0.1073,
+      "n": 2067
+     }
+    ],
+    "seeds": {
+     "mean": 1.5545,
+     "std": 0.0053
+    },
+    "strata": [
+     {
+      "region": "Arabian Sea",
+      "season": "NE monsoon",
+      "profiles": 137,
+      "floats": 23,
+      "thermocline_rmse": 1.5492,
+      "skill": 0.0883
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "Inter-monsoon",
+      "profiles": 225,
+      "floats": 20,
+      "thermocline_rmse": 1.1951,
+      "skill": 0.0327
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "SW monsoon",
+      "profiles": 234,
+      "floats": 7,
+      "thermocline_rmse": 1.2347,
+      "skill": 0.0248
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "NE monsoon",
+      "profiles": 41,
+      "floats": 13,
+      "thermocline_rmse": 2.8857,
+      "skill": -0.0059
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "Inter-monsoon",
+      "profiles": 96,
+      "floats": 14,
+      "thermocline_rmse": 2.0706,
+      "skill": 0.0048
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "SW monsoon",
+      "profiles": 28,
+      "floats": 12,
+      "thermocline_rmse": 1.5954,
+      "skill": 0.0121
+     }
+    ]
+   },
+   "A2": {
+    "label": "SST + SLA",
+    "channels": [
+     "sst",
+     "sla"
+    ],
+    "thermocline_rmse": 1.2851,
+    "ci": [
+     1.0875,
+     1.4961
+    ],
+    "headline_rmse": 1.1258,
+    "skill_thermocline": 0.3331,
+    "bands": [
+     {
+      "band": "0-10 m (OISST-dependent)",
+      "rmse": 0.7762,
+      "bias": -0.1529,
+      "n": 2271
+     },
+     {
+      "band": "20-30 m",
+      "rmse": 1.3867,
+      "bias": -0.1471,
+      "n": 1518
+     },
+     {
+      "band": "50-150 m (thermocline)",
+      "rmse": 1.2851,
+      "bias": 0.2015,
+      "n": 3781
+     },
+     {
+      "band": "200-300 m",
+      "rmse": 0.9916,
+      "bias": 0.0274,
+      "n": 1484
+     },
+     {
+      "band": "500-1000 m",
+      "rmse": 0.5365,
+      "bias": -0.0968,
+      "n": 2067
+     }
+    ],
+    "seeds": {
+     "mean": 1.297,
+     "std": 0.0132
+    },
+    "strata": [
+     {
+      "region": "Arabian Sea",
+      "season": "NE monsoon",
+      "profiles": 137,
+      "floats": 23,
+      "thermocline_rmse": 1.329,
+      "skill": 0.3291
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "Inter-monsoon",
+      "profiles": 225,
+      "floats": 20,
+      "thermocline_rmse": 1.058,
+      "skill": 0.2419
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "SW monsoon",
+      "profiles": 234,
+      "floats": 7,
+      "thermocline_rmse": 1.2204,
+      "skill": 0.0472
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "NE monsoon",
+      "profiles": 41,
+      "floats": 13,
+      "thermocline_rmse": 1.8125,
+      "skill": 0.6032
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "Inter-monsoon",
+      "profiles": 96,
+      "floats": 14,
+      "thermocline_rmse": 1.5211,
+      "skill": 0.4629
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "SW monsoon",
+      "profiles": 28,
+      "floats": 12,
+      "thermocline_rmse": 1.4397,
+      "skill": 0.1956
+     }
+    ]
+   },
+   "A3": {
+    "label": "SST + SLA + SSS",
+    "channels": [
+     "sst",
+     "sla",
+     "sss"
+    ],
+    "thermocline_rmse": 1.2907,
+    "ci": [
+     1.0864,
+     1.5061
+    ],
+    "headline_rmse": 1.1285,
+    "skill_thermocline": 0.3272,
+    "bands": [
+     {
+      "band": "0-10 m (OISST-dependent)",
+      "rmse": 0.7985,
+      "bias": -0.141,
+      "n": 2271
+     },
+     {
+      "band": "20-30 m",
+      "rmse": 1.3975,
+      "bias": -0.151,
+      "n": 1518
+     },
+     {
+      "band": "50-150 m (thermocline)",
+      "rmse": 1.2907,
+      "bias": 0.2087,
+      "n": 3781
+     },
+     {
+      "band": "200-300 m",
+      "rmse": 0.9851,
+      "bias": 0.0593,
+      "n": 1484
+     },
+     {
+      "band": "500-1000 m",
+      "rmse": 0.5239,
+      "bias": -0.0926,
+      "n": 2067
+     }
+    ],
+    "seeds": {
+     "mean": 1.3039,
+     "std": 0.0182
+    },
+    "strata": [
+     {
+      "region": "Arabian Sea",
+      "season": "NE monsoon",
+      "profiles": 137,
+      "floats": 23,
+      "thermocline_rmse": 1.3416,
+      "skill": 0.3164
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "Inter-monsoon",
+      "profiles": 225,
+      "floats": 20,
+      "thermocline_rmse": 1.0541,
+      "skill": 0.2475
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "SW monsoon",
+      "profiles": 234,
+      "floats": 7,
+      "thermocline_rmse": 1.2171,
+      "skill": 0.0524
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "NE monsoon",
+      "profiles": 41,
+      "floats": 13,
+      "thermocline_rmse": 1.8267,
+      "skill": 0.5969
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "Inter-monsoon",
+      "profiles": 96,
+      "floats": 14,
+      "thermocline_rmse": 1.5302,
+      "skill": 0.4564
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "SW monsoon",
+      "profiles": 28,
+      "floats": 12,
+      "thermocline_rmse": 1.5096,
+      "skill": 0.1156
+     }
+    ]
+   },
+   "A4": {
+    "label": "All sensors",
+    "channels": [
+     "sst",
+     "sss",
+     "sla",
+     "ug",
+     "vg",
+     "u10",
+     "v10"
+    ],
+    "thermocline_rmse": 1.2711,
+    "ci": [
+     1.0825,
+     1.4748
+    ],
+    "headline_rmse": 1.1197,
+    "skill_thermocline": 0.3475,
+    "bands": [
+     {
+      "band": "0-10 m (OISST-dependent)",
+      "rmse": 0.8095,
+      "bias": -0.165,
+      "n": 2271
+     },
+     {
+      "band": "20-30 m",
+      "rmse": 1.3973,
+      "bias": -0.1583,
+      "n": 1518
+     },
+     {
+      "band": "50-150 m (thermocline)",
+      "rmse": 1.2711,
+      "bias": 0.2281,
+      "n": 3781
+     },
+     {
+      "band": "200-300 m",
+      "rmse": 0.9897,
+      "bias": 0.0411,
+      "n": 1484
+     },
+     {
+      "band": "500-1000 m",
+      "rmse": 0.5248,
+      "bias": -0.091,
+      "n": 2067
+     }
+    ],
+    "seeds": {
+     "mean": 1.2858,
+     "std": 0.0071
+    },
+    "strata": [
+     {
+      "region": "Arabian Sea",
+      "season": "NE monsoon",
+      "profiles": 137,
+      "floats": 23,
+      "thermocline_rmse": 1.3594,
+      "skill": 0.298
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "Inter-monsoon",
+      "profiles": 225,
+      "floats": 20,
+      "thermocline_rmse": 1.0248,
+      "skill": 0.2887
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "SW monsoon",
+      "profiles": 234,
+      "floats": 7,
+      "thermocline_rmse": 1.2339,
+      "skill": 0.0261
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "NE monsoon",
+      "profiles": 41,
+      "floats": 13,
+      "thermocline_rmse": 1.6384,
+      "skill": 0.6758
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "Inter-monsoon",
+      "profiles": 96,
+      "floats": 14,
+      "thermocline_rmse": 1.4698,
+      "skill": 0.4985
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "SW monsoon",
+      "profiles": 28,
+      "floats": 12,
+      "thermocline_rmse": 1.5559,
+      "skill": 0.0605
+     }
+    ]
+   },
+   "A4-noSSS": {
+    "label": "All sensors except SSS",
+    "channels": [
+     "sst",
+     "sla",
+     "ug",
+     "vg",
+     "u10",
+     "v10"
+    ],
+    "thermocline_rmse": 1.2766,
+    "ci": [
+     1.1144,
+     1.4612
+    ],
+    "headline_rmse": 1.1318,
+    "skill_thermocline": 0.3418,
+    "bands": [
+     {
+      "band": "0-10 m (OISST-dependent)",
+      "rmse": 0.7868,
+      "bias": -0.1843,
+      "n": 2271
+     },
+     {
+      "band": "20-30 m",
+      "rmse": 1.4238,
+      "bias": -0.1361,
+      "n": 1518
+     },
+     {
+      "band": "50-150 m (thermocline)",
+      "rmse": 1.2766,
+      "bias": 0.2858,
+      "n": 3781
+     },
+     {
+      "band": "200-300 m",
+      "rmse": 1.0178,
+      "bias": 0.1035,
+      "n": 1484
+     },
+     {
+      "band": "500-1000 m",
+      "rmse": 0.5207,
+      "bias": -0.0635,
+      "n": 2067
+     }
+    ],
+    "seeds": {
+     "mean": 1.2993,
+     "std": 0.0169
+    },
+    "strata": [
+     {
+      "region": "Arabian Sea",
+      "season": "NE monsoon",
+      "profiles": 137,
+      "floats": 23,
+      "thermocline_rmse": 1.3993,
+      "skill": 0.2563
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "Inter-monsoon",
+      "profiles": 225,
+      "floats": 20,
+      "thermocline_rmse": 1.05,
+      "skill": 0.2533
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "SW monsoon",
+      "profiles": 234,
+      "floats": 7,
+      "thermocline_rmse": 1.2553,
+      "skill": -0.008
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "NE monsoon",
+      "profiles": 41,
+      "floats": 13,
+      "thermocline_rmse": 1.583,
+      "skill": 0.6973
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "Inter-monsoon",
+      "profiles": 96,
+      "floats": 14,
+      "thermocline_rmse": 1.4009,
+      "skill": 0.5445
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "SW monsoon",
+      "profiles": 28,
+      "floats": 12,
+      "thermocline_rmse": 1.5298,
+      "skill": 0.0917
+     }
+    ]
+   }
+  },
+  "steps": {
+   "A2 vs A1": {
+    "diff_c": -0.2665,
+    "ci": [
+     -0.4383,
+     -0.1452
+    ],
+    "p": 0.0,
+    "relative": -0.1717
+   },
+   "A3 vs A2": {
+    "diff_c": 0.0056,
+    "ci": [
+     -0.0069,
+     0.0167
+    ],
+    "p": 0.394,
+    "relative": 0.0044
+   },
+   "A4 vs A3": {
+    "diff_c": -0.0196,
+    "ci": [
+     -0.0507,
+     0.0053
+    ],
+    "p": 0.132,
+    "relative": -0.0152
+   },
+   "A4 vs A4-noSSS": {
+    "diff_c": -0.0055,
+    "ci": [
+     -0.0363,
+     0.0274
+    ],
+    "p": 0.74,
+    "relative": -0.0043
+   }
+  },
+  "h1a_direction_validation": -0.1717
+ },
+ "e4": {
+  "tier_a": {
+   "thermocline_rmse": 1.2871,
+   "ci": [
+    1.0894,
+    1.5049
+   ],
+   "headline_rmse": 1.1323,
+   "skill_thermocline": 0.331,
+   "bands": [
+    {
+     "band": "0-10 m (OISST-dependent)",
+     "rmse": 0.8115,
+     "bias": -0.203,
+     "n": 2271
+    },
+    {
+     "band": "20-30 m",
+     "rmse": 1.427,
+     "bias": -0.1559,
+     "n": 1518
+    },
+    {
+     "band": "50-150 m (thermocline)",
+     "rmse": 1.2871,
+     "bias": 0.2698,
+     "n": 3781
+    },
+    {
+     "band": "200-300 m",
+     "rmse": 0.9786,
+     "bias": 0.0392,
+     "n": 1484
+    },
+    {
+     "band": "500-1000 m",
+     "rmse": 0.5252,
+     "bias": -0.0779,
+     "n": 2067
+    }
+   ]
+  },
+  "tier_b": {
+   "thermocline_rmse": 1.3833,
+   "ci": [
+    1.1629,
+    1.627
+   ],
+   "headline_rmse": 1.1771,
+   "skill_thermocline": 0.2273,
+   "bands": [
+    {
+     "band": "0-10 m (OISST-dependent)",
+     "rmse": 0.6895,
+     "bias": -0.1765,
+     "n": 2271
+    },
+    {
+     "band": "20-30 m",
+     "rmse": 1.3764,
+     "bias": -0.1873,
+     "n": 1518
+    },
+    {
+     "band": "50-150 m (thermocline)",
+     "rmse": 1.3833,
+     "bias": 0.2013,
+     "n": 3781
+    },
+    {
+     "band": "200-300 m",
+     "rmse": 1.0187,
+     "bias": 0.0343,
+     "n": 1484
+    },
+    {
+     "band": "500-1000 m",
+     "rmse": 0.5441,
+     "bias": -0.0809,
+     "n": 2067
+    }
+   ]
+  },
+  "b_minus_a": {
+   "diff_c": 0.0962,
+   "ci": [
+    0.0072,
+    0.225
+   ],
+   "p": 0.025,
+   "relative": 0.0747
+  },
+  "note": "Tier B is the scratch arm of E5 at 100% of labels (identical architecture)."
+ },
+ "e5": {
+  "curves": {
+   "scratch": [
+    {
+     "fraction": 0.1,
+     "thermocline_rmse": 1.464,
+     "seeds": {
+      "mean": 1.5275,
+      "std": 0.0075
+     }
+    },
+    {
+     "fraction": 0.25,
+     "thermocline_rmse": 1.443,
+     "seeds": {
+      "mean": 1.4797,
+      "std": 0.0262
+     }
+    },
+    {
+     "fraction": 0.5,
+     "thermocline_rmse": 1.4394,
+     "seeds": {
+      "mean": 1.4643,
+      "std": 0.0418
+     }
+    },
+    {
+     "fraction": 1.0,
+     "thermocline_rmse": 1.3833,
+     "seeds": {
+      "mean": 1.4085,
+      "std": 0.0094
+     }
+    }
+   ],
+   "masked": [
+    {
+     "fraction": 0.1,
+     "thermocline_rmse": 1.4728,
+     "seeds": {
+      "mean": 1.5102,
+      "std": 0.0354
+     }
+    },
+    {
+     "fraction": 0.25,
+     "thermocline_rmse": 1.419,
+     "seeds": {
+      "mean": 1.4502,
+      "std": 0.0263
+     }
+    },
+    {
+     "fraction": 0.5,
+     "thermocline_rmse": 1.3745,
+     "seeds": {
+      "mean": 1.3998,
+      "std": 0.0193
+     }
+    },
+    {
+     "fraction": 1.0,
+     "thermocline_rmse": 1.3455,
+     "seeds": {
+      "mean": 1.3697,
+      "std": 0.0272
+     }
+    }
+   ],
+   "masked+temporal": [
+    {
+     "fraction": 0.1,
+     "thermocline_rmse": 1.4654,
+     "seeds": {
+      "mean": 1.4999,
+      "std": 0.0368
+     }
+    },
+    {
+     "fraction": 0.25,
+     "thermocline_rmse": 1.4302,
+     "seeds": {
+      "mean": 1.464,
+      "std": 0.0197
+     }
+    },
+    {
+     "fraction": 0.5,
+     "thermocline_rmse": 1.3767,
+     "seeds": {
+      "mean": 1.4097,
+      "std": 0.0275
+     }
+    },
+    {
+     "fraction": 1.0,
+     "thermocline_rmse": 1.3379,
+     "seeds": {
+      "mean": 1.3581,
+      "std": 0.028
+     }
+    }
+   ]
+  },
+  "pretrained_minus_scratch": {
+   "masked": {
+    "10%": {
+     "diff_c": 0.0088,
+     "ci": [
+      -0.0163,
+      0.0357
+     ],
+     "p": 0.497,
+     "relative": 0.006
+    },
+    "25%": {
+     "diff_c": -0.024,
+     "ci": [
+      -0.0552,
+      0.0068
+     ],
+     "p": 0.131,
+     "relative": -0.0166
+    },
+    "50%": {
+     "diff_c": -0.0649,
+     "ci": [
+      -0.1042,
+      -0.0319
+     ],
+     "p": 0.0,
+     "relative": -0.0451
+    },
+    "100%": {
+     "diff_c": -0.0378,
+     "ci": [
+      -0.0659,
+      -0.0107
+     ],
+     "p": 0.008,
+     "relative": -0.0273
+    }
+   },
+   "masked+temporal": {
+    "10%": {
+     "diff_c": 0.0015,
+     "ci": [
+      -0.0271,
+      0.0312
+     ],
+     "p": 0.918,
+     "relative": 0.001
+    },
+    "25%": {
+     "diff_c": -0.0128,
+     "ci": [
+      -0.0356,
+      0.0097
+     ],
+     "p": 0.244,
+     "relative": -0.0089
+    },
+    "50%": {
+     "diff_c": -0.0627,
+     "ci": [
+      -0.1013,
+      -0.0315
+     ],
+     "p": 0.0,
+     "relative": -0.0436
+    },
+    "100%": {
+     "diff_c": -0.0453,
+     "ci": [
+      -0.0867,
+      -0.0042
+     ],
+     "p": 0.025,
+     "relative": -0.0328
+    }
+   }
+  },
+  "h2_validation": {
+   "best_pretext": "masked+temporal",
+   "reduction_full_labels": 0.0328,
+   "reduction_10pct_labels": -0.001,
+   "thresholds": {
+    "full": 0.05,
+    "10%": 0.1
+   },
+   "decision": "no-go"
+  }
+ },
+ "e6": {
+  "methods": {
+   "heteroscedastic": {
+    "coverage": [
+     {
+      "region": "All",
+      "season": "All",
+      "profiles": 761,
+      "floats": 37,
+      "coverage": 0.8233971765129036,
+      "ci_low": 0.7945476168838818,
+      "ci_high": 0.8465312643600431
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "Inter-monsoon",
+      "profiles": 225,
+      "floats": 20,
+      "coverage": 0.8108682452944748,
+      "ci_low": 0.7698441328302384,
+      "ci_high": 0.8483868118710898
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "NE monsoon",
+      "profiles": 137,
+      "floats": 23,
+      "coverage": 0.7720953326713009,
+      "ci_low": 0.7000441381409087,
+      "ci_high": 0.8222157626593475
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "SW monsoon",
+      "profiles": 234,
+      "floats": 7,
+      "coverage": 0.8340224453632605,
+      "ci_low": 0.797048007657819,
+      "ci_high": 0.8819705781731099
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "Inter-monsoon",
+      "profiles": 96,
+      "floats": 14,
+      "coverage": 0.8777777777777778,
+      "ci_low": 0.8480509413067553,
+      "ci_high": 0.9052012060933435
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "NE monsoon",
+      "profiles": 41,
+      "floats": 13,
+      "coverage": 0.865040650406504,
+      "ci_low": 0.8248062015503876,
+      "ci_high": 0.9056983531373775
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "SW monsoon",
+      "profiles": 28,
+      "floats": 12,
+      "coverage": 0.8360215053763441,
+      "ci_low": 0.7074462278175231,
+      "ci_high": 0.8912403126231446
+     }
+    ],
+    "mean_width": 2.4159,
+    "crps_thermocline": 0.6669
+   },
+   "seed_ensemble": {
+    "coverage": [
+     {
+      "region": "All",
+      "season": "All",
+      "profiles": 761,
+      "floats": 37,
+      "coverage": 0.8312202140095315,
+      "ci_low": 0.8099400801597203,
+      "ci_high": 0.850113048176667
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "Inter-monsoon",
+      "profiles": 225,
+      "floats": 20,
+      "coverage": 0.8181542197935641,
+      "ci_low": 0.7832682975965245,
+      "ci_high": 0.8517609431159087
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "NE monsoon",
+      "profiles": 137,
+      "floats": 23,
+      "coverage": 0.7835153922542205,
+      "ci_low": 0.7146077623602464,
+      "ci_high": 0.832383974739539
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "SW monsoon",
+      "profiles": 234,
+      "floats": 7,
+      "coverage": 0.8405197873597164,
+      "ci_low": 0.8044217631929108,
+      "ci_high": 0.870682337483271
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "Inter-monsoon",
+      "profiles": 96,
+      "floats": 14,
+      "coverage": 0.8930555555555556,
+      "ci_low": 0.8560975609756097,
+      "ci_high": 0.9209344996799659
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "NE monsoon",
+      "profiles": 41,
+      "floats": 13,
+      "coverage": 0.8585365853658536,
+      "ci_low": 0.8130081300813008,
+      "ci_high": 0.9033333333333333
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "SW monsoon",
+      "profiles": 28,
+      "floats": 12,
+      "coverage": 0.8360215053763441,
+      "ci_low": 0.7026992376992377,
+      "ci_high": 0.8935058888870738
+     }
+    ],
+    "mean_width": 2.4297,
+    "crps_thermocline": 0.6573
+   },
+   "conformal_global": {
+    "coverage": [
+     {
+      "region": "All",
+      "season": "All",
+      "profiles": 761,
+      "floats": 37,
+      "coverage": 0.8995593921409946,
+      "ci_low": 0.8762390597239377,
+      "ci_high": 0.9196516589495095
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "Inter-monsoon",
+      "profiles": 225,
+      "floats": 20,
+      "coverage": 0.8901032179720705,
+      "ci_low": 0.859993952580478,
+      "ci_high": 0.9199331330341198
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "NE monsoon",
+      "profiles": 137,
+      "floats": 23,
+      "coverage": 0.8689175769612711,
+      "ci_low": 0.8147459832289226,
+      "ci_high": 0.9093057811913448
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "SW monsoon",
+      "profiles": 234,
+      "floats": 7,
+      "coverage": 0.9063792085056114,
+      "ci_low": 0.880244953504196,
+      "ci_high": 0.9396369108970426
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "Inter-monsoon",
+      "profiles": 96,
+      "floats": 14,
+      "coverage": 0.9395833333333333,
+      "ci_low": 0.9166616465863453,
+      "ci_high": 0.9587657770498121
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "NE monsoon",
+      "profiles": 41,
+      "floats": 13,
+      "coverage": 0.9154471544715447,
+      "ci_low": 0.8780420054200542,
+      "ci_high": 0.95
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "SW monsoon",
+      "profiles": 28,
+      "floats": 12,
+      "coverage": 0.9059139784946236,
+      "ci_low": 0.823248581284077,
+      "ci_high": 0.9447930951521712
+     }
+    ],
+    "mean_width": 3.0464,
+    "crps_thermocline": 0.6647
+   },
+   "conformal_mondrian": {
+    "coverage": [
+     {
+      "region": "All",
+      "season": "All",
+      "profiles": 761,
+      "floats": 37,
+      "coverage": 0.896232353205647,
+      "ci_low": 0.8757303430191615,
+      "ci_high": 0.9132408951108899,
+      "status": "overall"
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "Inter-monsoon",
+      "profiles": 225,
+      "floats": 20,
+      "coverage": 0.891317547055252,
+      "ci_low": 0.8636621496049917,
+      "ci_high": 0.9198685705605204,
+      "status": "confirmatory"
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "NE monsoon",
+      "profiles": 137,
+      "floats": 23,
+      "coverage": 0.9001986097318768,
+      "ci_low": 0.8500549605411499,
+      "ci_high": 0.9352542725104648,
+      "status": "descriptive only"
+     },
+     {
+      "region": "Arabian Sea",
+      "season": "SW monsoon",
+      "profiles": 234,
+      "floats": 7,
+      "coverage": 0.8987005316007088,
+      "ci_low": 0.8697050804160381,
+      "ci_high": 0.9347993018181273,
+      "status": "confirmatory"
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "Inter-monsoon",
+      "profiles": 96,
+      "floats": 14,
+      "coverage": 0.9006944444444445,
+      "ci_low": 0.8708750226080666,
+      "ci_high": 0.9256140350877193,
+      "status": "descriptive only"
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "NE monsoon",
+      "profiles": 41,
+      "floats": 13,
+      "coverage": 0.8975609756097561,
+      "ci_low": 0.8507839721254356,
+      "ci_high": 0.9418803418803419,
+      "status": "descriptive only"
+     },
+     {
+      "region": "Bay of Bengal",
+      "season": "SW monsoon",
+      "profiles": 28,
+      "floats": 12,
+      "coverage": 0.8763440860215054,
+      "ci_low": 0.777131761442441,
+      "ci_high": 0.92,
+      "status": "descriptive only"
+     }
+    ],
+    "mean_width": 3.0516,
+    "crps_thermocline": 0.6669
+   }
+  },
+  "reliability": {
+   "nominal": [
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    0.95
+   ],
+   "heteroscedastic": [
+    0.42433234421364985,
+    0.5148817552378383,
+    0.6124449240176243,
+    0.7146839313011419,
+    0.8233971765129036,
+    0.8880496358241166
+   ],
+   "conformal_mondrian": [
+    0.5028324790936067,
+    0.6043521266073195,
+    0.6999370560201421,
+    0.7983095045409585,
+    0.896232353205647,
+    0.9475766567754699
+   ]
+  },
+  "gate": {
+   "band": [
+    0.85,
+    0.95
+   ],
+   "every_stratum_in_band": true,
+   "confirmatory_strata_in_band": true
+  },
+  "applicability": {
+   "threshold": 2.6889,
+   "share_inside": 0.9014,
+   "di_quantiles_val": [
+    0.8205,
+    1.2311,
+    1.6749,
+    2.1581,
+    3.0092
+   ],
+   "inside": {
+    "profiles": 686,
+    "thermocline_rmse": 1.2914
+   },
+   "outside": {
+    "profiles": 75,
+    "thermocline_rmse": 1.2467
+   },
+   "outside_minus_inside_ci": [
+    -0.3026,
+    0.2242
+   ]
+  }
+ },
+ "e7": {
+  "delayed": {
+   "thermocline_rmse": 1.2871,
+   "ci": [
+    1.0894,
+    1.5049
+   ],
+   "headline_rmse": 1.1323,
+   "skill_thermocline": 0.331,
+   "bands": [
+    {
+     "band": "0-10 m (OISST-dependent)",
+     "rmse": 0.8115,
+     "bias": -0.203,
+     "n": 2271
+    },
+    {
+     "band": "20-30 m",
+     "rmse": 1.427,
+     "bias": -0.1559,
+     "n": 1518
+    },
+    {
+     "band": "50-150 m (thermocline)",
+     "rmse": 1.2871,
+     "bias": 0.2698,
+     "n": 3781
+    },
+    {
+     "band": "200-300 m",
+     "rmse": 0.9786,
+     "bias": 0.0392,
+     "n": 1484
+    },
+    {
+     "band": "500-1000 m",
+     "rmse": 0.5252,
+     "bias": -0.0779,
+     "n": 2067
+    }
+   ]
+  },
+  "nowcast": {
+   "thermocline_rmse": 1.2912,
+   "ci": [
+    1.0848,
+    1.5145
+   ],
+   "headline_rmse": 1.1248,
+   "skill_thermocline": 0.3267,
+   "bands": [
+    {
+     "band": "0-10 m (OISST-dependent)",
+     "rmse": 0.7957,
+     "bias": -0.1796,
+     "n": 2271
+    },
+    {
+     "band": "20-30 m",
+     "rmse": 1.3909,
+     "bias": -0.1592,
+     "n": 1518
+    },
+    {
+     "band": "50-150 m (thermocline)",
+     "rmse": 1.2912,
+     "bias": 0.2388,
+     "n": 3781
+    },
+    {
+     "band": "200-300 m",
+     "rmse": 0.9656,
+     "bias": 0.0074,
+     "n": 1484
+    },
+    {
+     "band": "500-1000 m",
+     "rmse": 0.5261,
+     "bias": -0.0897,
+     "n": 2067
+    }
+   ]
+  },
+  "skill_delayed": 0.331,
+  "skill_nowcast": 0.3267,
+  "skill_ratio": 0.9869,
+  "skill_ratio_ci": [
+   0.919,
+   1.0968
+  ],
+  "h1b_threshold": 0.85,
+  "nowcast_minus_delayed": {
+   "diff_c": 0.0042,
+   "ci": [
+    -0.0209,
+    0.0363
+   ],
+   "p": 0.727,
+   "relative": 0.0032
+  },
+  "preliminary_sst": "Not run. ERDDAP keeps the preliminary OISST release only until the final one replaces it (about two weeks), so 2023 preliminary fields no longer exist to download. E7 here uses final OISST in both modes; the preliminary-release run needs a prospective archive (blueprint's optional 2026 shadow test)."
+ },
+ "served": {
+  "tier": "Tier A v2 (point features, nowcast-aware, Mondrian conformal per mode, DI)",
+  "config": {
+   "tier": "A",
+   "channels": [
+    "sst",
+    "sss",
+    "sla",
+    "ug",
+    "vg",
+    "u10",
+    "v10"
+   ],
+   "nowcast_share": 0.3,
+   "channel_dropout": 0.1,
+   "epochs": 40,
+   "warmup": 5,
+   "batch": 256,
+   "lr": 0.001,
+   "weight_decay": 0.0001,
+   "lambda_grad": 0.0,
+   "lambda_phys": 0.0,
+   "eps_inv": 0.05,
+   "patience": 8,
+   "label_fraction": 1.0,
+   "freeze_epochs": 3,
+   "finetune_lr": 0.0003
+  },
+  "path": "checkpoints/tier_a_v2/model.pt",
+  "written": true
+ }
+}
