@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-10-30T16:53:01+00:00",
- "git_sha": "70a652a94d76c62bd32cd9f41b0c6dd95d9a976b",
- "git_branch": "ui-redesign",
+ "generated_at": "2026-10-31T15:44:34+00:00",
+ "git_sha": "eda846e3fab64dccff30f3f44198960ce50ceac1",
+ "git_branch": "docs-trim",
  "git_dirty": true,
  "metrics_model_version": "v0.2-baseline",
  "metrics_data_version": "argo-2025-snapshot",

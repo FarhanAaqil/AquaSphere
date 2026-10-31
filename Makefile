@@ -5,7 +5,7 @@ setup:
 	pip install -e ".[dev]"
 	pre-commit install
 
-# ── Data pipeline (real, open data; see docs/DATA_CARD.md) ──────────────────
+# ── Data pipeline (real, open data from NOAA ERDDAP and Argovis) ──────────────────
 # ~4 GB of downloads on first run, cached under data/cache afterwards.
 data: data-store data-argo data-collocate data-coverage data-patches
 

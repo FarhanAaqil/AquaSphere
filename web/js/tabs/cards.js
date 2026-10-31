@@ -118,7 +118,7 @@ export default {
           <div style="width:${w('test')};min-width:4.5em;background:${C.coral}" title="Test 2024–25 (read once, final evaluation)">${p.test.toLocaleString()}</div></div>
         <p class="card__foot"></p><p class="note"></p>`;
       split.body.querySelector('.card__foot').textContent = `Profiles in each partition: train ${p.train.toLocaleString()} (${v2.split.floats.train} floats), validation 2023 ${p.val} (${v2.split.floats.val} floats), test 2024–25 ${p.test.toLocaleString()} (${v2.split.floats.test} floats).`;
-      split.body.querySelector('.note').textContent = `Every float belongs to the first period it appears in, so ${v2.split.dropped_profiles.val.toLocaleString()} validation-year and ${v2.split.dropped_profiles.test.toLocaleString()} test-year profiles from floats already seen earlier are excluded. Hypotheses were frozen before the test period was read (docs/hypotheses.yaml).`;
+      split.body.querySelector('.note').textContent = `Every float belongs to the first period it appears in, so ${v2.split.dropped_profiles.val.toLocaleString()} validation-year and ${v2.split.dropped_profiles.test.toLocaleString()} test-year profiles from floats already seen earlier are excluded. Hypotheses were frozen before the test period was read (git tag hypotheses-v1-2026-10-29).`;
     } else if (metrics) {
       split.meta.append(badge('results'));
       const n = metrics.n_train_profiles + metrics.n_eval_profiles;

@@ -472,9 +472,10 @@ def main() -> None:
             raise SystemExit(
                 "docs/results/final_eval.json exists: the test period was already evaluated."
             )
-    frozen = yaml.safe_load(HYPOTHESES.read_text(encoding="utf-8"))
     if a.quick and not a.dry_run:
         raise SystemExit("--quick is only for dry runs")
+    # The frozen file is kept locally (git tag hypotheses-v1-2026-10-29 holds the committed copy)
+    frozen = yaml.safe_load(HYPOTHESES.read_text(encoding="utf-8")) if HYPOTHESES.exists() else {}
     run = Final(a.n_boot, dry=a.dry_run, quick=a.quick)
     srv = run.served()
     hyp = {
